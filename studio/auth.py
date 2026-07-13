@@ -92,6 +92,20 @@ def find_user(user):
     return None
 
 
+def bootstrap_admin():
+    """Seed admin tu env ADMIN_USER/ADMIN_PASSWORD khi khoi dong.
+    - Chi tao khi user do CHUA ton tai (idempotent, khong ghi de mat khau da doi).
+    - Neu thieu 2 env -> bo qua (khong tao gi)."""
+    u = (os.environ.get("ADMIN_USER") or "").strip()
+    p = os.environ.get("ADMIN_PASSWORD") or ""
+    if not u or not p:
+        return None
+    if find_user(u):
+        return None  # da co -> ton trong mat khau user tu doi
+    create_user(u, role="admin", password=p, status="active")
+    return u
+
+
 def check_secret(user, secret):
     """True neu secret khop mat khau HOAC token (BO QUA status). Dung cho verify + doi mat khau."""
     r = find_user(user)

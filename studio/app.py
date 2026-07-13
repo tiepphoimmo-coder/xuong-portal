@@ -2021,5 +2021,8 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", "8090"))
     host = os.environ.get("HOST", "127.0.0.1")  # container: HOST=0.0.0.0 de cong anh xa ra ngoai
+    seeded = auth.bootstrap_admin()  # tao admin mac dinh tu ADMIN_USER/ADMIN_PASSWORD neu chua co
+    if seeded:
+        print(f"[bootstrap] Da tao admin mac dinh: {seeded}", flush=True)
     print(f"Xuong KOL Studio -> http://{host}:{port}  (data: {DATA_HOME})", flush=True)
     uvicorn.run(app, host=host, port=port, log_level="warning")
