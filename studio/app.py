@@ -16,8 +16,10 @@ SD = os.path.dirname(os.path.abspath(__file__))
 DATA_HOME = store.DATA
 UPLOAD_DIR = os.path.join(DATA_HOME, "refs")
 PROJECTS_DIR = os.path.join(DATA_HOME, "Du An")
+AVATAR_DIR = os.path.join(DATA_HOME, "avatars")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(PROJECTS_DIR, exist_ok=True)
+os.makedirs(AVATAR_DIR, exist_ok=True)
 
 app = FastAPI(title="Xuong KOL Studio")
 
@@ -109,39 +111,78 @@ LOGIN_HTML = """<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Đăng nhập · Xưởng KOL Văn phòng</title>
 <style>
-:root{--bg:#12100e;--card:#1b1815;--brand:#C15F3C;--bd:rgba(255,255,255,.09);--tx:#efe9e3;--mut:#a99}
+:root{--bg:#12100e;--card:#1b1815;--brand:#C15F3C;--bd:rgba(255,255,255,.09);--tx:#efe9e3;--mut:#a99;--ok:#7BC96F}
 *{box-sizing:border-box}body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
 background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.box{width:340px;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:30px 26px;
+.box{width:348px;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:28px 26px;
 box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .mk{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#D98157);
-display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;margin-bottom:16px}
-h1{font-size:18px;margin:0 0 3px}p.sub{margin:0 0 20px;color:var(--mut);font-size:13px}
+display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;margin-bottom:14px}
+h1{font-size:18px;margin:0 0 3px}p.sub{margin:0 0 16px;color:var(--mut);font-size:13px}
+.tabs{display:flex;gap:6px;margin-bottom:6px;background:#221e1b;padding:4px;border-radius:10px}
+.tabs button{flex:1;height:34px;margin:0;border:0;border-radius:7px;background:transparent;color:var(--mut);
+font-size:13.5px;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--brand);color:#fff}
 label{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px}
 input{width:100%;height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--bd);
 background:#221e1b;color:var(--tx);font-size:14px}
-button{width:100%;height:42px;margin-top:20px;border:0;border-radius:9px;background:var(--brand);
+button.act{width:100%;height:42px;margin-top:18px;border:0;border-radius:9px;background:var(--brand);
 color:#fff;font-size:15px;font-weight:600;cursor:pointer}
-button:hover{filter:brightness(1.08)}.err{color:#e8836b;font-size:13px;margin-top:12px;min-height:16px}
+button.act:hover{filter:brightness(1.08)}
+.err{color:#e8836b;font-size:13px;margin-top:12px;min-height:16px}
+.ok{color:var(--ok);font-size:13px;margin-top:12px;min-height:16px}
 .badge{display:inline-block;font-size:10px;letter-spacing:1px;color:var(--brand);border:1px solid var(--brand);
-border-radius:6px;padding:2px 7px;margin-bottom:14px;text-transform:uppercase}
+border-radius:6px;padding:2px 7px;margin-bottom:12px;text-transform:uppercase}
+form{display:none}form.on{display:block}
 </style></head><body>
-<form class="box" onsubmit="return dologin(event)">
+<div class="box">
 <div class="mk">XK</div>
 <div class="badge">Văn phòng</div>
-<h1>Xưởng KOL Văn phòng</h1><p class="sub">Đăng nhập bằng tên và token được cấp.</p>
-<label>Tên đăng nhập</label><input id="u" autofocus autocomplete="username">
-<label>Token</label><input id="t" type="password" autocomplete="current-password">
-<button type="submit">Đăng nhập</button>
+<h1>Xưởng KOL Văn phòng</h1><p class="sub">Đăng nhập hoặc đăng ký tài khoản thành viên.</p>
+<div class="tabs"><button id="tab-login" class="on" onclick="showTab('login')">Đăng nhập</button>
+<button id="tab-reg" onclick="showTab('reg')">Đăng ký</button></div>
+
+<form id="f-login" class="on" onsubmit="return dologin(event)">
+<label>Tên đăng nhập</label><input id="u" autocomplete="username">
+<label>Mật khẩu</label><input id="t" type="password" autocomplete="current-password" placeholder="Mật khẩu (hoặc token cũ)">
+<button type="submit" class="act">Đăng nhập</button>
 <div class="err" id="e"></div>
 </form>
+
+<form id="f-reg" onsubmit="return doreg(event)">
+<label>Tên đăng nhập</label><input id="ru" autocomplete="username" placeholder="3-24 ký tự: a-z 0-9 - _">
+<label>Tên hiển thị</label><input id="rn" placeholder="Vd: Nguyễn Văn An">
+<label>Mật khẩu</label><input id="rp" type="password" autocomplete="new-password" placeholder="Tối thiểu 6 ký tự">
+<label>Nhắc lại mật khẩu</label><input id="rp2" type="password" autocomplete="new-password">
+<button type="submit" class="act">Đăng ký</button>
+<div class="err" id="re"></div><div class="ok" id="ro"></div>
+</form>
+</div>
 <script>
+function showTab(t){
+ document.getElementById('tab-login').classList.toggle('on',t==='login');
+ document.getElementById('tab-reg').classList.toggle('on',t==='reg');
+ document.getElementById('f-login').classList.toggle('on',t==='login');
+ document.getElementById('f-reg').classList.toggle('on',t==='reg');}
 async function dologin(ev){ev.preventDefault();
  const u=document.getElementById('u').value.trim(),t=document.getElementById('t').value.trim();
  const e=document.getElementById('e');e.textContent='';
  try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({user:u,token:t})});
-  if(r.ok){location.href='/';}else{const d=await r.json().catch(()=>({}));e.textContent=d.detail||'Sai tên hoặc token';}}
+   body:JSON.stringify({user:u,password:t})});
+  if(r.ok){location.href='/';}else{const d=await r.json().catch(()=>({}));e.textContent=d.detail||'Sai tên hoặc mật khẩu';}}
+ catch(err){e.textContent='Lỗi kết nối';}
+ return false;}
+async function doreg(ev){ev.preventDefault();
+ const u=document.getElementById('ru').value.trim(),n=document.getElementById('rn').value.trim();
+ const p=document.getElementById('rp').value,p2=document.getElementById('rp2').value;
+ const e=document.getElementById('re'),o=document.getElementById('ro');e.textContent='';o.textContent='';
+ if(p!==p2){e.textContent='Hai ô mật khẩu chưa khớp';return false;}
+ try{const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({user:u,password:p,display_name:n})});
+  const d=await r.json().catch(()=>({}));
+  if(r.ok){o.textContent='✅ Đã gửi — chờ admin duyệt';
+    document.getElementById('rp').value='';document.getElementById('rp2').value='';}
+  else{e.textContent=d.detail||'Đăng ký không thành công';}}
  catch(err){e.textContent='Lỗi kết nối';}
  return false;}
 </script></body></html>"""
@@ -203,7 +244,7 @@ def _portal_blocked(method, path):
     return False
 
 
-_PUBLIC_API = {"/api/login", "/api/logout", "/api/config"}
+_PUBLIC_API = {"/api/login", "/api/logout", "/api/config", "/api/register"}
 
 
 @app.middleware("http")
@@ -239,11 +280,30 @@ def api_config():
             "role": u.get("role") if u else None}
 
 
+@app.post("/api/register")
+def api_register(body: dict):
+    """Dang ky thanh vien moi (chi PORTAL). Tao user status=pending, role=member. KHONG tu login."""
+    if not _portal():
+        raise HTTPException(403, "chi che do Van phong")
+    user = (body.get("user") or "").strip().lower()
+    pw = body.get("password") or ""
+    dn = (body.get("display_name") or "").strip()
+    if not re.fullmatch(r"[a-z0-9_-]{3,24}", user):
+        raise HTTPException(400, "Tên đăng nhập 3-24 ký tự, chỉ gồm a-z 0-9 - _")
+    if len(pw) < 6:
+        raise HTTPException(400, "Mật khẩu tối thiểu 6 ký tự")
+    if auth.find_user(user):
+        raise HTTPException(409, "Tên đăng nhập đã tồn tại")
+    auth.create_user(user, role="member", password=pw, status="pending", display_name=dn or user)
+    return {"ok": True, "user": user, "status": "pending"}
+
+
 @app.post("/api/login")
 def api_login(body: dict, response: Response):
-    rec = auth.verify((body.get("user") or "").strip(), (body.get("token") or "").strip())
+    secret = (body.get("password") or body.get("token") or "").strip()
+    rec, err = auth.verify((body.get("user") or "").strip(), secret)
     if not rec:
-        raise HTTPException(401, "Sai ten hoac token")
+        raise HTTPException(401, err or "Sai tên hoặc mật khẩu")
     sid = auth.new_session(rec["user"], rec["role"])
     response.set_cookie("sid", sid, httponly=True, samesite="lax", max_age=30 * 24 * 3600)
     return {"ok": True, "user": rec["user"], "role": rec["role"]}
@@ -254,7 +314,150 @@ def api_me():
     u = _cur()
     if not u:
         raise HTTPException(401, "chua dang nhap")
-    return {"user": u["user"], "role": u["role"]}
+    r = auth.find_user(u["user"]) or {}
+    return {"user": u["user"], "role": u["role"],
+            "display_name": r.get("display_name") or u["user"],
+            "avatar": _avatar_url(u["user"]),
+            "has_password": bool(r.get("pass_hash"))}
+
+
+@app.patch("/api/me")
+def api_me_patch(body: dict):
+    """Doi ten hien thi va/hoac mat khau cua chinh minh.
+    Doi mat khau: neu da co pass_hash -> phai dung old_password; neu chua (login token) -> cho dat moi khong can old."""
+    u = _cur()
+    if not u:
+        raise HTTPException(401, "chua dang nhap")
+    user = u["user"]
+    rec = auth.find_user(user)
+    if not rec:
+        raise HTTPException(404, "no user")
+    if "display_name" in body:
+        auth.set_display_name(user, (body.get("display_name") or "").strip() or user)
+    npw = (body.get("new_password") or "").strip()
+    if npw:
+        if len(npw) < 6:
+            raise HTTPException(400, "Mật khẩu mới tối thiểu 6 ký tự")
+        if rec.get("pass_hash"):
+            old = (body.get("old_password") or "").strip()
+            if not auth.check_secret(user, old):
+                raise HTTPException(400, "Mật khẩu hiện tại không đúng")
+        auth.set_password(user, npw)
+    r = auth.find_user(user)
+    return {"ok": True, "display_name": r.get("display_name") or user,
+            "avatar": _avatar_url(user), "has_password": bool(r.get("pass_hash"))}
+
+
+# ---------- Avatar ----------
+_AV_EXTS = (".png", ".jpg", ".jpeg", ".webp")
+_AV_BY_CT = {"image/png": ".png", "image/jpeg": ".jpg", "image/jpg": ".jpg", "image/webp": ".webp"}
+_AV_BY_EXT = {".png": ".png", ".jpg": ".jpg", ".jpeg": ".jpg", ".webp": ".webp"}
+
+
+def _valid_user(u):
+    return bool(u) and re.fullmatch(r"[a-z0-9_-]{1,40}", u) is not None
+
+
+def _avatar_files(user):
+    if not _valid_user(user):
+        return []
+    return [os.path.join(AVATAR_DIR, user + e) for e in _AV_EXTS
+            if os.path.isfile(os.path.join(AVATAR_DIR, user + e))]
+
+
+def _avatar_url(user):
+    return ("/api/avatar/" + user) if _avatar_files(user) else None
+
+
+@app.post("/api/me/avatar")
+async def api_me_avatar(file: UploadFile = File(...)):
+    u = _cur()
+    if not u:
+        raise HTTPException(401, "chua dang nhap")
+    user = u["user"]
+    if not _valid_user(user):
+        raise HTTPException(400, "user khong hop le")
+    data = await file.read()
+    if len(data) > 2 * 1024 * 1024:
+        raise HTTPException(400, "Ảnh tối đa 2MB")
+    ext = _AV_BY_CT.get((file.content_type or "").lower()) \
+        or _AV_BY_EXT.get(os.path.splitext(file.filename or "")[1].lower())
+    if not ext:
+        raise HTTPException(400, "Chỉ nhận ảnh PNG, JPG hoặc WEBP")
+    for old in _avatar_files(user):   # xoa ext cu khac
+        try:
+            os.remove(old)
+        except Exception:
+            pass
+    with open(os.path.join(AVATAR_DIR, user + ext), "wb") as fh:
+        fh.write(data)
+    return {"ok": True, "avatar": _avatar_url(user)}
+
+
+@app.get("/api/avatar/{user}")
+def api_avatar(user: str):
+    # Portal: middleware da chan neu chua dang nhap. Local: mo.
+    files = _avatar_files(user)
+    if not files:
+        raise HTTPException(404, "no avatar")
+    p = files[0]
+    return FileResponse(p, media_type=mimetypes.guess_type(p)[0] or "image/png")
+
+
+# ---------- QUAN TRI THANH VIEN (admin, portal) ----------
+def _require_admin():
+    if not _portal():
+        raise HTTPException(403, "chi che do Van phong")
+    u = _cur()
+    if not u or u.get("role") != "admin":
+        raise HTTPException(403, "chi admin duoc phep")
+    return u
+
+
+@app.get("/api/users")
+def api_users():
+    _require_admin()
+    rows = sorted(auth.load_users(), key=lambda r: r.get("created", 0))
+    return [{**auth.public_record(r), "avatar": _avatar_url(r.get("user"))} for r in rows]
+
+
+@app.patch("/api/users/{user}")
+def api_users_patch(user: str, body: dict):
+    _require_admin()
+    if not auth.find_user(user):
+        raise HTTPException(404, "no user")
+    out = {"ok": True, "user": user}
+    if "status" in body:
+        st = body.get("status")
+        if st not in ("pending", "active", "disabled"):
+            raise HTTPException(400, "status = pending|active|disabled")
+        auth.set_status(user, st)
+        out["status"] = st
+    if "role" in body:
+        rl = body.get("role")
+        if rl not in ("admin", "member"):
+            raise HTTPException(400, "role = admin|member")
+        auth.set_role(user, rl)
+        out["role"] = rl
+    if body.get("reset_password"):
+        out["temp_password"] = auth.reset_password(user)
+    return out
+
+
+@app.delete("/api/users/{user}")
+def api_users_delete(user: str):
+    me = _require_admin()
+    if user == me.get("user"):
+        raise HTTPException(400, "không thể tự xoá chính mình")
+    if not auth.find_user(user):
+        raise HTTPException(404, "no user")
+    auth.delete_user(user)
+    for f in _avatar_files(user):
+        try:
+            os.remove(f)
+        except Exception:
+            pass
+    return {"ok": True}
 
 
 @app.post("/api/logout")

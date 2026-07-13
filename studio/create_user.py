@@ -23,14 +23,20 @@ def main():
     p.add_argument("user", help="ten dang nhap")
     p.add_argument("--role", default="member", choices=["admin", "member"])
     p.add_argument("--token", default=None, help="dat token co san (mac dinh sinh ngau nhien)")
+    p.add_argument("--password", default=None, help="dat thang mat khau (status active); khong dung token")
     a = p.parse_args()
-    rec, tok = auth.create_user(a.user, a.role, a.token)
+    rec, tok = auth.create_user(a.user, a.role, token=a.token, password=a.password,
+                                status="active")
     print("=" * 48)
     print(f"  User : {rec['user']}")
     print(f"  Role : {rec['role']}")
     print(f"  Data : {auth.store.DATA}")
-    print(f"  TOKEN: {tok}")
-    print("  (Luu token lai — chi hien 1 lan. Dang nhap = user + token.)")
+    if a.password:
+        print("  PASS : (mat khau da dat theo tham so --password)")
+        print("  (Dang nhap = user + mat khau.)")
+    else:
+        print(f"  TOKEN: {tok}")
+        print("  (Luu token lai — chi hien 1 lan. Dang nhap = user + token.)")
     print("=" * 48)
 
 

@@ -28,6 +28,21 @@
   /* ===== CHE DO VAN PHONG (portal) ===== */
   .vpbadge{display:inline-block;margin-top:3px;font-size:9px;letter-spacing:.8px;color:var(--brand);border:1px solid var(--brand);border-radius:5px;padding:1px 6px;text-transform:uppercase;font-weight:700}
   .authchip{display:inline-block;font-size:9.5px;padding:1px 6px;border-radius:5px;background:var(--brand-bg);color:var(--brand);margin-left:5px;vertical-align:middle}
+  /* avatar header + trang Tai khoan */
+  .mebtn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bd);border-radius:99px;padding:3px 12px 3px 3px;cursor:pointer;height:33px}
+  .mebtn:hover{border-color:var(--bd2)}
+  .meav{width:27px;height:27px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;overflow:hidden}
+  .meav img{width:100%;height:100%;object-fit:cover}
+  .mename{font-size:13px;font-weight:600;color:var(--tx);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .avbig{width:82px;height:82px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;overflow:hidden}
+  .avbig img{width:100%;height:100%;object-fit:cover}
+  .urow{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--bd);border-radius:var(--r);background:var(--card);margin-bottom:8px}
+  .urow .uav{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;overflow:hidden}
+  .urow .uav img{width:100%;height:100%;object-fit:cover}
+  .ust{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
+  .ust.active{background:var(--okbg);color:var(--ok)} .ust.pending{background:var(--warnbg);color:var(--warn)} .ust.disabled{background:var(--errbg);color:var(--err)}
+  .pcard{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--warn);background:var(--warnbg);border-radius:var(--r);margin-bottom:8px}
+  .tmpbox{margin-top:8px;padding:8px 10px;background:var(--accbg);color:var(--acc);border-radius:8px;font-family:ui-monospace,monospace;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px}
   body.portal #fab,body.portal #apanel,body.portal .sfoot,
   body.portal nav a[data-v="staff"],body.portal nav a[data-v="flowaccts"],
   body.portal nav a[data-v="projects"],
@@ -345,6 +360,7 @@
       <a data-v="dash" class="on"><span class="ic">📊</span><span class="lb">Tổng quan</span></a>
       <a data-v="staff"><span class="ic">👔</span><span class="lb">Nhân viên</span><span class="cnt" id="n-staff"></span></a>
       <a data-v="flowaccts"><span class="ic">🎬</span><span class="lb">Tài khoản Flow</span><span class="cnt" id="n-facc"></span></a>
+      <a data-v="users" id="nav-users" style="display:none"><span class="ic">👥</span><span class="lb">Tài khoản</span><span class="cnt hot" id="n-users"></span></a>
     </nav>
   </div>
   <div class="navgrp"><div class="gt">Sản xuất</div>
@@ -399,18 +415,36 @@ const PLAT={facebook:{e:"📘",n:"Facebook"},tiktok:{e:"🎵",n:"TikTok"},youtub
 const chanById=id=>CHANS.find(c=>c.id===id);
 const chanLabel=id=>{const c=chanById(id);return c?`${(PLAT[c.platform]||PLAT.khac).e} ${c.name}`:"";};
 const api = (p,o) => fetch(p,o).then(r=>r.json());
-window.PORTAL=false; window.CFG={};
+window.PORTAL=false; window.CFG={}; window.ME=null; window.USERMAP={};
 const _isAdminUI=()=>!window.PORTAL||(window.CFG&&window.CFG.role==='admin');
-function applyPortalUI(){
+const authorName=u=>window.USERMAP[u]||u;
+const avInner=(name,url)=>url?`<img src="${url}" alt="">`:esc(initials(name));
+async function applyPortalUI(){
   if(!window.PORTAL) return;
   document.body.classList.add('portal');
+  try{ window.ME=await api('/api/me'); }catch(e){ window.ME=null; }
+  if(window.ME){ window.USERMAP[window.ME.user]=window.ME.display_name||window.ME.user; }
+  const isAdmin=window.CFG.role==='admin';
   const lt=document.querySelector('.logo .lt');
   if(lt&&!lt.querySelector('.vpbadge')){
-    const who=(window.CFG.user?(' · '+window.CFG.user+(window.CFG.role==='admin'?' (admin)':'')):'');
+    const who=(window.CFG.user?(' · '+window.CFG.user+(isAdmin?' (admin)':'')):'');
     lt.insertAdjacentHTML('beforeend','<span class="vpbadge">Văn phòng'+esc(who)+'</span>');
   }
   const tact=document.querySelector('.tact');
+  if(tact&&!tact.querySelector('.mebtn')){
+    const me=window.ME||{user:window.CFG.user,display_name:window.CFG.user};
+    tact.insertAdjacentHTML('afterbegin',
+      `<button class="mebtn" onclick="openProfile()" title="Hồ sơ của tôi"><span class="meav" id="me-av">${avInner(me.display_name||me.user,me.avatar)}</span><span class="mename" id="me-name">${esc(me.display_name||me.user)}</span></button>`);
+  }
   if(tact&&!tact.querySelector('.logoutbtn')) tact.insertAdjacentHTML('beforeend','<button class="mini logoutbtn" onclick="doLogout()">Đăng xuất</button>');
+  const nu=document.getElementById('nav-users');
+  if(nu&&isAdmin){ nu.style.display='flex'; loadUsers(); }
+}
+function _refreshMeHeader(){
+  const me=window.ME; if(!me) return;
+  const av=document.getElementById('me-av'), nm=document.getElementById('me-name');
+  if(av) av.innerHTML=avInner(me.display_name||me.user,me.avatar?me.avatar+'?t='+Date.now():null);
+  if(nm) nm.textContent=me.display_name||me.user;
 }
 window.doLogout=async()=>{ try{await fetch('/api/logout',{method:'POST'});}catch(e){} location.href='/'; };
 const img = p => "/api/image?path="+encodeURIComponent(p);
@@ -432,6 +466,7 @@ const VIEWMETA={
   dash:["Tổng quan","Toàn cảnh xưởng: số liệu, quy trình và dự án gần nhất"],
   staff:["Nhân viên","Mỗi kỹ năng là một nhân viên — giao việc 1 chạm, Claude nhận và làm"],
   flowaccts:["Tài khoản Flow","Quản lý tài khoản gen video: online/tín dụng/cooldown · mở hàng loạt · Auto/LRU"],
+  users:["Tài khoản","Duyệt đăng ký thành viên · phân quyền · khoá/mở · đặt lại mật khẩu"],
   scripts:["Kịch bản duyệt","Kanban kịch bản: Claude soạn nhiều bản gắn tag cấu trúc — bạn duyệt, bản duyệt đi vào sản xuất"],
   projects:["Dự án video","Mỗi video một mã DA-xxxx · quy trình từ kịch bản đến video hoàn thiện"],
   media:["Thư viện Media","Video hoàn thiện · xem trên Drive · caption · trạng thái đăng · chỉ số view/bình luận/đơn"],
@@ -474,7 +509,7 @@ function render(){
   setCounts();
   // trang chi tiet du an -> full chieu rong (video to + nhieu canh 1 hang)
   document.querySelector("#wrap").classList.toggle("full", view==="projects" && !!curProj);
-  ({dash:renderDash,staff:renderStaff,flowaccts:renderFlowAccounts,scripts:renderScripts,channels:renderChannels,kols:()=>renderLib("kols",KOLS,"KOL",1),products:()=>renderLib("products",PRODS,"sản phẩm",0),projects:renderProjects,media:renderMedia}[view])();
+  ({dash:renderDash,staff:renderStaff,flowaccts:renderFlowAccounts,scripts:renderScripts,channels:renderChannels,kols:()=>renderLib("kols",KOLS,"KOL",1),products:()=>renderLib("products",PRODS,"sản phẩm",0),projects:renderProjects,media:renderMedia,users:()=>{renderUsers();loadUsers();}}[view])();
 }
 function media(e,round){const r=(e.refs&&e.refs[0]);const c=round?'av':'sq';return `<div class="${c}">${r?`<img src="${img(r)}">`:(round?initials(e.name):'#')}</div>`;}
 
@@ -736,7 +771,7 @@ function renderScripts(){
                :`<button class="kbbtn" onclick="event.stopPropagation();go('media')">🎞 Thư viện Media</button>`;
       } else foot=`<button class="kbbtn" onclick="event.stopPropagation();openProj('${s.project_id}')">📁 Mở dự án</button>`;
     }
-    const auth=s.nguoi_tao?`<span class="authchip">👤 ${esc(s.nguoi_tao)}</span>`:'';
+    const auth=s.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(s.nguoi_tao))}</span>`:'';
     return `<div class="kbcard" draggable="${canApprove}" ondragstart="kbDrag(event,'${s.id}')" ondragend="kbDragEnd(event)" onclick="openScript('${s.id}')">
       <div class="kbtags">${tags}</div>
       <div class="kbtitle">${esc((s.product||'').slice(0,50))}</div>
@@ -1120,7 +1155,7 @@ function renderChannels(){
     const nk=KOLS.filter(k=>k.channel===c.id).length, np=PROJS.filter(x=>x.channel===c.id).length;
     return `<div class="card">
       <div class="tools"><span onclick="openChan('${c.id}')" title="Sửa">✎</span><span onclick="delChan('${c.id}')" title="Xoá kênh">×</span></div>
-      <div class="nm">${p.e} ${esc(c.name)} ${codeChip(c.code)}${window.PORTAL&&c.nguoi_tao?`<span class="authchip">👤 ${esc(c.nguoi_tao)}</span>`:''}</div>
+      <div class="nm">${p.e} ${esc(c.name)} ${codeChip(c.code)}${window.PORTAL&&c.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(c.nguoi_tao))}</span>`:''}</div>
       <div class="sub" style="margin-top:3px"><span class="niche">${p.n}</span> · 👤 ${nk} KOL · 🎬 ${np} dự án</div>
       ${c.url?`<div class="sub2"><a href="${esc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${esc(c.url).replace(/^https?:\/\//,'').slice(0,42)}</a></div>`:''}
       ${c.note?`<div class="sub" style="margin-top:3px;-webkit-line-clamp:2">${esc(c.note)}</div>`:''}</div>`;
@@ -1174,7 +1209,7 @@ function renderLib(kind,rows,word,round){
     ${bar}
     <div class="grid">${shown.map(e=>`
     <div class="card clk" onclick="openLibDetail('${round?'kol':'prod'}','${e.id}')"><div class="tools"><span onclick="event.stopPropagation();openForm('${round?'kol':'prod'}','${e.id}')" title="Sửa">✎</span><span onclick="event.stopPropagation();del('${kind}','${e.id}')">×</span></div>
-      <div class="row">${media(e,round)}<div><div class="nm">${esc(e.name)} ${codeChip(e.code)}${window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(e.nguoi_tao)}</span>`:''}</div>
+      <div class="row">${media(e,round)}<div><div class="nm">${esc(e.name)} ${codeChip(e.code)}${window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(e.nguoi_tao))}</span>`:''}</div>
       <div class="sub">${round?`${e.channel&&chanById(e.channel)?`<span class="niche">${esc(chanLabel(e.channel))}</span> · `:''}${e.group?`${esc(e.group)} · `:''}${e.voice_id?'🎙 giọng khoá':(e.voice?'có mô tả giọng':'')}`:`${e.niche?`<span class="niche">${esc(e.niche)}</span> · `:''}${esc(e.price||'')}`} · ${(e.refs||[]).length} ref</div>
       ${round?`<div class="wbtn" onclick="event.stopPropagation();openWardrobe('${e.id}')">👕 Trang phục (${(e.outfits||[]).length})</div>`
              :`<div class="wbtn napbtn" onclick="event.stopPropagation();openNapVideo('${e.id}')">🧠 Nạp video ra đơn${(e.spy_refs||[]).length?` (${e.spy_refs.length})`:''}</div>`}
@@ -1235,7 +1270,7 @@ window.openLibDetail=(kind,id)=>{
   const e=(isK?KOLS:PRODS).find(x=>x.id===id); if(!e) return;
   const imgs=(e.refs||[]).map(r=>`<img class="dth" src="${img(r)}">`).join("")||'<span class="sub">chưa có ảnh tham chiếu</span>';
   const row=(lbl,val)=>val?`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`:'';
-  const auth=window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(e.nguoi_tao)}</span>`:'';
+  const auth=window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(e.nguoi_tao))}</span>`:'';
   const panel=(title,txt,code)=>txt?`<div class="dpanel"><div class="dpt">${title}</div>${code?`<code class="dcode">${esc(txt)}</code>`:`<div class="dptext">${esc(txt)}</div>`}</div>`:'';
   let meta, right;
   if(isK){
@@ -1415,7 +1450,7 @@ function renderProjects(){
     const ns=(p.scenes||[]).length, done=(p.scenes||[]).filter(s=>s.video).length;
     return `<div class="card" onclick="openProj('${p.id}')">
       <div class="tools"><span onclick="event.stopPropagation();delProject('${p.id}')" title="Xoá dự án">×</span></div>
-      <div class="nm">${esc(p.title||'(chưa đặt tên)')} <span class="code">${p.code||''}</span>${window.PORTAL&&p.nguoi_tao?`<span class="authchip">👤 ${esc(p.nguoi_tao)}</span>`:''}</div>
+      <div class="nm">${esc(p.title||'(chưa đặt tên)')} <span class="code">${p.code||''}</span>${window.PORTAL&&p.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(p.nguoi_tao))}</span>`:''}</div>
       <div class="sub" style="margin-top:3px">${p.channel&&chanById(p.channel)?`<span class="niche">${esc(chanLabel(p.channel))}</span> · `:''}${esc(p.kol||'')}${p.product?' × '+esc(p.product):''}</div>
       <div class="sub" style="margin-top:4px">${pstatBadge(p.status)} · ${ns} scene${ns?` (${done} có video)`:''}${p.final_video?' · ✅ video hoàn thiện':''}</div>
       ${p.template?`<div class="sub2">📝 ${esc(p.template)}</div>`:''}</div>`;
@@ -1566,7 +1601,7 @@ function renderMedia(){
 function mediaCard(m){
   const m2=m.metrics||{};
   const chips=[m.kol?`👤 ${esc(m.kol)}`:'',m.product?`📦 ${esc(m.product)}`:'',m.channel&&chanById(m.channel)?esc(chanLabel(m.channel)):(m.channel?esc(m.channel):''),m.project_code?`🎬 ${esc(m.project_code)}`:''].filter(Boolean).map(c=>`<span class="mchip">${c}</span>`).join("");
-  const auth=window.PORTAL&&m.nguoi_tao?`<span class="mchip">👤 ${esc(m.nguoi_tao)}</span>`:'';
+  const auth=window.PORTAL&&m.nguoi_tao?`<span class="mchip">👤 ${esc(authorName(m.nguoi_tao))}</span>`:'';
   const thumb=m.drive_id
     ?`<div class="mplay" title="Xem video" onclick="event.stopPropagation();mediaEmbedCard('${m.id}',this.parentNode)">▶</div>`
     :`<div class="mnodrive">Chưa upload Drive</div>`;
@@ -1590,7 +1625,7 @@ window.openMediaDetail=(id)=>{
     ?`<div class="mplayer"><iframe src="${drivePrev(m.drive_id)}" allow="autoplay" allowfullscreen></iframe></div>`
     :`<div class="mplayer" style="display:flex;align-items:center;justify-content:center;color:#888;font-size:13px">Chưa upload Drive — chưa có video để xem</div>`;
   const row=(lbl,val)=>`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`;
-  const auth=window.PORTAL&&m.nguoi_tao?`<span class="authchip">👤 ${esc(m.nguoi_tao)}</span>`:'';
+  const auth=window.PORTAL&&m.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(m.nguoi_tao))}</span>`:'';
   const meta=row('👤 KOL',m.kol?esc(m.kol):'—')+row('📦 Sản phẩm',m.product?esc(m.product):'—')
     +row('📡 Kênh',m.channel&&chanById(m.channel)?esc(chanLabel(m.channel)):(m.channel?esc(m.channel):'—'))
     +row('🎬 Mã dự án',m.project_code?`<span class="code">${esc(m.project_code)}</span>`:'—')
@@ -1653,6 +1688,144 @@ window.doImport=async kind=>{
   const r=await api("/api/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind,items})});
   closeModal(); alert("Đã import "+r.imported); load();
 };
+/* ===== HỒ SƠ CỦA TÔI ===== */
+window.openProfile=()=>{
+  const me=window.ME||{user:window.CFG.user,display_name:window.CFG.user};
+  const needOld=me.has_password;
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <h3>Hồ sơ của tôi</h3>
+    <div style="display:flex;gap:16px;align-items:center;margin:10px 0 16px">
+      <span class="avbig" id="pf-av">${avInner(me.display_name||me.user,me.avatar)}</span>
+      <div>
+        <div style="font-size:12px;color:var(--mut)">Tên đăng nhập</div>
+        <div style="font-weight:600;font-family:ui-monospace,monospace">${esc(me.user)}</div>
+        <label class="mini" style="display:inline-block;margin-top:8px;cursor:pointer;padding:5px 11px;border:1px solid var(--bd2);border-radius:8px">
+          🖼 Đổi ảnh đại diện<input type="file" id="pf-file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="uploadAvatar(event)"></label>
+        <div class="hint" style="margin-top:5px">PNG/JPG/WEBP · tối đa 2MB</div>
+      </div>
+    </div>
+    <div class="fld"><label>Tên hiển thị</label><input id="pf-name" value="${esc(me.display_name||me.user)}"></div>
+    <h4 style="margin:16px 0 4px">Đổi mật khẩu</h4>
+    <div class="hint" style="margin-bottom:8px">${needOld?'Nhập mật khẩu hiện tại để đổi.':'Bạn đang đăng nhập bằng token — có thể đặt mật khẩu mới ngay.'}</div>
+    ${needOld?`<div class="fld"><label>Mật khẩu hiện tại</label><input id="pf-old" type="password" autocomplete="current-password"></div>`:''}
+    <div class="fld"><label>Mật khẩu mới</label><input id="pf-new" type="password" autocomplete="new-password" placeholder="Tối thiểu 6 ký tự (để trống nếu không đổi)"></div>
+    <div class="fld"><label>Nhắc lại mật khẩu mới</label><input id="pf-new2" type="password" autocomplete="new-password"></div>
+    <div class="err" id="pf-err" style="color:var(--err);font-size:13px;min-height:16px;margin-top:8px"></div>
+    <div class="row" style="margin-top:12px"><button class="primary" onclick="saveProfile()">💾 Lưu</button><button onclick="closeModal()">Đóng</button></div>`);
+  $("#sheetbox").classList.add("detail");
+};
+window.uploadAvatar=async(ev)=>{
+  const f=ev.target.files&&ev.target.files[0]; if(!f) return;
+  const err=$("#pf-err"); if(err) err.textContent='';
+  if(f.size>2*1024*1024){ if(err) err.textContent='Ảnh vượt quá 2MB'; return; }
+  const fd=new FormData(); fd.append('file',f);
+  const r=await fetch('/api/me/avatar',{method:'POST',body:fd});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){ if(err) err.textContent=d.detail||'Tải ảnh thất bại'; return; }
+  if(window.ME) window.ME.avatar=d.avatar;
+  const bust=d.avatar?d.avatar+'?t='+Date.now():null;
+  const pv=$("#pf-av"); if(pv) pv.innerHTML=avInner((window.ME||{}).display_name,bust);
+  _refreshMeHeader();
+};
+window.saveProfile=async()=>{
+  const err=$("#pf-err"); err.textContent='';
+  const body={display_name:($("#pf-name").value||'').trim()};
+  const np=$("#pf-new")?$("#pf-new").value:'', np2=$("#pf-new2")?$("#pf-new2").value:'';
+  if(np||np2){
+    if(np!==np2){ err.textContent='Hai ô mật khẩu mới chưa khớp'; return; }
+    if(np.length<6){ err.textContent='Mật khẩu mới tối thiểu 6 ký tự'; return; }
+    body.new_password=np;
+    if($("#pf-old")) body.old_password=$("#pf-old").value;
+  }
+  const r=await fetch('/api/me',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){ err.textContent=d.detail||'Lưu thất bại'; return; }
+  if(window.ME){ window.ME.display_name=d.display_name; window.ME.has_password=d.has_password; window.USERMAP[window.ME.user]=d.display_name; }
+  _refreshMeHeader(); closeModal();
+};
+
+/* ===== QUẢN TRỊ THÀNH VIÊN (admin) ===== */
+window.USERS=[];
+async function loadUsers(){
+  if(!_isAdminUI()) return;
+  try{ USERS=await api('/api/users'); }catch(e){ USERS=[]; }
+  USERS.forEach(u=>{ window.USERMAP[u.user]=u.display_name||u.user; });
+  const pend=USERS.filter(u=>u.status==='pending').length;
+  const e=document.getElementById('n-users'); if(e){ e.textContent=pend||''; e.classList.toggle('hot',pend>0); }
+  if(view==='users') renderUsers();
+}
+const _ust={active:['active','Hoạt động'],pending:['pending','Chờ duyệt'],disabled:['disabled','Bị khoá']};
+function _uav(u){return `<span class="uav">${avInner(u.display_name||u.user,u.avatar)}</span>`;}
+function renderUsers(){
+  if(!_isAdminUI()){ $("#app").innerHTML='<div class="hint" style="padding:26px;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)">Chỉ quản trị viên mới xem được trang này.</div>'; return; }
+  const pend=USERS.filter(u=>u.status==='pending');
+  const members=USERS.filter(u=>u.status!=='pending');
+  const pendHtml=pend.length?pend.map(u=>`
+    <div class="pcard">
+      ${_uav(u)}
+      <div style="flex:1">
+        <div class="nm">${esc(u.display_name||u.user)} <span style="font-family:ui-monospace,monospace;color:var(--mut);font-size:12px">@${esc(u.user)}</span></div>
+        <div class="hint">Đăng ký: ${u.created?new Date(u.created*1000).toLocaleString('vi-VN'):'—'}</div>
+      </div>
+      <button class="mini primary" onclick="approveUser('${esc(u.user)}')">✅ Duyệt</button>
+      <button class="mini" onclick="rejectUser('${esc(u.user)}')">✕ Từ chối</button>
+    </div>`).join(''):'<div class="hint">Không có đăng ký nào đang chờ.</div>';
+  const rows=members.map(u=>{
+    const st=_ust[u.status]||_ust.active;
+    const isMe=window.ME&&u.user===window.ME.user;
+    return `<div class="urow">
+      ${_uav(u)}
+      <div style="flex:1;min-width:0">
+        <div class="nm">${esc(u.display_name||u.user)} ${isMe?'<span class="authchip">bạn</span>':''}</div>
+        <div class="hint" style="font-family:ui-monospace,monospace">@${esc(u.user)}</div>
+      </div>
+      <select onchange="setUserRole('${esc(u.user)}',this.value)" ${isMe?'disabled title="không tự đổi quyền của mình"':''} style="height:32px">
+        <option value="member" ${u.role==='member'?'selected':''}>Thành viên</option>
+        <option value="admin" ${u.role==='admin'?'selected':''}>Quản trị</option>
+      </select>
+      <span class="ust ${st[0]}">${st[1]}</span>
+      <button class="mini" onclick="toggleUser('${esc(u.user)}','${u.status==='disabled'?'active':'disabled'}')">${u.status==='disabled'?'🔓 Mở khoá':'🔒 Khoá'}</button>
+      <button class="mini" onclick="resetUserPw('${esc(u.user)}')">🔑 Reset MK</button>
+      ${isMe?'':`<button class="mini" onclick="deleteUser('${esc(u.user)}')" title="Xoá tài khoản">🗑</button>`}
+    </div>`;}).join('');
+  $("#app").innerHTML=`
+    <h2>⏳ Chờ duyệt ${pend.length?`<span class="hint" style="font-weight:400">· ${pend.length}</span>`:''}</h2>
+    <div style="margin-bottom:22px">${pendHtml}</div>
+    <h2>Thành viên <span class="hint" style="font-weight:400">· ${members.length}</span></h2>
+    <div>${rows||'<div class="hint">Chưa có thành viên.</div>'}</div>`;
+}
+window.approveUser=async(u)=>{ await _patchUser(u,{status:'active'}); };
+window.toggleUser=async(u,st)=>{ await _patchUser(u,{status:st}); };
+window.setUserRole=async(u,role)=>{ await _patchUser(u,{role}); };
+async function _patchUser(u,body){
+  const r=await fetch('/api/users/'+encodeURIComponent(u),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ const d=await r.json().catch(()=>({})); alert(d.detail||'Thao tác thất bại'); }
+  await loadUsers();
+}
+window.rejectUser=async(u)=>{
+  if(!confirm('Từ chối và xoá đăng ký "'+u+'"?')) return;
+  await _delUser(u);
+};
+window.deleteUser=async(u)=>{
+  if(!confirm('Xoá tài khoản "'+u+'"? Không thể hoàn tác.')) return;
+  await _delUser(u);
+};
+async function _delUser(u){
+  const r=await fetch('/api/users/'+encodeURIComponent(u),{method:'DELETE'});
+  if(!r.ok){ const d=await r.json().catch(()=>({})); alert(d.detail||'Xoá thất bại'); }
+  await loadUsers();
+}
+window.resetUserPw=async(u)=>{
+  const r=await fetch('/api/users/'+encodeURIComponent(u),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({reset_password:true})});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){ alert(d.detail||'Reset thất bại'); return; }
+  openModal(`<h3>🔑 Mật khẩu tạm cho @${esc(u)}</h3>
+    <div class="hint" style="margin-bottom:6px">Gửi cho thành viên. Mật khẩu chỉ hiện <b>một lần</b> — thành viên nên đổi sau khi đăng nhập.</div>
+    <div class="tmpbox"><span id="tmp-pw">${esc(d.temp_password||'')}</span>
+      <button class="mini" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(d.temp_password||'')}');this.textContent='✓ Đã copy'">⧉ Copy</button></div>
+    <div class="row" style="margin-top:14px"><button class="primary" onclick="closeModal()">Xong</button></div>`);
+};
+
 function openModal(h){$("#sheetbox").innerHTML=h;$("#modal").classList.add("on");}
 function closeModal(){$("#modal").classList.remove("on");$("#sheetbox").classList.remove("wide","detail");} window.closeModal=closeModal;
 // ===== Agent nổi =====
@@ -1724,7 +1897,7 @@ $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();}
 window.addEventListener("hashchange",()=>{ const p=location.hash.slice(1).split("/"); if(VIEWMETA[p[0]]&&(p[0]!==view||(p[0]==="projects"&&(curProj?curProj.id:"")!==(p[1]||"")))){ view=p[0]; curProj=null; if(p[0]==="projects"&&p[1]){ openProj(p[1]).catch(()=>render()); } else render(); } });
 (async()=>{
   try{ window.CFG=await api('/api/config'); window.PORTAL=(window.CFG.mode==='portal'); }catch(e){}
-  applyPortalUI();
+  await applyPortalUI();
   load(); pollStatusLight();
 })();
 setInterval(async()=>{ if(window.PORTAL) return; if(view==="staff"){ loadStaff(); } if(view==="flowaccts"){ loadFlow().then(renderFlowAccounts); } if(view==="scripts"){ loadScripts(); } },4000);
