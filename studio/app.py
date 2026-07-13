@@ -2020,5 +2020,6 @@ app.mount("/", StaticFiles(directory=os.path.join(SD, "web"), html=True), name="
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", "8090"))
-    print(f"Xuong KOL Studio -> http://127.0.0.1:{port}  (data: {DATA_HOME})", flush=True)
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+    host = os.environ.get("HOST", "127.0.0.1")  # container: HOST=0.0.0.0 de cong anh xa ra ngoai
+    print(f"Xuong KOL Studio -> http://{host}:{port}  (data: {DATA_HOME})", flush=True)
+    uvicorn.run(app, host=host, port=port, log_level="warning")

@@ -11,7 +11,8 @@ COPY studio/ /app/studio/
 ENV STUDIO_MODE=portal \
     STUDIO_ORIGIN=vps \
     DATA_HOME=/data \
-    PORT=8091
+    PORT=8091 \
+    HOST=0.0.0.0
 
 VOLUME /data
 EXPOSE 8091
