@@ -426,6 +426,9 @@ def api_users_patch(user: str, body: dict):
     _require_admin()
     if not auth.find_user(user):
         raise HTTPException(404, "no user")
+    me = _cur() or {}
+    if user == me.get("user") and (body.get("status") in ("disabled", "pending") or body.get("role") == "member"):
+        raise HTTPException(400, "Không thể tự khoá / tự hạ quyền chính mình")
     out = {"ok": True, "user": user}
     if "status" in body:
         st = body.get("status")
