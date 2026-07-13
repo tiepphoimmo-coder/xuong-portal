@@ -1,29 +1,18 @@
-# Xuong KOL - Van phong · stack cho Arcane
-# Cach dung: xem HUONG-DAN-ARCANE.md cung thu muc
+# Xuong KOL - Van phong · compose cho Arcane
+# Arcane chi PULL image (GitHub Actions da build san). Dan noi dung nay vao compose.yaml,
+# va dat SYNC_TOKEN trong file .env cua project.
 services:
   xuong-portal:
-    build: .
+    image: ghcr.io/tiepphoimmo-coder/xuong-portal:latest
     container_name: xuong-portal
     restart: unless-stopped
-    environment:
-      STUDIO_MODE: portal
-      STUDIO_ORIGIN: vps
-      DATA_HOME: /data
-      PORT: "8091"
-      # Token cho sync agent (PC goi len). DAT GIA TRI MANH truoc khi deploy!
-      SYNC_TOKEN: ${SYNC_TOKEN:?dat SYNC_TOKEN trong file .env cua stack}
+    env_file:
+      - .env
     volumes:
       - xuong_data:/data
     ports:
-      # Chi publish noi bo; reverse proxy (NPM/Traefik/Caddy) tro vao day
-      - "127.0.0.1:8091:8091"
-    # Neu VPS dung Traefik, bo ports va mo labels duoi (sua domain):
-    # labels:
-    #   - traefik.enable=true
-    #   - traefik.http.routers.xuong.rule=Host(`xuong.tiepphoi.com`)
-    #   - traefik.http.routers.xuong.entrypoints=websecure
-    #   - traefik.http.routers.xuong.tls.certresolver=letsencrypt
-    #   - traefik.http.services.xuong.loadbalancer.server.port=8091
+      # doi domain sau; tam thoi expose de test qua http://IP-VPS:8091
+      - "8091:8091"
 
 volumes:
   xuong_data:
