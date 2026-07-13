@@ -1,0 +1,1733 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Xưởng KOL · TiếpPhối Space</title>
+<style>
+  :root{
+    --brand:#C15F3C; --brand-600:#A84E30; --brand-bg:#FBEEE8;
+    --side:#221E18; --side-2:#2E2921; --side-tx:#B8B1A4; --side-on:#F5EFE6;
+    --bg:#F6F4EF; --card:#FFFFFF; --bd:#E8E4DB; --bd2:#D5D0C4;
+    --tx:#26231E; --mut:#8B867B;
+    --acc:#185FA5; --accbg:#E8F1FA;
+    --ok:#3B6D11; --okbg:#EAF3DE; --run:#0F6E56; --runbg:#E1F5EE;
+    --warn:#854F0B; --warnbg:#FAEEDA; --err:#A32D2D; --errbg:#FCEBEB;
+    --r:12px; --sh:0 1px 2px rgba(35,30,22,.05); --sh2:0 6px 20px rgba(35,30,22,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx);font-size:14.5px;display:flex}
+
+  /* ===== SIDEBAR ===== */
+  aside{width:222px;flex:0 0 222px;background:var(--side);color:var(--side-tx);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .logo{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .logo .mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#D98157);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:15px;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 2px 8px rgba(193,95,60,.45)}
+  .logo .lt b{display:block;color:var(--side-on);font-size:15px;letter-spacing:.2px}
+  .logo .lt span{font-size:11px;color:var(--side-tx);letter-spacing:.6px;text-transform:uppercase}
+  /* ===== CHE DO VAN PHONG (portal) ===== */
+  .vpbadge{display:inline-block;margin-top:3px;font-size:9px;letter-spacing:.8px;color:var(--brand);border:1px solid var(--brand);border-radius:5px;padding:1px 6px;text-transform:uppercase;font-weight:700}
+  .authchip{display:inline-block;font-size:9.5px;padding:1px 6px;border-radius:5px;background:var(--brand-bg);color:var(--brand);margin-left:5px;vertical-align:middle}
+  body.portal #fab,body.portal #apanel,body.portal .sfoot,
+  body.portal nav a[data-v="staff"],body.portal nav a[data-v="flowaccts"],
+  body.portal nav a[data-v="projects"],
+  body.portal .prodbtn,body.portal .napbtn{display:none!important}
+  .navgrp{padding:14px 10px 2px}
+  .navgrp .gt{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:#736D60;padding:0 10px;margin-bottom:6px}
+  nav a{display:flex;align-items:center;gap:10px;color:var(--side-tx);text-decoration:none;font-size:13.5px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px;border-left:3px solid transparent}
+  nav a .ic{width:18px;text-align:center;font-size:14px;opacity:.9}
+  nav a:hover{background:var(--side-2);color:var(--side-on)}
+  nav a.on{background:var(--side-2);color:var(--side-on);border-left-color:var(--brand);font-weight:600}
+  nav a .cnt{margin-left:auto;font-size:11px;background:rgba(255,255,255,.09);padding:1px 7px;border-radius:99px}
+  nav a .cnt.hot{background:var(--brand);color:#fff}
+  .sfoot{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;display:flex;align-items:center;gap:8px}
+  .sfoot .adot2{width:8px;height:8px;border-radius:50%;background:#777;flex:0 0 auto}
+  .sfoot .adot2.on{background:#2FBF71;box-shadow:0 0 6px rgba(47,191,113,.8)}
+
+  /* ===== MAIN ===== */
+  #wrap{flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh}
+  #topbar{padding:0;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+  #topbar .tbinner{display:flex;align-items:center;gap:14px;max-width:1320px;width:100%;margin:0 auto;padding:14px 30px}
+  #topbar h1{font-size:16.5px;margin:0;font-weight:700;letter-spacing:.2px}
+  #topbar .tdesc{font-size:12.5px;color:var(--mut)}
+  #topbar .tact{margin-left:auto;display:flex;gap:8px;align-items:center}
+  main{max-width:1320px;width:100%;margin:0 auto;padding:26px 30px 60px}
+  #wrap.full main,#wrap.full #topbar .tbinner{max-width:none}
+
+  h2{font-size:13px;color:var(--mut);font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:12px;text-transform:uppercase;letter-spacing:.8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:26px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:13px;cursor:pointer;transition:box-shadow .12s,border-color .12s,transform .12s;position:relative;box-shadow:var(--sh)}
+  .card:hover{border-color:var(--bd2);box-shadow:var(--sh2);transform:translateY(-1px)}
+  .card.sel{border:2px solid var(--brand);padding:12px;box-shadow:0 0 0 3px var(--brand-bg)}
+  .card.add{border:1.5px dashed var(--bd2);display:flex;align-items:center;justify-content:center;gap:6px;color:var(--mut);min-height:68px;box-shadow:none;background:transparent}
+  .card.add:hover{color:var(--brand);border-color:var(--brand);transform:none}
+  .row{display:flex;align-items:center;gap:10px}
+  .card .row>div:last-child{min-width:0;flex:1;padding-right:24px}
+  .av{width:44px;height:44px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:600;overflow:hidden;flex:0 0 auto}
+  .av img,.sq img{width:100%;height:100%;object-fit:cover}
+  .sq{width:44px;height:44px;border-radius:10px;background:var(--accbg);color:var(--acc);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+  .nm{font-weight:600;font-size:14px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden} .sub{font-size:12px;color:var(--mut);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .code{font-family:ui-monospace,monospace;font-size:11px;background:var(--bg);color:var(--acc);padding:1px 6px;border-radius:5px;border:1px solid var(--bd)}
+  .code.copy{cursor:pointer}
+  .code.copy:hover{border-color:var(--acc);background:var(--accbg)}
+  .code.copy .ci{opacity:.55;margin-left:3px;font-family:system-ui}
+  .code.copied{background:var(--okbg);color:var(--ok);border-color:var(--ok)}
+  .niche{font-size:11px;background:var(--warnbg);color:var(--warn);padding:1px 7px;border-radius:5px;font-weight:500}
+  .nfbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .nf{font-size:13px;padding:5px 13px;border-radius:99px;background:var(--card);border:1px solid var(--bd2);color:var(--mut);cursor:pointer;user-select:none}
+  .nf:hover{border-color:var(--brand);color:var(--brand)}
+  .nf.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .nf b{font-weight:600;opacity:.75;margin-left:2px}
+
+  label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px;font-weight:500}
+  select,input,textarea{width:100%;height:37px;border:1px solid var(--bd2);border-radius:9px;padding:0 11px;font-size:14px;background:var(--card);color:var(--tx);font-family:inherit}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+  textarea{height:auto;padding:9px 11px;min-height:70px;line-height:1.5}
+  .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  button{height:37px;border:1px solid var(--bd2);background:var(--card);color:var(--tx);border-radius:9px;padding:0 15px;font-size:13px;cursor:pointer;font-weight:500;font-family:inherit}
+  button:hover{background:var(--bg);border-color:var(--bd2)}
+  button.primary{background:var(--brand);color:#fff;border:none;height:39px;padding:0 18px;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(193,95,60,.35)}
+  button.primary:hover{background:var(--brand-600)}
+  button.mini{height:27px;padding:0 10px;font-size:12px}
+
+  .brief{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 15px;margin-bottom:9px;box-shadow:var(--sh)}
+  .badge{font-size:12px;padding:2px 10px;border-radius:99px;min-width:96px;text-align:center;white-space:nowrap;font-weight:500}
+  .modal{position:fixed;inset:0;background:rgba(30,25,18,.45);display:none;align-items:center;justify-content:center;z-index:9;backdrop-filter:blur(2px)}
+  .modal.on{display:flex}
+  .sheet{background:var(--card);border-radius:16px;padding:22px;width:490px;max-width:92vw;max-height:90vh;overflow:auto;box-shadow:0 18px 60px rgba(30,25,18,.35)}
+  .sheet h3{margin:0 0 14px;font-size:16px}
+  .fld{margin-bottom:12px}
+  .hint{font-size:12px;color:var(--mut)}
+  video{width:100%;border-radius:10px;margin-top:8px;background:#000}
+  .tools{position:absolute;top:9px;right:11px;display:flex;gap:9px}
+  .tools span{cursor:pointer;color:var(--mut);font-size:15px}
+  .tools span:hover{color:var(--brand)}
+  .cmd{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:13px;margin-top:8px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .instr{font-size:13px;color:var(--mut);margin-top:6px;white-space:pre-wrap;line-height:1.5}
+  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .thumb{position:relative;width:70px;height:70px;border-radius:8px;overflow:hidden;border:1px solid var(--bd2);background:var(--bg)}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .thumb .thx{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:12px;line-height:18px;text-align:center;cursor:pointer}
+  .thumb .cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:9px;text-align:center;padding:1px 0}
+  .thumb.rm{opacity:.4} .thumb.rm img{filter:grayscale(1)} .thumb.rm .thx{background:var(--brand)}
+  .wbtn{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:12px;color:var(--acc);cursor:pointer}
+  .wbtn:hover{text-decoration:underline}
+  .ofit{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--bd);border-radius:10px;margin-bottom:8px}
+  .ofit .oimg{width:52px;height:52px;border-radius:8px;object-fit:cover;background:var(--bg);flex:0 0 auto}
+  .ofit .oimg.ph{display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:20px}
+  .otools{margin-left:auto;display:flex;gap:10px}.otools span{cursor:pointer;color:var(--mut)}
+  .beat{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--bd)}
+  .beat:first-child{border-top:none}
+  .beat .role{flex:0 0 92px;font-size:12px;font-weight:600;color:var(--acc)}
+  .beat .role small{display:block;color:var(--mut);font-weight:400}
+  .beat .btxt{font-size:13px;line-height:1.5}
+  .beat .btxt .vis{color:var(--mut);font-size:12px;margin-top:2px}
+  .ph{color:var(--brand);font-weight:500}
+  .tcard .sub2{font-size:12px;color:var(--mut);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .phlist{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--mut);margin:8px 0;line-height:1.7}
+  .phlist code{background:var(--card);color:var(--brand);padding:1px 5px;border-radius:4px;font-size:11px}
+  .back{color:var(--acc);cursor:pointer;font-size:13px;display:inline-block;margin-bottom:12px}
+  .back:hover{text-decoration:underline}
+
+  /* ===== SECTIONS / PROJECT ===== */
+  .psec{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:17px 19px;margin-bottom:14px;box-shadow:var(--sh)}
+  .psec h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:9px}
+  .psec h3 .step{width:23px;height:23px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 auto}
+  .scriptbox{white-space:pre-wrap;font-size:13px;line-height:1.6;color:var(--tx)}
+  .scene{display:grid;grid-template-columns:200px 1fr;gap:16px;padding:15px 0;border-top:1px solid var(--bd)}
+  .scene:first-of-type{border-top:none}
+  .scene .sb{width:200px;border-radius:9px;overflow:hidden;background:var(--bg);border:1px solid var(--bd)}
+  .scene .sb img,.scene .sb video{width:100%;display:block}
+  .scene .sb.empty{height:112px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px}
+  .scene .sinfo .slabel{font-size:11.5px;color:var(--mut);margin:9px 0 3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .scene .voice{font-size:14px;line-height:1.55}
+  .scene .snum{font-weight:700;font-size:14px;color:var(--brand)}
+  .pstat{font-size:11px;padding:2px 9px;border-radius:99px;font-weight:600}
+  .pdone{background:var(--okbg);color:var(--ok)} .pprod{background:var(--runbg);color:var(--run)} .pplan{background:var(--warnbg);color:var(--warn)}
+  .finalvid video{width:100%;border-radius:10px}
+  /* dU AN — layout moi gon */
+  .pjhead{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+  .pjtitle{font-size:18px;font-weight:700;line-height:1.3;margin:2px 0 4px}
+  .pjmeta{font-size:12.5px;color:var(--mut)}
+  .pjgrid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+  #wrap.full .pjgrid{grid-template-columns:1fr minmax(360px,440px)}
+  .pjside{position:sticky;top:80px}
+  .scenegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+  .scard{border:1px solid var(--bd);border-radius:11px;padding:10px;background:var(--card);box-shadow:var(--sh)}
+  .scardtop{display:flex;gap:7px;margin-bottom:8px}
+  .scsb,.scvid{flex:1;min-width:0;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--bd);height:150px}
+  .scsb{cursor:zoom-in}
+  .scsb img{width:100%;height:100%;object-fit:cover;display:block}
+  .scsb.empty{cursor:default;color:var(--mut);font-size:11px;text-align:center;padding:6px;display:flex;align-items:center;justify-content:center}
+  .scvid{background:#000;object-fit:cover}
+  .scvid.ph{background:var(--bg);color:var(--mut);font-size:11.5px;display:flex;align-items:center;justify-content:center;border-style:dashed}
+  .scnum{font-weight:700;font-size:13px;color:var(--brand);margin:2px 0 4px}
+  .scnum .scttl{color:var(--tx);font-weight:600}
+  .scvoice{font-size:12.5px;line-height:1.5;color:var(--tx);margin-bottom:8px;max-height:110px;overflow:auto}
+  .promptdet{margin-bottom:8px;font-size:12px}
+  .promptdet summary{cursor:pointer;color:var(--mut);font-weight:600;padding:4px 0;user-select:none}
+  .promptdet summary:hover{color:var(--brand)}
+  .promptdet .pl{font-size:11px;color:var(--mut);font-weight:600;margin:6px 0 3px;display:flex;align-items:center;gap:6px}
+  .promptdet .pv{white-space:pre-wrap;font-size:11px;line-height:1.45;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:7px 9px;max-height:150px;overflow:auto;margin:0;font-family:inherit;color:var(--tx)}
+  .scact{display:flex;align-items:center;gap:10px;border-top:1px solid var(--bd);padding-top:8px}
+  @media (max-width:820px){ .pjgrid{grid-template-columns:1fr} .pjside{position:static} }
+  /* pipeline stepper */
+  .pipe{display:flex;flex-wrap:wrap;gap:0;margin:2px 0 18px;align-items:center}
+  .pipe .pst{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:6px 13px;background:var(--card);border:1px solid var(--bd);color:var(--mut)}
+  .pipe .pst:first-child{border-radius:99px 0 0 99px}
+  .pipe .pst:last-child{border-radius:0 99px 99px 0}
+  .pipe .pst+.pst{border-left:none}
+  .pipe .pst .pd{width:17px;height:17px;border-radius:50%;background:var(--bg);border:1px solid var(--bd2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex:0 0 auto}
+  .pipe .pst.ok{color:var(--ok);font-weight:600}
+  .pipe .pst.ok .pd{background:var(--ok);border-color:var(--ok);color:#fff}
+  .pipe .pst.part{color:var(--warn);font-weight:600}
+  .pipe .pst.part .pd{background:var(--warnbg);border-color:var(--warn);color:var(--warn)}
+
+  /* ===== DASHBOARD ===== */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:26px}
+  .stat{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .12s,transform .12s}
+  .stat:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
+  .stat .sv{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .stat .sl{font-size:12px;color:var(--mut);margin-top:2px}
+  .stat .sic{float:right;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .flowmap{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px 19px;margin-bottom:26px;box-shadow:var(--sh)}
+  .flowmap .fsteps{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+  .flowmap .fs{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:8px 13px;display:flex;align-items:center;gap:7px}
+  .flowmap .fs b{font-size:12px}
+  .flowmap .fs .fn{width:19px;height:19px;border-radius:50%;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 auto}
+  .flowmap .fa{color:var(--bd2);font-size:15px}
+  /* nhan vien */
+  .emps{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:6px}
+  .emp{display:flex;gap:12px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:13px;box-shadow:var(--sh)}
+  .emp.work{border-color:var(--run);box-shadow:0 0 0 2px var(--runbg)}
+  .empav{width:46px;height:46px;border-radius:11px;background:var(--brand-bg);display:flex;align-items:center;justify-content:center;font-size:24px;flex:0 0 auto}
+  .empmain{min-width:0;flex:1}
+  .empname{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .emprole{font-size:12.5px;color:var(--mut);margin:3px 0 8px;line-height:1.45}
+  .empfoot{display:flex;align-items:center;gap:12px}
+  .stx{font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+  .stx.ok{color:var(--ok);background:var(--okbg)} .stx.run{color:var(--run);background:var(--runbg)} .stx.off{color:var(--mut);background:var(--bg)}
+  .brainchip{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--accbg);color:var(--acc);white-space:nowrap}
+  .acctchip{font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--brand-bg);color:var(--brand);white-space:nowrap}
+  .acctrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .acctrow .al{font-size:11.5px;color:var(--mut);font-weight:600;white-space:nowrap}
+  .acctrow select{height:30px;font-size:12.5px;padding:0 8px}
+  /* kanban kich ban */
+  .kb{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:10px}
+  .kbcol{min-width:240px;flex:0 0 240px;background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;min-height:120px}
+  .kbcol h4{margin:0 0 10px;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);display:flex;align-items:center;gap:6px}
+  .kbcol .cnt2{background:var(--card);border:1px solid var(--bd);border-radius:99px;padding:0 7px;font-size:11px}
+  .kbrej{background:var(--errbg);border-color:#EAC8C8}
+  .kbcard{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px;cursor:grab;box-shadow:var(--sh)}
+  .kbcard:hover{border-color:var(--bd2);box-shadow:var(--sh2)}
+  .kbcard:active{cursor:grabbing}
+  .kbtags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+  .tagchip{font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);color:var(--mut);border:1px solid var(--bd);white-space:nowrap}
+  .tagchip.tc{background:var(--brand-bg);color:var(--brand);border-color:transparent}
+  .tagchip.st{background:var(--accbg);color:var(--acc);border-color:transparent;font-weight:700}
+  .tagchip.fmt{background:var(--runbg);color:var(--run);border-color:transparent;font-weight:700}
+  .tagchip.chan{background:var(--okbg);color:var(--ok);border-color:transparent;font-weight:700}
+  button.mini.nsmode{background:var(--card);color:var(--mut)} button.mini.nsmode.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .kbtitle{font-weight:600;font-size:13px;line-height:1.35;margin-bottom:4px}
+  .kbhook{font-size:12px;color:var(--tx);line-height:1.4;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .kbmeta{font-size:11px;color:var(--mut);margin-bottom:8px}
+  .kbfoot{display:flex;align-items:center;gap:6px}
+  .kbbtn{flex:1;min-width:0;height:30px;padding:0 10px;font-size:12.5px;font-weight:600;border:1px solid var(--bd2);background:var(--card);color:var(--tx);border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kbbtn:hover{background:var(--bg)}
+  .kbbtn.primary{height:30px;background:var(--brand);color:#fff;border-color:var(--brand)}
+  .kbbtn.primary:hover{background:var(--brand-600)}
+  .kbico{flex:0 0 auto;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;border:1px solid var(--bd2);background:var(--card);color:var(--mut);border-radius:8px;cursor:pointer}
+  .kbico:hover{background:var(--bg);color:var(--tx)}
+  .kbico.del:hover{color:var(--err);border-color:var(--err);background:var(--errbg)}
+  .kbempty{font-size:12px;color:var(--mut);text-align:center;padding:14px 0;border:1.5px dashed var(--bd2);border-radius:8px}
+  /* thanh loc kich ban: dropdown gom nhom (thay chip cloud) */
+  .sfbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
+  .fsel{height:30px;max-width:210px;padding:0 26px 0 10px;border:1px solid var(--bd);background:var(--card) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239a9a9a' stroke-width='1.5'/></svg>") no-repeat right 9px center;color:var(--tx);border-radius:8px;font-size:12.5px;cursor:pointer;-webkit-appearance:none;appearance:none;text-overflow:ellipsis}
+  .fsel:hover{border-color:var(--bd2)}
+  .fsel.act{border-color:var(--brand);color:var(--brand);font-weight:600;background-color:var(--brand-bg)}
+  .nf.clr{cursor:pointer;color:var(--err);border-color:var(--err);background:var(--errbg)}
+  /* the thu vien bam duoc + bang chi tiet */
+  .card.clk{cursor:pointer}
+  .card.clk:hover{border-color:var(--bd2);box-shadow:var(--sh2)}
+  .sheet.detail{width:880px;max-width:94vw}
+  .dhead{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--bd)}
+  .dgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:22px}
+  .dcol{min-width:0}
+  .ddetail{margin:0 0 4px}
+  .drow{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--bd);font-size:13px}
+  .drow:first-child{border-top:0}
+  .drow .dlbl{flex:0 0 96px;color:var(--mut)}
+  .drow .dval{flex:1;color:var(--tx);white-space:pre-wrap;word-break:break-word}
+  .dreflabel{font-size:12px;color:var(--mut);margin:12px 0 6px}
+  .dpanel{margin-bottom:16px}
+  .dpt{font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px}
+  .dptext{font-size:13.5px;line-height:1.62;color:var(--tx);white-space:pre-wrap;word-break:break-word;max-height:56vh;overflow:auto;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:13px 15px}
+  .dcode{display:block;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;font-size:11.5px;color:var(--mut);white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,monospace;max-height:40vh;overflow:auto}
+  .dth{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--bd);margin:0 6px 6px 0}
+  @media(max-width:720px){ .dgrid{grid-template-columns:1fr;gap:14px} .sheet.detail{width:96vw} }
+  /* keo-tha kieu Trello: card dang keo mo + nghieng, cot dich sang len */
+  .kbcard.dragging{opacity:.4;transform:rotate(2.5deg) scale(.98)}
+  .kbcol.dragover{border-color:var(--brand);background:var(--brand-bg);box-shadow:inset 0 0 0 2px var(--brand)}
+  .kbcol.dragover .kbempty{border-color:var(--brand);color:var(--brand)}
+  /* modal kich ban kieu the Trello */
+  .sheet.wide{width:740px;max-width:94vw}
+  .scrhead{font-size:18px;font-weight:700;line-height:1.35;margin:0 0 8px;padding-right:28px}
+  .scrlabels{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .scrlabels .tagchip{font-size:12px;padding:4px 12px;border-radius:6px}
+  .scrsec{margin-bottom:16px}
+  .scrsec .sl{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .scrsec .sl .cnt3{font-weight:500;text-transform:none;letter-spacing:0;margin-left:auto;font-size:11.5px;color:var(--mut)}
+  .scrsec .sl .cnt3.ok{color:var(--ok)} .scrsec .sl .cnt3.warn{color:var(--warn)}
+  .scrhookbox{background:var(--brand-bg);border-left:3px solid var(--brand);border-radius:8px;padding:10px 14px;font-size:14.5px;line-height:1.55;font-weight:500}
+  .scrlydo{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--mut);line-height:1.55}
+  textarea.scrauto{overflow:hidden;resize:none;min-height:0;height:auto;font-size:14.5px;line-height:1.6;padding:11px 13px;background:var(--bg)}
+  textarea.scrauto:focus{background:var(--card)}
+  .scractions{display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)}
+  .engtag{font-size:10px;font-weight:600;padding:0 6px;border-radius:99px;background:var(--accbg);color:var(--acc);margin-left:6px}
+
+  /* ===== AGENT ===== */
+  #fab{position:fixed;right:22px;bottom:22px;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.28);z-index:20}
+  #fab:hover{background:var(--brand-600)}
+  #fab .dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#999;border:2px solid #fff}
+  #fab .dot.on{background:#2FBF71}
+  #apanel{position:fixed;right:22px;bottom:84px;width:380px;max-width:92vw;height:520px;max-height:72vh;background:var(--card);border:1px solid var(--bd2);border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.25);display:none;flex-direction:column;z-index:20;overflow:hidden}
+  #apanel.on{display:flex}
+  #apanel .ahead{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;background:var(--side);color:var(--side-on)}
+  #apanel .ahead .st{font-size:11px;font-weight:400;color:var(--side-tx)}
+  #afeed{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:88%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .msg.me{align-self:flex-end;background:var(--brand-bg);color:var(--tx);border-bottom-right-radius:4px}
+  .msg.ai{align-self:flex-start;background:var(--bg);border:1px solid var(--bd);border-bottom-left-radius:4px}
+  .msg.ai.run{color:var(--mut);font-style:italic}
+  .msg .mt{font-size:10px;color:var(--mut);margin-top:4px;font-style:normal}
+  #abar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd)}
+  #abar textarea{flex:1;min-height:38px;max-height:110px;height:38px;resize:none;padding:8px 11px}
+  #abar button{flex:0 0 auto}
+
+  /* ===== THU VIEN MEDIA ===== */
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .mcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);display:flex;flex-direction:column;transition:box-shadow .12s,border-color .12s,transform .12s;cursor:pointer}
+  .mcard:hover{border-color:var(--bd2);box-shadow:var(--sh2);transform:translateY(-1px)}
+  .mthumb{position:relative;width:100%;aspect-ratio:16/9;background:#141414;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .mthumb iframe{width:100%;height:100%;border:0;display:block}
+  .mplay{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.4);z-index:2}
+  .mthumb .mnodrive{color:#888;font-size:12px;text-align:center;padding:10px}
+  .mbody{padding:11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .mtt{font-weight:600;font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mchips{display:flex;flex-wrap:wrap;gap:5px}
+  .mchip{font-size:11px;background:var(--bg);border:1px solid var(--bd);color:var(--mut);padding:1px 7px;border-radius:99px}
+  .mbadge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;align-self:flex-start}
+  .mbadge.chua_dang{background:#ECECEC;color:#666}
+  .mbadge.da_dang{background:var(--okbg);color:var(--ok)}
+  .mbadge.len_lich{background:var(--warnbg);color:var(--warn)}
+  .mmetrics{display:flex;gap:12px;font-size:12.5px;color:var(--tx);margin-top:auto;padding-top:4px;border-top:1px dashed var(--bd)}
+  .mmetrics span{display:flex;align-items:center;gap:3px}
+  .mplayer{width:100%;aspect-ratio:9/16;max-height:62vh;background:#111;border-radius:10px;overflow:hidden}
+  .mplayer iframe{width:100%;height:100%;border:0}
+  .mnum3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media (max-width:860px){
+    aside{width:64px;flex-basis:64px}
+    .logo .lt,.navgrp .gt,nav a .lb,nav a .cnt,.sfoot .sl2{display:none}
+    nav a{justify-content:center;padding:10px 0;border-left-width:0}
+    main{padding:20px 16px 60px}
+    #topbar .tbinner{padding:12px 16px}
+  }
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo">
+    <div class="mark">XK</div>
+    <div class="lt"><b>Xưởng KOL</b><span>TiếpPhối Space</span></div>
+  </div>
+  <div class="navgrp"><div class="gt">Điều hành</div>
+    <nav id="nav1">
+      <a data-v="dash" class="on"><span class="ic">📊</span><span class="lb">Tổng quan</span></a>
+      <a data-v="staff"><span class="ic">👔</span><span class="lb">Nhân viên</span><span class="cnt" id="n-staff"></span></a>
+      <a data-v="flowaccts"><span class="ic">🎬</span><span class="lb">Tài khoản Flow</span><span class="cnt" id="n-facc"></span></a>
+    </nav>
+  </div>
+  <div class="navgrp"><div class="gt">Sản xuất</div>
+    <nav id="nav2">
+      <a data-v="scripts"><span class="ic">📋</span><span class="lb">Kịch bản duyệt</span><span class="cnt" id="n-scripts"></span></a>
+      <a data-v="projects"><span class="ic">🎬</span><span class="lb">Dự án video</span><span class="cnt" id="n-projs"></span></a>
+      <a data-v="media"><span class="ic">🎞️</span><span class="lb">Thư viện Media</span><span class="cnt" id="n-media"></span></a>
+    </nav>
+  </div>
+  <div class="navgrp"><div class="gt">Thư viện</div>
+    <nav id="nav3">
+      <a data-v="channels"><span class="ic">📡</span><span class="lb">Kênh</span><span class="cnt" id="n-chans"></span></a>
+      <a data-v="kols"><span class="ic">👤</span><span class="lb">KOL</span><span class="cnt" id="n-kols"></span></a>
+      <a data-v="products"><span class="ic">📦</span><span class="lb">Sản phẩm</span><span class="cnt" id="n-prods"></span></a>
+    </nav>
+  </div>
+  <div class="sfoot"><span class="adot2" id="adot2"></span><span class="sl2" id="astside">Agent: đang kiểm tra…</span></div>
+</aside>
+
+<div id="wrap">
+  <div id="topbar">
+    <div class="tbinner">
+      <div><h1 id="ttitle">Tổng quan</h1><div class="tdesc" id="tdesc"></div></div>
+      <div class="tact">
+        <button class="mini" onclick="load()" title="Tải lại dữ liệu">↻ Làm mới</button>
+        <button class="primary prodbtn" style="height:33px;padding:0 14px;font-size:13px" onclick="go('scripts');openScriptOrder()">＋ Đặt hàng kịch bản</button>
+      </div>
+    </div>
+  </div>
+  <main id="app"></main>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheetbox"></div></div>
+
+<div id="fab" onclick="toggleAgent()" title="Agent nổi — gửi lệnh cho Claude">🤖<span class="dot" id="adot"></span></div>
+<div id="apanel">
+  <div class="ahead">🤖 Agent nổi <span class="st" id="ast">đang kiểm tra…</span></div>
+  <div id="afeed"></div>
+  <div id="areply" style="display:none;padding:5px 12px;font-size:12px;color:var(--brand);background:var(--brand-bg);border-top:1px solid var(--bd2)">
+    🔗 tiếp mạch: <b id="areply-lb"></b>
+    <span style="float:right;cursor:pointer;color:var(--mut)" onclick="agClearReply()" title="Thoát mạch — tin sau mở phiên mới">×</span></div>
+  <div id="abar">
+    <textarea id="ain" placeholder="Gõ lệnh cho Claude… (Enter gửi, Shift+Enter xuống dòng)&#10;Vd: làm brief studio kế tiếp"></textarea>
+    <button class="primary" onclick="sendCmd()">Gửi</button>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let KOLS=[], PRODS=[], BRIEFS=[], NICHES=[], TPLS=[], PROJS=[], STAFF=[], ENGINES=[], FLOWACCTS=[], FLOWPIN=null, FLOWBRIDGES=0, SCRIPTS=[], CHANS=[], MEDIA=[], scrF={}, scrShowRej=false, sel={kol:null,prod:null,tpl:""}, view="dash", nicheFilter="", curProj=null, _hashProj=null, stNiche="", stQ="", stKGroup="", stKQ="", kolFilter="";
+const PLAT={facebook:{e:"📘",n:"Facebook"},tiktok:{e:"🎵",n:"TikTok"},youtube:{e:"▶️",n:"YouTube"},khac:{e:"📡",n:"Khác"}};
+const chanById=id=>CHANS.find(c=>c.id===id);
+const chanLabel=id=>{const c=chanById(id);return c?`${(PLAT[c.platform]||PLAT.khac).e} ${c.name}`:"";};
+const api = (p,o) => fetch(p,o).then(r=>r.json());
+window.PORTAL=false; window.CFG={};
+const _isAdminUI=()=>!window.PORTAL||(window.CFG&&window.CFG.role==='admin');
+function applyPortalUI(){
+  if(!window.PORTAL) return;
+  document.body.classList.add('portal');
+  const lt=document.querySelector('.logo .lt');
+  if(lt&&!lt.querySelector('.vpbadge')){
+    const who=(window.CFG.user?(' · '+window.CFG.user+(window.CFG.role==='admin'?' (admin)':'')):'');
+    lt.insertAdjacentHTML('beforeend','<span class="vpbadge">Văn phòng'+esc(who)+'</span>');
+  }
+  const tact=document.querySelector('.tact');
+  if(tact&&!tact.querySelector('.logoutbtn')) tact.insertAdjacentHTML('beforeend','<button class="mini logoutbtn" onclick="doLogout()">Đăng xuất</button>');
+}
+window.doLogout=async()=>{ try{await fetch('/api/logout',{method:'POST'});}catch(e){} location.href='/'; };
+const img = p => "/api/image?path="+encodeURIComponent(p);
+const initials = n => (n||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+const esc = s => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const codeChip = c => c?`<span class="code copy" onclick="copyCode(event,'${esc(c)}')" title="Bấm để copy mã">${esc(c)}<span class="ci">⧉</span></span>`:'';
+window.copyCode=(ev,code)=>{
+  ev.stopPropagation();
+  const el=ev.currentTarget;
+  const flash=()=>{ el.classList.add("copied"); el.innerHTML=esc(code)+'<span class="ci">✓</span>';
+    setTimeout(()=>{ el.classList.remove("copied"); el.innerHTML=esc(code)+'<span class="ci">⧉</span>'; },1100); };
+  const fallback=()=>{ const ta=document.createElement("textarea"); ta.value=code; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(flash,()=>{fallback();flash();});
+  else { fallback(); flash(); }
+};
+
+const VIEWMETA={
+  dash:["Tổng quan","Toàn cảnh xưởng: số liệu, quy trình và dự án gần nhất"],
+  staff:["Nhân viên","Mỗi kỹ năng là một nhân viên — giao việc 1 chạm, Claude nhận và làm"],
+  flowaccts:["Tài khoản Flow","Quản lý tài khoản gen video: online/tín dụng/cooldown · mở hàng loạt · Auto/LRU"],
+  scripts:["Kịch bản duyệt","Kanban kịch bản: Claude soạn nhiều bản gắn tag cấu trúc — bạn duyệt, bản duyệt đi vào sản xuất"],
+  projects:["Dự án video","Mỗi video một mã DA-xxxx · quy trình từ kịch bản đến video hoàn thiện"],
+  media:["Thư viện Media","Video hoàn thiện · xem trên Drive · caption · trạng thái đăng · chỉ số view/bình luận/đơn"],
+  channels:["Kênh","Fanpage Facebook / kênh TikTok — mỗi KOL và dự án thuộc 1 kênh để dễ quản lý"],
+  kols:["Thư viện KOL","Nhân vật, giọng đọc, trang phục và ảnh tham chiếu"],
+  products:["Thư viện sản phẩm","Quản lý theo ngách · giá · token khoá hình ảnh"],
+};
+/* Khôi phục tab từ URL hash để F5 không bị quay về trang chủ */
+(()=>{ const p=(location.hash||"").slice(1).split("/"); if(VIEWMETA[p[0]]) view=p[0]; if(p[0]==="projects"&&p[1]) _hashProj=p[1]; })();
+
+async function load(){
+  let _fa;
+  [KOLS,PRODS,BRIEFS,NICHES,TPLS,PROJS,STAFF,ENGINES,_fa,SCRIPTS,CHANS,MEDIA] = await Promise.all([api("/api/kols"),api("/api/products"),Promise.resolve([]),api("/api/niches"),Promise.resolve([]),api("/api/projects"),api("/api/staff").catch(()=>[]),api("/api/engines").catch(()=>[]),api("/api/flow-accounts").catch(()=>({accounts:[]})),api("/api/scripts").catch(()=>[]),api("/api/channels").catch(()=>[]),api("/api/media").catch(()=>[])]);
+  _setFlow(_fa);
+  if(!sel.kol && KOLS[0]) sel.kol=KOLS[0].id;
+  if(!sel.prod && PRODS[0]) sel.prod=PRODS[0].id;
+  _ttsVoices().then(()=>{ if(view==="scripts") renderScripts(); });  // ten giong cho chip 🎙
+  render();
+  if(_hashProj){ const id=_hashProj; _hashProj=null; try{ await openProj(id); }catch(e){} }
+}
+function setCounts(){
+  $("#n-projs").textContent=PROJS.length||"";
+  $("#n-kols").textContent=KOLS.length||"";
+  $("#n-prods").textContent=PRODS.length||"";
+  {const e=$("#n-chans"); if(e) e.textContent=CHANS.length||"";}
+  {const e=$("#n-media"); if(e) e.textContent=MEDIA.length||"";}
+  const busy=STAFF.filter(s=>s.busy).length, se=$("#n-staff");
+  if(se){ se.textContent=busy?busy+" ⚙":(STAFF.length||""); se.classList.toggle("hot",busy>0); }
+  const onl=FLOWACCTS.filter(a=>a.online).length, fe=$("#n-facc");
+  if(fe){ fe.textContent=FLOWACCTS.length?(onl+"/"+FLOWACCTS.length):""; }
+  const spend=SCRIPTS.filter(s=>s.status==="pending").length, sce=$("#n-scripts");
+  if(sce){ sce.textContent=spend||""; sce.classList.toggle("hot",spend>0); }
+}
+window.go=v=>{ view=v; curProj=null; render(); };
+function render(){
+  history.replaceState(null,"","#"+view+(view==="projects"&&curProj?"/"+curProj.id:""));
+  document.querySelectorAll("aside nav a").forEach(a=>a.classList.toggle("on",a.dataset.v===view));
+  const [t,d]=VIEWMETA[view]||VIEWMETA.dash;
+  $("#ttitle").textContent=t; $("#tdesc").textContent=d;
+  setCounts();
+  // trang chi tiet du an -> full chieu rong (video to + nhieu canh 1 hang)
+  document.querySelector("#wrap").classList.toggle("full", view==="projects" && !!curProj);
+  ({dash:renderDash,staff:renderStaff,flowaccts:renderFlowAccounts,scripts:renderScripts,channels:renderChannels,kols:()=>renderLib("kols",KOLS,"KOL",1),products:()=>renderLib("products",PRODS,"sản phẩm",0),projects:renderProjects,media:renderMedia}[view])();
+}
+function media(e,round){const r=(e.refs&&e.refs[0]);const c=round?'av':'sq';return `<div class="${c}">${r?`<img src="${img(r)}">`:(round?initials(e.name):'#')}</div>`;}
+
+/* ===== NHÂN VIÊN (skill = nhân viên) ===== */
+const _agOnline=()=>!!(window._agentSt&&window._agentSt.online);
+function renderStaff(){
+  const online=_agOnline();
+  const phongs=[...new Set(STAFF.map(s=>s.phong))];
+  const secs=phongs.map(ph=>{
+    const list=STAFF.filter(s=>s.phong===ph);
+    const cards=list.map(s=>{
+      const st = !s.installed ? `<span class="stx off">chưa sẵn sàng</span>`
+        : s.busy ? `<span class="stx run">⚙ đang làm việc</span>`
+        : `<span class="stx ok">● Rảnh</span>`;
+      const bn={claude:['🧠','Claude'],codex:['⚡','Codex'],gemini:['✦','Gemini'],oss:['🖥️','OSS']}[s.brain||'claude']||['🧠','Claude'];
+      const brainChip=`<span class="brainchip" title="Bộ não mặc định">${bn[0]} ${bn[1]}</span>`;
+      // nhan vien lam VIDEO -> gan 1 tai khoan Flow rieng (chay song song khong dam chan)
+      const isVideo = s.phong==='Phòng Media';
+      const acctRow = isVideo ? (()=>{
+        const opts=`<option value="">— chưa gán (Auto/LRU) —</option>`+FLOWACCTS.map(a=>{
+          const dot=a.online?'🟢':'⚪'; const lbl=esc(a.label||a.email);
+          return `<option value="${esc(a.email)}" ${a.email===s.flow_account?'selected':''}>${dot} ${lbl}${a.credits!=null?` · ${a.credits} tín dụng`:''}</option>`;}).join("");
+        return `<div class="acctrow"><span class="al">🎬 Tài khoản Flow</span>
+          <select onchange="setStaffAccount('${s.slug}',this.value)">${opts}</select></div>`;
+      })() : '';
+      return `<div class="emp ${s.busy?'work':''}">
+        <div class="empav">${s.emoji}</div>
+        <div class="empmain">
+          <div class="empname">${esc(s.ten)} ${brainChip} ${s.flow_account?`<span class="acctchip" title="Đã khoá tài khoản Flow">🎬 ${esc((FLOWACCTS.find(a=>a.email===s.flow_account)||{}).label||s.flow_account.split('@')[0])}</span>`:''} ${st}</div>
+          <div class="emprole">${esc(s.mo_ta)}</div>
+          ${acctRow}
+          <div class="empfoot">
+            <button class="mini primary" ${s.installed?'':'disabled'} onclick="openAssign('${s.slug}')">＋ Giao việc</button>
+            ${s.jobs?`<span class="wbtn" onclick="staffJobs('${s.slug}')">🗂 ${s.jobs} việc đã giao</span>`:'<span class="hint">chưa có việc</span>'}
+          </div>
+        </div></div>`;
+    }).join("");
+    return `<h2 style="margin-top:18px">${esc(ph)} <span class="hint" style="font-weight:400;text-transform:none;letter-spacing:0">· ${list.length} nhân viên</span></h2>
+      <div class="emps">${cards}</div>`;
+  }).join("");
+  $("#app").innerHTML=`
+    <div class="psec" style="display:flex;gap:12px;align-items:center">
+      <div style="font-size:26px">🤖</div>
+      <div style="flex:1">
+        <div class="nm">Bộ phận điều phối (Claude) — ${online?'<span style="color:var(--ok)">● đang trực</span>':'<span style="color:var(--mut)">○ ngoài giờ</span>'}</div>
+        <div class="hint">Giao việc cho nhân viên → phiếu vào hàng đợi → ${online?'Claude tự nhận và làm, kết quả hiện ở 🤖 Agent nổi.':'bật <code>studio\\START-AGENT.bat</code> để Claude tự làm, hoặc mở chat gõ đúng câu lệnh.'}</div>
+      </div>
+      <button class="mini" onclick="loadStaff()">↻ Làm mới</button>
+    </div>
+    <div class="hint" style="margin:2px 0 8px">Mỗi <b>kỹ năng</b> của Claude = một <b>nhân viên</b> chuyên trách. Bấm <b>Giao việc</b>, mô tả việc cần làm — hệ thống tự ghép đúng câu lệnh để gọi đúng nhân viên.</div>
+    ${secs||'<div class="sub">Chưa nạp được danh sách nhân viên.</div>'}`;
+}
+function _setFlow(fa){ FLOWACCTS=(fa&&fa.accounts)||[]; FLOWPIN=(fa&&fa.default_pin)||null; FLOWBRIDGES=(fa&&fa.bridge_count)||0; }
+async function loadFlow(){ _setFlow(await api("/api/flow-accounts").catch(()=>({accounts:[]}))); }
+async function loadStaff(){
+  const [st,fa]=await Promise.all([api("/api/staff").catch(()=>STAFF), api("/api/flow-accounts").catch(()=>({accounts:[]}))]);
+  STAFF=st; _setFlow(fa);
+  if(view==="staff") renderStaff(); if(view==="flowaccts") renderFlowAccounts(); setCounts();
+}
+window.setStaffAccount=async(slug,email)=>{
+  await api("/api/staff/"+slug+"/account",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});
+  loadStaff();
+};
+const _mkText=(s,task)=> s.trigger ? (s.trigger+(task?": "+task:"")) : task;
+window.openAssign=slug=>{
+  const s=STAFF.find(x=>x.slug===slug); if(!s) return;
+  const online=_agOnline();
+  const all=(ENGINES&&ENGINES.length)?ENGINES:[{id:'claude',ten:'Claude',emoji:'🧠',available:true},{id:'codex',ten:'Codex (OpenAI)',emoji:'⚡',available:true}];
+  const opts=all.map(e=>`<option value="${e.id}" ${e.id===(s.brain||'claude')?'selected':''} ${e.available?'':'disabled'}>${e.emoji||''} ${esc(e.ten)}${e.available?'':' — chưa sẵn sàng'}</option>`).join("");
+  openModal(`<h3>${s.emoji} Giao việc · ${esc(s.ten)}</h3>
+    <div class="hint" style="margin:-6px 0 10px">${esc(s.mo_ta)}</div>
+    <div class="cfg" style="margin-bottom:12px">
+      <div><label>Bộ não thực thi</label><select id="as-eng" onchange="_asPrev('${slug}')">${opts}</select></div>
+    </div>
+    <div id="as-warn" class="hint" style="margin:-4px 0 8px"></div>
+    <div class="fld"><label>Nội dung công việc</label>
+      <textarea id="as-task" style="min-height:120px" placeholder="${esc(s.vd)}"></textarea></div>
+    <div class="phlist">Câu lệnh gửi bộ não sẽ là:<br><code id="as-preview">${esc(_mkText(s,''))||'…'}</code></div>
+    <div class="hint">${online?'🟢 Điều phối đang trực — nhận việc và làm ngay (nhiều việc chạy song song), xem ở 🤖 Agent nổi.':'🟡 Điều phối ngoài giờ — phiếu vẫn được lưu; bật studio\\START-AGENT.bat hoặc mở chat gõ câu lệnh trên.'}</div>
+    <div class="row" style="margin-top:14px"><button class="primary" onclick="doAssign('${s.slug}')">📨 Giao việc</button><button onclick="closeModal()">Huỷ</button></div>`);
+  const ta=$("#as-task");
+  ta.addEventListener("input",()=>_asPrev(slug));
+  _asPrev(slug); ta.focus();
+};
+window._asPrev=slug=>{
+  const s=STAFF.find(x=>x.slug===slug); if(!s) return;
+  const t=($("#as-task")?$("#as-task").value.trim():""), eng=$("#as-eng")?$("#as-eng").value:"claude";
+  const pv=$("#as-preview"); if(pv) pv.textContent=_mkText(s,t)||"…";
+  const w=$("#as-warn");
+  if(w) w.innerHTML = (s.is_skill && eng!=="claude")
+    ? '⚠️ Nhân viên này là <b>skill của Claude</b> — chạy trên bộ não khác có thể không kích hoạt đúng kỹ năng. Khuyến nghị để <b>Claude</b>.'
+    : (eng==='gemini' ? '✦ Gemini (Google) — chạy bằng login Google riêng, KHÔNG đọc skill Claude. Chưa dùng được thì chạy <code>studio\\LOGIN-GEMINI.bat</code> đăng nhập 1 lần.'
+    : (eng==='oss' ? '🖥️ Model local (Ollama) — cần đã cài; hợp việc đơn giản/số lượng lớn.' : ''));
+};
+window.doAssign=async slug=>{
+  const s=STAFF.find(x=>x.slug===slug); if(!s) return;
+  const task=$("#as-task").value.trim();
+  const engine=$("#as-eng")?$("#as-eng").value:(s.brain||"claude");
+  const text=_mkText(s,task);
+  if(!text){ alert("Nhập nội dung công việc"); return; }
+  await api("/api/commands",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text,staff:slug,engine,label:(task||s.ten).slice(0,80)})});
+  closeModal();
+  if(!agentOpen) toggleAgent(); else pollAgent();
+  loadStaff();
+};
+window.staffJobs=async slug=>{
+  const s=STAFF.find(x=>x.slug===slug);
+  const jobs=await api("/api/staff/"+slug+"/jobs").catch(()=>[]);
+  const eName={claude:'🧠 Claude',codex:'⚡ Codex',oss:'🖥️ OSS'};
+  const rows=jobs.map(j=>{
+    const stm={pending:["⏳ chờ","var(--warn)"],running:["⚙ đang làm","var(--run)"],done:["✅ xong","var(--ok)"],failed:["⚠️ lỗi","var(--err)"]}[j.status]||["·","var(--mut)"];
+    return `<div class="ofit" style="align-items:flex-start"><div style="flex:1">
+      <div class="nm" style="font-size:13px">${esc(j.label||j.text.slice(0,60))} <span class="engtag">${eName[j.engine||'claude']||('🧠 '+(j.engine||'claude'))}</span></div>
+      <div class="hint" style="margin-top:2px">${esc((j.text||'').slice(0,120))}</div>
+      ${j.response?`<div class="instr" style="margin-top:4px;max-height:120px;overflow:auto">${esc(j.response.slice(0,600))}</div>`:''}
+      </div><span class="stx" style="color:${stm[1]}">${stm[0]}</span></div>`;
+  }).join("");
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <h3>${s?s.emoji+' ':''}Việc đã giao · ${esc(s?s.ten:slug)}</h3>
+    ${rows||'<div class="sub">Chưa có việc nào.</div>'}
+    <div class="row" style="margin-top:12px"><button class="primary" onclick="openAssign('${slug}')">＋ Giao việc mới</button><button onclick="closeModal()">Đóng</button></div>`);
+};
+
+/* ===== TÀI KHOẢN FLOW ===== */
+function _fmtDur(s){ if(s==null) return '—'; s=Math.round(s); if(s<=0) return '0s'; if(s<60) return s+'s'; return Math.floor(s/60)+'m'+(s%60)+'s'; }
+function renderFlowAccounts(){
+  const accts=FLOWACCTS, pin=FLOWPIN, online=accts.filter(a=>a.online).length;
+  const isLRU=!pin;
+  const cards=accts.map(a=>{
+    const dot=a.online?'🟢':'⚪';
+    const stm={active:['● Sẵn sàng','var(--ok)','var(--okbg)'],cooldown:['⏳ Cooldown','var(--warn)','var(--warnbg)'],
+      no_token:['⚠ Chưa có token','var(--err)','var(--errbg)'],offline:['○ Offline','var(--mut)','var(--bg)']}[a.status]||['·','var(--mut)','var(--bg)'];
+    const pinned=pin&&pin.toLowerCase()===a.email.toLowerCase();
+    return `<div class="emp">
+      <div class="empav">${dot}</div>
+      <div class="empmain">
+        <div class="empname">${esc(a.label||a.email.split('@')[0])} ${pinned?'<span class="acctchip">📌 đang ghim</span>':''}
+          <span class="stx" style="color:${stm[1]};background:${stm[2]}">${stm[0]}</span></div>
+        <div class="emprole" style="font-family:ui-monospace,monospace;font-size:11.5px">${esc(a.email)}</div>
+        <div class="hint" style="margin-bottom:8px">
+          💳 ${a.credits!=null?a.credits+' tín dụng':'—'} · ⏳ cooldown ${_fmtDur(a.cooldown_remaining_s)} ·
+          ✅ ${a.success_count||0} / ❌ ${a.failed_count||0} · Σ ${a.gen_count_total||0} lần
+          ${a.token_age_s!=null?' · token '+_fmtDur(a.token_age_s):''}</div>
+        <div class="empfoot">
+          ${a.online
+            ? (pinned?`<button class="mini" onclick="setPin('')">Bỏ ghim (Auto/LRU)</button>`
+                     :`<button class="mini" onclick="setPin('${esc(a.email)}')">📌 Ghim account này</button>`)
+            : `<span class="hint">⚪ chưa online — Launch-all + đăng nhập Flow</span>`}
+        </div>
+      </div></div>`;
+  }).join("");
+  $("#app").innerHTML=`
+    <div class="psec" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <div class="nm">Chế độ phân bổ gen: ${isLRU
+          ? '<span style="color:var(--ok)">🔄 Auto / LRU</span> — gen tự chia đều các account online'
+          : '<span style="color:var(--brand)">📌 Ghim: '+esc(pin)+'</span> — mọi gen (chưa gán riêng) dồn về account này'}</div>
+        <div class="hint">${online}/${accts.length} account online · ${FLOWBRIDGES} bridge. Nhân viên đã gán account riêng thì luôn dùng account đó (không theo chế độ này).</div>
+      </div>
+      <div class="row">
+        ${isLRU?'':'<button class="primary" onclick="setPin(\'\')">🔄 Bật Auto/LRU (bỏ ghim)</button>'}
+        <button onclick="launchAll()">🚀 Mở tất cả Chrome (Launch-all)</button>
+        <button class="mini" onclick="loadFlow().then(renderFlowAccounts)">↻ Làm mới</button>
+      </div>
+    </div>
+    <div class="hint" style="margin:2px 0 10px">Quản lý tài khoản gen video ngay tại đây — không cần mở flowboard. Mỗi account online = một luồng gen song song + quota riêng. Gán account cho từng nhân viên ở tab <b>Nhân viên</b>.</div>
+    <div class="emps">${cards||'<div class="sub">Chưa thấy account nào. Bật backend :8200 + Launch-all + đăng nhập Flow.</div>'}</div>`;
+}
+window.setPin=async(email)=>{
+  try{ await api("/api/flow-accounts/default",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})}); }
+  catch(e){ alert("Lỗi: "+e.message); }
+  await loadFlow(); renderFlowAccounts();
+};
+window.launchAll=async()=>{
+  const btn=event&&event.currentTarget; if(btn){btn.disabled=true;btn.textContent="⏳ Đang mở…";}
+  try{
+    const r=await api("/api/flow-accounts/launch-all",{method:"POST"});
+    const L=(r.launched||[]).length, S=(r.skipped||[]).length;
+    alert(`Đã mở ${L} cửa sổ Chrome`+(S?` · bỏ qua ${S} (đã online/chưa có profile)`:'')+`.\nĐăng nhập Flow trong các cửa sổ mới → account sẽ lên 🟢.`);
+  }catch(e){ alert("Lỗi Launch-all: "+e.message+"\n(Cần backend :8200 chạy + account đã có profile_dir)"); }
+  await loadFlow(); renderFlowAccounts();
+};
+
+/* ===== KỊCH BẢN DUYỆT (kanban + tag) ===== */
+const SCR_COLS=[["pending","📝 Chờ duyệt"],["approved","✅ Đã duyệt"],["producing","🎬 Đang sản xuất"],["done","✔ Hoàn thành"]];
+async function loadScripts(){ SCRIPTS=await api("/api/scripts").catch(()=>SCRIPTS); if(view==="scripts") renderScripts(); setCounts(); }
+function _scrStaff(s){ const st=STAFF.find(x=>x.slug===s.staff); return st?{ten:st.ten,emoji:st.emoji}:null; }
+function _scrFormat(s){ const st=STAFF.find(x=>x.slug===s.staff); return st&&(st.formats||[]).find(f=>f.id===s.format)||null; }
+function _scrChips(s){  // [{t,cls,dim}] de hien thi + gom nhom loc
+  const st=_scrStaff(s), fm=_scrFormat(s), a=[];
+  if(s.channel&&chanById(s.channel)) a.push({t:chanLabel(s.channel), cls:"chan", dim:"chan"});
+  if(st) a.push({t:"👤 "+st.emoji+" "+st.ten, cls:"st", dim:"staff"});
+  if(fm) a.push({t:fm.emoji+" "+fm.label, cls:"fmt", dim:"fmt"});
+  if(s.cau_truc) a.push({t:"Cấu trúc "+s.cau_truc, cls:"tc", dim:"cau"});
+  if(s.tts_voice) a.push({t:"🎙 "+_voiceName(s.tts_voice), cls:"", dim:"voice"});
+  (s.tags||[]).forEach(t=>a.push({t, cls:"", dim:"tag"}));
+  return a;
+}
+function fmtTime(ts){  // epoch giay -> "14:32 hôm nay" | "09:15 hôm qua" | "12/07" | "12/07/25"
+  if(!ts) return "";
+  const d=new Date(ts*1000), now=new Date();
+  const day=x=>x.toDateString();
+  const hm=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  if(day(d)===day(now)) return `${hm} hôm nay`;
+  if(day(d)===day(new Date(now-864e5))) return `${hm} hôm qua`;
+  const dm=`${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+  return d.getFullYear()===now.getFullYear()?dm:`${dm}/${String(d.getFullYear()).slice(2)}`;
+}
+function _scrDimVal(s,dim){  // gia tri cua 1 kich ban theo chieu loc -> mang (co the rong)
+  if(dim==="kol") return s.kol?[s.kol]:[];
+  if(dim==="product") return s.product?[s.product]:[];
+  if(dim==="chan") return (s.channel&&chanById(s.channel))?[chanLabel(s.channel)]:[];
+  if(dim==="staff"){ const st=_scrStaff(s); return st?["👤 "+st.emoji+" "+st.ten]:[]; }
+  if(dim==="fmt"){ const fm=_scrFormat(s); return fm?[fm.emoji+" "+fm.label]:[]; }
+  if(dim==="cau") return s.cau_truc?["Cấu trúc "+s.cau_truc]:[];
+  if(dim==="tag") return (s.tags||[]).slice();
+  return [];
+}
+function _dimVals(all,dim){  // [[value,count]] giam dan theo so luong
+  const m=new Map();
+  all.forEach(s=>_scrDimVal(s,dim).forEach(v=>m.set(v,(m.get(v)||0)+1)));
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]);
+}
+const _chips=s=>_scrChips(s).filter(o=>o.dim!=="tag").map(o=>`<span class="tagchip ${o.cls}">${esc(o.t)}</span>`).join(" ");
+function _scrTagTexts(s){ return _scrChips(s).map(o=>o.t); }
+function renderScripts(){
+  const all=SCRIPTS||[];
+  // loc theo TAT CA cac chieu dang chon (ket hop AND) — de "Tổng" dem dung
+  const _match=s=>Object.entries(scrF).every(([d,v])=>!v||_scrDimVal(s,d).includes(v));
+  const dd=(label,dim)=>{
+    // dem trong pham vi cac chieu KHAC dang loc (de so lieu phan anh dung ket hop)
+    const base=all.filter(s=>Object.entries(scrF).every(([d,v])=>d===dim||!v||_scrDimVal(s,d).includes(v)));
+    const vals=_dimVals(base,dim); const cur=scrF[dim]||"";
+    if(!vals.length && !cur) return "";
+    const opts=vals.map(([v,n])=>`<option value="${esc(v)}" ${cur===v?'selected':''}>${esc(v)} · ${n}</option>`).join("");
+    return `<select class="fsel${cur?' act':''}" onchange="scrPickDim('${dim}',this.value)"><option value="">${label}</option>${opts}</select>`;
+  };
+  const nActive=Object.values(scrF).filter(Boolean).length;
+  const shown=all.filter(_match);
+  const filterBar=`<div class="sfbar">
+    <span class="nf ${!nActive?'on':''}" onclick="scrClearF()">Tất cả <b>${shown.length}${nActive?'/'+all.length:''}</b></span>
+    ${dd('👤 KOL','kol')}${dd('📦 Sản phẩm','product')}${dd('📡 Kênh','chan')}${dd('🧑‍🏭 Nhân viên','staff')}${dd('🎬 Format','fmt')}${dd('🧩 Cấu trúc','cau')}
+    ${nActive?`<span class="nf clr" onclick="scrClearF()">✕ Xoá lọc (${nActive})</span>`:''}
+    <span class="nf ${scrShowRej?'on':''}" onclick="scrShowRej=!scrShowRej;renderScripts()" style="margin-left:auto">🗑 Đã bỏ (${all.filter(s=>s.status==='rejected').length})</span></div>`;
+  const card=s=>{
+    const tags=_chips(s);
+    const canApprove=_isAdminUI();  // portal member = chi xem, khong duyet
+    let foot="";
+    if(s.status==="pending") foot=(canApprove?`<button class="kbbtn primary" onclick="event.stopPropagation();scrSet('${s.id}','approved')">✅ Duyệt</button>`:'')
+      +`<button class="kbico" title="Xem / Sửa" onclick="event.stopPropagation();openScript('${s.id}')">✏️</button>`
+      +(canApprove?`<button class="kbico del" title="Bỏ" onclick="event.stopPropagation();scrSet('${s.id}','rejected')">✕</button>`:'');
+    else if(s.status==="approved" && canApprove) foot=`<button class="kbbtn primary prodbtn" onclick="event.stopPropagation();scrProduce('${s.id}')">🎬 Sản xuất</button>
+      <button class="kbico" title="Trả lại Chờ duyệt" onclick="event.stopPropagation();scrSet('${s.id}','pending')">↩︎</button>`;
+    else if(s.project_id){
+      if(window.PORTAL){  // portal khong co tab Du an -> tro thang vao video trong Thu vien Media
+        const md=(MEDIA||[]).find(m=>m.project_id===s.project_id);
+        foot=md?`<button class="kbbtn primary" onclick="event.stopPropagation();openMediaDetail('${md.id}')">🎬 Xem video</button>`
+               :`<button class="kbbtn" onclick="event.stopPropagation();go('media')">🎞 Thư viện Media</button>`;
+      } else foot=`<button class="kbbtn" onclick="event.stopPropagation();openProj('${s.project_id}')">📁 Mở dự án</button>`;
+    }
+    const auth=s.nguoi_tao?`<span class="authchip">👤 ${esc(s.nguoi_tao)}</span>`:'';
+    return `<div class="kbcard" draggable="${canApprove}" ondragstart="kbDrag(event,'${s.id}')" ondragend="kbDragEnd(event)" onclick="openScript('${s.id}')">
+      <div class="kbtags">${tags}</div>
+      <div class="kbtitle">${esc((s.product||'').slice(0,50))}</div>
+      <div class="kbhook">🪝 ${esc((s.hook||'').slice(0,90))}</div>
+      <div class="kbmeta">${esc(s.kol||'')} · ${(s.scenes||[]).length} cảnh · <span title="Thời gian tạo">🕐 ${fmtTime(s.created)}</span>${auth}</div>
+      <div class="kbfoot">${foot}</div></div>`;
+  };
+  const cols=SCR_COLS.map(([st,label])=>{
+    const items=shown.filter(s=>s.status===st);
+    return `<div class="kbcol" ondragover="kbOver(event)" ondragleave="kbLeave(event)" ondrop="kbDrop(event,'${st}')">
+      <h4>${label} <span class="cnt2">${items.length}</span></h4>
+      ${items.map(card).join("")||'<div class="kbempty">trống</div>'}</div>`;
+  }).join("");
+  const rej=shown.filter(s=>s.status==="rejected");
+  const rejCol=scrShowRej?`<div class="kbcol kbrej" ondragover="kbOver(event)" ondragleave="kbLeave(event)" ondrop="kbDrop(event,'rejected')">
+      <h4>🗑 Đã bỏ <span class="cnt2">${rej.length}</span></h4>
+      ${rej.map(s=>`<div class="kbcard" draggable="true" ondragstart="kbDrag(event,'${s.id}')" ondragend="kbDragEnd(event)" onclick="openScript('${s.id}')">
+        <div class="kbtitle" style="opacity:.6">${esc((s.product||'').slice(0,44))}</div>
+        <div class="kbmeta">🕐 ${fmtTime(s.created)}</div>
+        <div class="kbfoot"><span class="wbtn" onclick="event.stopPropagation();scrSet('${s.id}','pending')">↩︎ khôi phục</span>
+        <span class="wbtn" style="color:var(--err)" onclick="event.stopPropagation();del('scripts','${s.id}')">× xoá hẳn</span></div></div>`).join("")||'<div class="kbempty">trống</div>'}</div>`:"";
+  $("#app").innerHTML=`
+    <div class="row" style="margin-bottom:10px;gap:12px">
+      <div class="hint" style="flex:1">Cửa vào duy nhất của xưởng: <b>① Đặt hàng</b> — chọn KOL × SP × nhân viên, Claude soạn theo DNA cấu trúc. <b>② Nhập tay</b> — dán kịch bản của bạn, tự phân cảnh. Cả hai vào cột Chờ duyệt → bạn duyệt → <b>🎬 Sản xuất</b>.</div>
+      <button class="primary prodbtn" onclick="openScriptOrder()">＋ Đặt hàng kịch bản</button>
+      <button onclick="openScriptNew()" style="height:33px">＋ Nhập kịch bản</button>
+    </div>
+    ${filterBar}
+    <div class="kb">${cols}${rejCol}</div>`;
+}
+window.scrPickDim=(dim,v)=>{ if(v) scrF[dim]=v; else delete scrF[dim]; renderScripts(); };
+window.scrClearF=()=>{ scrF={}; renderScripts(); };
+window.scrSet=async(id,status)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})}); loadScripts(); };
+window.scrSetKol=async(id,kol)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({kol})}); const s=SCRIPTS.find(x=>x.id===id); if(s)s.kol=kol; };
+window.scrSetFmt=async(id,format)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({format})}); const s=SCRIPTS.find(x=>x.id===id); if(s)s.format=format; loadScripts(); };
+window.kbDrag=(ev,id)=>{ ev.dataTransfer.setData("text/plain",id); ev.dataTransfer.effectAllowed="move"; ev.currentTarget.classList.add("dragging"); };
+window.kbDragEnd=ev=>{ ev.currentTarget.classList.remove("dragging"); document.querySelectorAll(".kbcol.dragover").forEach(c=>c.classList.remove("dragover")); };
+window.kbOver=ev=>{ ev.preventDefault(); ev.dataTransfer.dropEffect="move"; ev.currentTarget.classList.add("dragover"); };
+window.kbLeave=ev=>{ if(!ev.currentTarget.contains(ev.relatedTarget)) ev.currentTarget.classList.remove("dragover"); };
+const _KB_ALLOW={pending:["approved","rejected"],approved:["pending","rejected"],rejected:["pending"]};
+window.kbDrop=(ev,target)=>{
+  ev.preventDefault();
+  ev.currentTarget.classList.remove("dragover");
+  const id=ev.dataTransfer.getData("text/plain"); if(!id) return;
+  const s=SCRIPTS.find(x=>x.id===id); if(!s) return;
+  if(s.status===target) return;
+  if(!(_KB_ALLOW[s.status]||[]).includes(target)){ return; }
+  scrSet(id,target);
+};
+window.scrProduce=async id=>{
+  if(window.PORTAL){ alert("Chế độ Văn phòng: sản xuất chạy ở Xưởng (PC)."); return; }
+  const s=SCRIPTS.find(x=>x.id===id); if(!s) return;
+  const emp=s.staff||"video-kol-studio";
+  const st=STAFF.find(x=>x.slug===emp);
+  const fm=_scrFormat(s);
+  const fmtNote=s.format?` FORMAT = "${s.format}"${fm?" ("+fm.label+")":""} → ghi "format":"${s.format}" vào episode.json để engine nạp đúng profile (bối cảnh/giọng/MC của format đó).`:"";
+  const voiceNote=s.tts_voice?` GIỌNG TTS = "${s.tts_voice}" (${_voiceName(s.tts_voice)}) — khi gen voiceover PHẢI gọi tiepphoi-voice tts với voice_id này (ghi "tts_voice":"${s.tts_voice}" vào episode.json).`:"";
+  const chanNote=s.channel?` KÊNH ĐĂNG = "${s.channel}" (${chanLabel(s.channel)}) — truyền "channel":"${s.channel}" khi POST /api/projects để dự án gắn đúng kênh.`:"";
+  const text=`Sản xuất kịch bản đã duyệt ${id} trong khu Kịch bản của Xưởng KOL (GET /api/scripts): đây là kịch bản của nhân viên "${emp}"${st?" ("+st.ten+")":""} — dùng ĐÚNG skill của nhân viên đó.${fmtNote}${voiceNote}${chanNote} Tạo dự án DA từ scenes của kịch bản này (BỎ QUA bước duyệt — đã duyệt trên kanban; giữ nguyên cấu trúc ${s.cau_truc||''} + tag + không icon giá/deal + VOICE DIRECTION), render trọn quy trình, cập nhật script status=producing→done + project_id. QUAN TRỌNG (phiên headless): chạy produce.py/render ĐỒNG BỘ chờ xong trong phiên (foreground, KHÔNG run_in_background, KHÔNG "chờ notification") — phiên kết thúc là tiến trình nền bị kill; chỉ trả lời khi video final + QC đã xong và project đã PATCH đủ scenes[].video + final_video (đường dẫn TUYỆT ĐỐI).`;
+  await api("/api/commands",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text,staff:emp,engine:"claude",label:("SX: "+(s.product||"")+" ["+(s.cau_truc||"")+"]").slice(0,80)})});
+  await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:"producing"})}).catch(()=>{});
+  loadScripts();
+  if(!agentOpen) toggleAgent(); else pollAgent();
+};
+const _syl=t=>(t||"").trim().split(/\s+/).filter(Boolean).length;
+window._scrCount=ta=>{
+  const n=_syl(ta.value), el=document.querySelector(`[data-cnt="${ta.dataset.scrIdx}"]`);
+  if(el){ el.textContent=`${n} âm tiết`; el.className="cnt3 "+(n>=45&&n<=58?"ok":"warn"); }
+  ta.style.height="auto"; ta.style.height=ta.scrollHeight+"px";
+};
+window.openScript=id=>{
+  const s=SCRIPTS.find(x=>x.id===id); if(!s) return;
+  const scenes=(s.scenes||[]).map(sc=>{
+    const n=_syl(sc.voice);
+    return `<div class="scrsec">
+      <div class="sl">🎬 Cảnh ${sc.idx}${sc.title?' · '+esc(sc.title):''}
+        <span class="cnt3 ${n>=45&&n<=58?'ok':'warn'}" data-cnt="${sc.idx}">${n} âm tiết</span></div>
+      <textarea class="scrauto" data-scr-idx="${sc.idx}" rows="2" oninput="_scrCount(this)">${esc(sc.voice||'')}</textarea>
+    </div>`;
+  }).join("");
+  const tags=_chips(s);
+  const kolOpts=`<option value="">— chưa gán KOL —</option>`+KOLS.map(k=>`<option ${k.name===s.kol?'selected':''}>${esc(k.name)}</option>`).join("");
+  const stf=STAFF.find(x=>x.slug===s.staff), fmts=(stf&&stf.formats)||[];
+  const fmtSel=fmts.length?`<div><label>🎬 Format</label>
+      <select id="scr-fmt" onchange="scrSetFmt('${s.id}',this.value)">${_fmtOpts(s.staff,s.format)}</select></div>`:'';
+  const chanSel=`<div><label>📡 Kênh đăng</label>
+      <select id="scr-chan" onchange="scrSetChan('${s.id}',this.value)">${_chanOpts(s.channel||"")}</select></div>`;
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <div class="scrhead">${esc(s.product||'')}</div>
+    <div class="scrlabels">${tags}</div>
+    <div class="cfg" style="margin-bottom:14px">
+      <div><label>👤 KOL (đổi được — kịch bản dùng lại cho KOL khác)</label>
+      <select id="scr-kol" onchange="scrSetKol('${s.id}',this.value)">${kolOpts}</select></div>
+      ${chanSel}
+      ${fmtSel}
+      <div><label>🎙 Giọng TTS (format lồng tiếng)</label>
+      <select id="scr-voice" onchange="scrSetVoice('${s.id}',this.value)"><option value="">— giọng mặc định format —</option></select></div></div>
+    <div class="scrsec"><div class="sl">🪝 Hook</div><div class="scrhookbox">${esc(s.hook||'—')}</div></div>
+    ${s.ly_do?`<div class="scrsec"><div class="sl">💡 Vì sao bản này</div><div class="scrlydo">${esc(s.ly_do)}</div></div>`:''}
+    ${scenes}
+    <div class="scractions">
+      ${s.status==='pending'?`<button class="primary" onclick="scrSaveApprove('${s.id}',true)">✅ Lưu + Duyệt</button>
+        <button onclick="scrSaveApprove('${s.id}',false)">💾 Lưu sửa</button>
+        <button onclick="scrSet('${s.id}','rejected');closeModal()">❌ Bỏ</button>`
+      :s.status==='approved'?`<button class="primary prodbtn" onclick="closeModal();scrProduce('${s.id}')">🎬 Sản xuất</button>
+        <button onclick="scrSaveApprove('${s.id}',false)">💾 Lưu sửa</button>`
+      :`<button onclick="closeModal()">Đóng</button>`}
+    </div>`);
+  $("#sheetbox").classList.add("wide");
+  document.querySelectorAll("#sheetbox textarea.scrauto").forEach(ta=>{ ta.style.height="auto"; ta.style.height=ta.scrollHeight+"px"; });
+  _fillVoiceSel("#scr-voice", s.tts_voice||"");
+};
+window.scrSetVoice=async(id,v)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({tts_voice:v})}); const s=SCRIPTS.find(x=>x.id===id); if(s)s.tts_voice=v; };
+window.scrSetChan=async(id,v)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({channel:v})}); const s=SCRIPTS.find(x=>x.id===id); if(s)s.channel=v; loadScripts(); };
+window.scrSaveApprove=async(id,approve)=>{
+  const s=SCRIPTS.find(x=>x.id===id); if(!s) return;
+  const scenes=(s.scenes||[]).map(sc=>{
+    const ta=document.querySelector(`textarea[data-scr-idx="${sc.idx}"]`);
+    return {...sc, voice: ta?ta.value:sc.voice};
+  });
+  const body={scenes}; if(approve) body.status="approved";
+  await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  closeModal(); loadScripts();
+};
+
+/* --- Nhập kịch bản THỦ CÔNG --- */
+const _MEDIA=()=>STAFF.filter(s=>s.phong==='Phòng Media');
+function _nsSceneRow(voice="",title=""){
+  const n=_syl(voice);
+  return `<div class="scrsec newscene">
+    <div class="sl">🎬 Cảnh <span class="scn"></span>
+      <input class="scntitle" placeholder="nhãn (hook/demo/chốt…)" value="${esc(title)}" style="height:26px;margin:0 8px;max-width:200px;flex:1">
+      <span class="cnt3 ${n>=45&&n<=58?'ok':'warn'}" data-newcnt>${n} âm tiết</span>
+      <span class="wbtn" style="color:var(--err);margin-left:8px" onclick="_nsRm(this)" title="Xoá cảnh">×</span></div>
+    <textarea class="scrauto scnvoice" rows="2" oninput="_nsCount(this)" placeholder="lời thoại cảnh…">${esc(voice)}</textarea></div>`;
+}
+function _nsRenumber(){ document.querySelectorAll('#nsScenes .newscene .scn').forEach((e,i)=>e.textContent=i+1); }
+window._nsCount=ta=>{ const el=ta.closest('.newscene').querySelector('[data-newcnt]'); const n=_syl(ta.value);
+  if(el){ el.textContent=n+' âm tiết'; el.className='cnt3 '+(n>=45&&n<=58?'ok':'warn'); } ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+window._nsRm=x=>{ const rows=document.querySelectorAll('#nsScenes .newscene'); if(rows.length<=1) return; x.closest('.newscene').remove(); _nsRenumber(); };
+window._nsAdd=()=>{ $("#nsScenes").insertAdjacentHTML("beforeend",_nsSceneRow()); _nsRenumber();
+  const tas=document.querySelectorAll('#nsScenes .scnvoice'); const last=tas[tas.length-1]; last.focus(); };
+window._nsKolChange=()=>{ const ch=_kolChannel($("#ns-kol").value); if(ch&&$("#ns-channel")) $("#ns-channel").value=ch; };
+window._nsProdChange=()=>{
+  const o=$("#ns-prod").selectedOptions[0]; if(!o) return;
+  const nz=(o.dataset.niche||"").toLowerCase();
+  let emp=""; if(/gia d|nhà bếp|nội thất/.test(nz)) emp="san-xuat-video-gia-dung"; else if(/mẹ|bé|me be/.test(nz)) emp="video-me-be";
+  if(emp && $("#ns-emp")) $("#ns-emp").value=emp;
+  _nsEmpFmt();
+};
+function _fmtOpts(slug, selected){
+  const st=STAFF.find(x=>x.slug===slug), fmts=(st&&st.formats)||[];
+  if(!fmts.length) return `<option value="">— format mặc định —</option>`;
+  return fmts.map(f=>`<option value="${f.id}" ${f.id===selected?'selected':''}>${f.emoji} ${esc(f.label)}</option>`).join("");
+}
+/* --- Giọng TTS (TiepPhoi Voice :8008) — cho format lồng tiếng (giấu mặt…) --- */
+let TTSVOICES=null;
+async function _ttsVoices(){ if(TTSVOICES===null){ try{ TTSVOICES=await api("/api/tts-voices"); }catch(e){ TTSVOICES=[]; } } return TTSVOICES; }
+function _voiceOpts(sel){
+  return `<option value="">— giọng mặc định format —</option>`+(TTSVOICES||[]).map(v=>
+    `<option value="${esc(v.id)}" ${v.id===sel?'selected':''}>🎙 ${esc(v.name)}${v.gender?' · '+esc(v.gender):''}${v.description?' — '+esc(v.description):''}</option>`).join("");
+}
+async function _fillVoiceSel(elId, sel){ await _ttsVoices(); const el=$(elId); if(el){ el.innerHTML=_voiceOpts(sel); if((TTSVOICES||[]).length===0) el.title="App TiepPhoi Voice (:8008) chưa bật — chỉ có giọng mặc định"; } }
+function _voiceName(id){ const v=(TTSVOICES||[]).find(x=>x.id===id); return v?v.name:id; }
+/* --- Kênh: options + auto-fill từ KOL đã chọn --- */
+function _chanOpts(sel){ return `<option value="">— chưa gán kênh —</option>`+CHANS.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${(PLAT[c.platform]||PLAT.khac).e} ${esc(c.name)}</option>`).join(""); }
+function _kolChannel(name){ const k=KOLS.find(x=>x.name===name); return k?(k.channel||""):""; }
+window._nsEmpFmt=()=>{ const sel=$("#ns-fmt"); if(!sel) return;
+  const slug=$("#ns-emp")?$("#ns-emp").value:"";
+  const st=STAFF.find(x=>x.slug===slug), has=st&&(st.formats||[]).length;
+  sel.innerHTML=_fmtOpts(slug); sel.disabled=!has; };
+/* --- ĐẶT HÀNG kịch bản (Claude soạn theo DNA nhân viên → card Chờ duyệt) --- */
+window._odProdChange=()=>{
+  const o=$("#od-prod").selectedOptions[0]; if(!o) return;
+  const nz=(o.dataset.niche||"").toLowerCase();
+  let emp=""; if(/gia d|nhà bếp|nội thất/.test(nz)) emp="san-xuat-video-gia-dung"; else if(/mẹ|bé|me be/.test(nz)) emp="video-me-be";
+  if(emp && $("#od-emp")) $("#od-emp").value=emp;
+  _odEmpFmt();
+};
+window._odKolChange=()=>{ const ch=_kolChannel($("#od-kol").value); if(ch&&$("#od-channel")) $("#od-channel").value=ch; };
+window._odEmpFmt=()=>{ const sel=$("#od-fmt"); if(!sel) return;
+  const slug=$("#od-emp")?$("#od-emp").value:"";
+  const st=STAFF.find(x=>x.slug===slug), has=st&&(st.formats||[]).length;
+  sel.innerHTML=_fmtOpts(slug); sel.disabled=!has; };
+window.openScriptOrder=()=>{
+  if(window.PORTAL){ alert("Chế độ Văn phòng: dùng ＋ Nhập kịch bản để gửi bản thảo. Đặt hàng Claude chạy ở Xưởng (PC)."); return; }
+  const kols=`<option value="">— chọn KOL —</option>`+KOLS.map(k=>`<option>${esc(k.name)}</option>`).join("");
+  const prods=`<option value="">— chọn sản phẩm —</option>`+PRODS.map(p=>`<option value="${esc(p.name)}" data-niche="${esc(p.niche||'')}">${esc(p.name)}${p.niche?' ['+esc(p.niche)+']':''}</option>`).join("");
+  const emps=`<option value="">— chọn nhân viên —</option>`+_MEDIA().map(s=>`<option value="${s.slug}">${s.emoji} ${esc(s.ten)}</option>`).join("");
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <div class="scrhead">＋ Đặt hàng kịch bản — Claude soạn, bạn duyệt</div>
+    <div class="cfg" style="margin-bottom:10px">
+      <div><label>KOL</label><select id="od-kol" onchange="_odKolChange()">${kols}</select></div>
+      <div><label>Sản phẩm</label><select id="od-prod" onchange="_odProdChange()">${prods}</select></div>
+      <div><label>Nhân viên</label><select id="od-emp" onchange="_odEmpFmt()">${emps}</select></div>
+    </div>
+    <div class="cfg" style="margin-bottom:12px">
+      <div><label>📡 Kênh đăng (tự theo KOL, đổi được)</label><select id="od-channel">${_chanOpts("")}</select></div>
+      <div><label>🎬 Format</label><select id="od-fmt"></select></div>
+      <div><label>Số bản kịch bản</label><select id="od-n"><option>1</option><option>2</option><option selected>3</option><option>5</option></select></div>
+      <div><label>Cấu trúc ưu tiên (tuỳ chọn)</label><input id="od-ct" placeholder="vd: M1, A… trống = đa dạng"></div>
+      <div><label>🎙 Giọng TTS (format lồng tiếng)</label><select id="od-voice"><option value="">— giọng mặc định format —</option></select></div>
+    </div>
+    <div class="fld"><label>Ý tưởng / yêu cầu thêm (tuỳ chọn)</label>
+      <textarea id="od-idea" style="min-height:70px" placeholder="vd: nhấn mẹo khóa bánh xe, giọng miền Nam hài, nhắm mẹ bỉm…"></textarea></div>
+    <div class="hint" style="margin:6px 0 12px">Claude nghiên cứu sản phẩm + kho cấu trúc DNA của nhân viên → soạn từng bản vào cột <b>Chờ duyệt</b>. Không sản xuất khi chưa duyệt.</div>
+    <div class="row"><button class="primary" onclick="scriptOrderSend()">📨 Đặt hàng</button><button onclick="closeModal()">Huỷ</button></div>`);
+  _odEmpFmt(); _fillVoiceSel("#od-voice");
+};
+window.scriptOrderSend=async()=>{
+  const kol=$("#od-kol").value, prod=$("#od-prod").value, emp=$("#od-emp").value;
+  if(!prod){alert("Chọn sản phẩm");return;}
+  if(!emp){alert("Chọn nhân viên");return;}
+  const st=STAFF.find(x=>x.slug===emp)||{};
+  const fmt=$("#od-fmt").value, fm=((st.formats)||[]).find(f=>f.id===fmt);
+  const n=$("#od-n").value, ct=$("#od-ct").value.trim(), idea=$("#od-idea").value.trim();
+  const tv=$("#od-voice")?$("#od-voice").value:"";
+  const ch=$("#od-channel")?$("#od-channel").value:"";
+  const brain=emp==="san-xuat-video-gia-dung"
+    ?`
+- 🧠 BỘ NÃO (BẮT BUỘC): đọc "D:\\AFFILATE SHOPEE 2026\\CONG CU AI\\TiepPhoi Space\\brain\\gia-dung\\" (cong-thuc.json + ban-do-san-pham.json + hook-bank.json) TRƯỚC khi viết; tra loại sản phẩm chọn công thức điểm cao nhất còn hợp; tôn trọng mục cấm; ghi id công thức vào cau_truc; SAU khi viết lưu bản sao vào brain/gia-dung/kich-ban-goc/.`:"";
+  const text=`Soạn ${n} kịch bản cho Xưởng KOL (CHỈ SOẠN ĐỂ DUYỆT — tuyệt đối KHÔNG sản xuất):${brain}
+- Sản phẩm: "${prod}" — lấy info/giá/token_block/ảnh từ GET http://127.0.0.1:8090/api/products (khớp theo tên).
+- KOL: "${kol||'(chưa gán — để trống)'}"
+- Nhân viên: "${emp}"${st.ten?` (${st.ten})`:''} — dùng ĐÚNG skill + kho cấu trúc DNA của nhân viên này.
+${fmt?`- Format: "${fmt}"${fm?` (${fm.label})`:''} — thoại đúng chuẩn âm tiết + giọng + bối cảnh của format.`:'- Format: mặc định của nhân viên.'}
+${tv?`- Giọng TTS user đã chọn: voice_id "${tv}" (${_voiceName(tv)}) — ghi vào field tts_voice của từng bản.`:''}
+${ch?`- Kênh đăng: "${ch}" (${chanLabel(ch)}) — ghi vào field channel của từng bản.`:''}
+${ct?`- Cấu trúc ưu tiên: ${ct}.`:'- Đa dạng cấu trúc theo kho DNA (mỗi bản 1 cấu trúc khác nhau, ghi nhãn cau_truc).'}
+${idea?`- Ý tưởng thêm từ user: ${idea}`:''}
+Mỗi bản gồm: hook + ly_do (vì sao bản này ra đơn, dẫn số liệu DNA) + scenes[{idx,title,voice,environment}] (bối cảnh bám thoại) + note chứa VOICE DIRECTION. KHÔNG icon giá/deal lên hình.
+POST từng bản vào http://127.0.0.1:8090/api/scripts với {"status":"pending","staff":"${emp}","format":"${fmt}","tts_voice":"${tv}","channel":"${ch}","kol":"${kol}","product":"${prod}","cau_truc":...,"tags":[...],"hook":...,"ly_do":...,"scenes":[...],"note":...}. DỪNG ở cột Chờ duyệt.`;
+  await api("/api/commands",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text,staff:emp,engine:"claude",label:("Soạn KB: "+prod).slice(0,80)})});
+  closeModal(); go('scripts');
+  if(!agentOpen) toggleAgent(); else pollAgent();
+};
+
+window.openScriptNew=()=>{
+  const kols=`<option value="">— chọn KOL —</option>`+KOLS.map(k=>`<option>${esc(k.name)}</option>`).join("");
+  const prods=`<option value="">— chọn sản phẩm —</option>`+PRODS.map(p=>`<option value="${esc(p.name)}" data-niche="${esc(p.niche||'')}">${esc(p.name)}${p.niche?' ['+esc(p.niche)+']':''}</option>`).join("");
+  const emps=`<option value="">— tự suy theo ngách —</option>`+_MEDIA().map(s=>`<option value="${s.slug}">${s.emoji} ${esc(s.ten)}</option>`).join("");
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <div class="scrhead">＋ Nhập kịch bản thủ công</div>
+    <div class="cfg" style="margin-bottom:10px">
+      <div><label>KOL</label><select id="ns-kol" onchange="_nsKolChange()">${kols}</select></div>
+      <div><label>Sản phẩm</label><select id="ns-prod" onchange="_nsProdChange()">${prods}</select></div>
+      <div><label>Nhân viên</label><select id="ns-emp" onchange="_nsEmpFmt()">${emps}</select></div>
+    </div>
+    <div class="cfg" style="margin-bottom:12px">
+      <div><label>📡 Kênh đăng (tự theo KOL, đổi được)</label><select id="ns-channel">${_chanOpts("")}</select></div>
+      <div><label>🎬 Format</label><select id="ns-fmt"></select></div>
+      <div><label>Cấu trúc (A/B/C… tuỳ chọn)</label><input id="ns-ct" placeholder="vd: A"></div>
+      <div><label>Tag (phân tách bằng dấu phẩy)</label><input id="ns-tags" placeholder="Gia Dụng, giá bí ẩn"></div>
+      <div><label>🎙 Giọng TTS (format lồng tiếng)</label><select id="ns-voice"><option value="">— giọng mặc định format —</option></select></div>
+    </div>
+    <div class="fld"><label>Hook (câu mở, tuỳ chọn)</label><input id="ns-hook"></div>
+    <div class="scrsec"><div class="sl">🎬 Kịch bản
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="mini ${'on'} nsmode" data-m="paste" onclick="_nsMode('paste')">📋 Dán cả kịch bản</button>
+        <button class="mini nsmode" data-m="scene" onclick="_nsMode('scene')">🎬 Nhập từng cảnh</button></span></div>
+      <div id="nsPaste">
+        <textarea id="ns-full" class="scrauto" rows="6" placeholder="Dán nguyên kịch bản vào đây — mình sẽ tự chia thành các cảnh ~10s. (Xuống dòng TRỐNG giữa các đoạn nếu muốn tự tách chỗ; không thì mình tự chia theo độ dài + dấu câu.)" style="min-height:130px" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <div class="row" style="margin-top:8px"><button onclick="_nsSplit()">✂️ Tự chia cảnh →</button>
+          <span class="hint" id="ns-splithint">chia xong sẽ hiện ra để bạn sửa</span></div></div>
+      <div id="nsSceneWrap" style="display:none">
+        <div id="nsScenes"></div>
+        <span class="wbtn" onclick="_nsAdd()">＋ Thêm cảnh</span></div></div>
+    <div class="scractions">
+      <button class="primary" onclick="scrCreate(false)">💾 Tạo (vào Chờ duyệt)</button>
+      <button onclick="scrCreate(true)">✅ Tạo + Duyệt luôn</button>
+      <button onclick="closeModal()">Huỷ</button></div>`);
+  $("#sheetbox").classList.add("wide");
+  $("#nsScenes").innerHTML=_nsSceneRow()+_nsSceneRow()+_nsSceneRow();
+  _nsRenumber(); _nsEmpFmt(); _fillVoiceSel("#ns-voice");
+};
+window._nsMode=m=>{
+  document.querySelectorAll(".nsmode").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
+  $("#nsPaste").style.display=(m==="paste")?"":"none";
+  $("#nsSceneWrap").style.display=(m==="scene")?"":"none";
+};
+// tach 1 doan van thanh cac cau theo dau cau
+function _sentences(t){
+  return (t||"").replace(/\s+/g," ").trim().match(/[^.!?…]+[.!?…]*/g)||[t];
+}
+// gom cau thanh cac cum ~muc tieu am tiet (chuan 10s ~ 45-55), khong cat giua cau
+function _chunkBySyllables(text, target=50, maxScenes=6){
+  const sents=_sentences(text).map(s=>s.trim()).filter(Boolean);
+  const out=[]; let cur="";
+  for(const s of sents){
+    const test=cur?cur+" "+s:s;
+    // dong cum khi them cau moi se vuot ~55 am tiet (chia som cho khop clip 10s)
+    if(cur && _syl(test)>target*1.1){ out.push(cur); cur=s; }
+    else cur=test;
+  }
+  if(cur) out.push(cur);
+  while(out.length>maxScenes){ out[out.length-2]+=" "+out.pop(); }
+  return out;
+}
+window._nsSplit=()=>{
+  const raw=($("#ns-full").value||"").trim();
+  if(!raw){ alert("Dán kịch bản trước đã"); return; }
+  // uu tien tach theo dong TRONG (user tu danh dau); khong co thi tu chia theo am tiet
+  let parts=raw.split(/\n\s*\n+/).map(x=>x.replace(/\s+/g," ").trim()).filter(Boolean);
+  if(parts.length<2){ parts=_chunkBySyllables(raw,50,6); }
+  // moi part neu qua dai (>75 am tiet) -> chia nho tiep
+  const scenes=[];
+  parts.forEach(p=>{ (_syl(p)>75?_chunkBySyllables(p,50,4):[p]).forEach(x=>scenes.push(x)); });
+  $("#nsScenes").innerHTML=scenes.map(v=>_nsSceneRow(v)).join("");
+  _nsRenumber();
+  document.querySelectorAll("#nsScenes .scnvoice").forEach(ta=>{ ta.style.height="auto"; ta.style.height=ta.scrollHeight+"px"; });
+  _nsMode("scene");
+  $("#ns-splithint").textContent="";
+};
+window.scrCreate=async approve=>{
+  const o=$("#ns-prod").selectedOptions[0];
+  const product=$("#ns-prod").value.trim();
+  if(!product){ alert("Chọn sản phẩm"); return; }
+  // dang o che do dan + chua tach -> tu tach truoc
+  const full=$("#ns-full")?$("#ns-full").value.trim():"";
+  const anyVoice=[...document.querySelectorAll('#nsScenes .scnvoice')].some(t=>t.value.trim());
+  if(full && !anyVoice){ _nsSplit(); }
+  const scenes=[...document.querySelectorAll('#nsScenes .newscene')].map((row,i)=>({
+    idx:i+1, title:row.querySelector('.scntitle').value.trim(), voice:row.querySelector('.scnvoice').value.trim()
+  })).filter(s=>s.voice);
+  if(!scenes.length){ alert("Nhập thoại ít nhất 1 cảnh"); return; }
+  const body={kol:$("#ns-kol").value.trim(), product, niche:(o?o.dataset.niche:"")||"",
+    staff:$("#ns-emp").value, format:$("#ns-fmt")?$("#ns-fmt").value:"", cau_truc:$("#ns-ct").value.trim(),
+    tts_voice:$("#ns-voice")?$("#ns-voice").value:"", channel:$("#ns-channel")?$("#ns-channel").value:"",
+    tags:$("#ns-tags").value.split(",").map(x=>x.trim()).filter(Boolean),
+    hook:$("#ns-hook").value.trim(), scenes, status:approve?"approved":"pending"};
+  await api("/api/scripts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  closeModal(); loadScripts();
+};
+
+/* ===== DASHBOARD ===== */
+function renderDash(){
+  const pend=SCRIPTS.filter(s=>s.status==="pending").length;
+  const doing=PROJS.filter(p=>p.status==="producing").length;
+  const done=PROJS.filter(p=>p.status==="done").length;
+  const stat=(ic,bg,c,v,l,go)=>`<div class="stat" onclick="go('${go}')"><div class="sic" style="background:${bg};color:${c}">${ic}</div><div class="sv">${v}</div><div class="sl">${l}</div></div>`;
+  const recent=PROJS.slice(0,6).map(p=>{
+    const ns=(p.scenes||[]).length, dv=(p.scenes||[]).filter(s=>s.video).length;
+    return `<div class="card" onclick="view='projects';openProj('${p.id}')">
+      <div class="nm">${esc(p.title||'(chưa đặt tên)')} <span class="code">${p.code||''}</span></div>
+      <div class="sub" style="margin-top:3px">${esc(p.kol||'')}${p.product?' × '+esc(p.product):''}</div>
+      <div class="sub" style="margin-top:5px">${pstatBadge(p.status)} · ${dv}/${ns} scene có video${p.final_video?' · ✅ hoàn thiện':''}</div></div>`;
+  }).join("");
+  $("#app").innerHTML=`
+    <div class="stats">
+      ${stat('🎬','var(--brand-bg)','var(--brand)',PROJS.length,`Dự án video · ${done} hoàn thiện`,'projects')}
+      ${stat('📋','var(--warnbg)','var(--warn)',pend,'Kịch bản chờ duyệt','scripts')}
+      ${stat('⚙️','var(--runbg)','var(--run)',doing,'Đang sản xuất','projects')}
+      ${stat('👤','var(--accbg)','var(--acc)',KOLS.length,'KOL trong thư viện','kols')}
+      ${stat('📦','var(--okbg)','var(--ok)',PRODS.length,`Sản phẩm · ${NICHES.length} ngách`,'products')}
+    </div>
+    <div class="flowmap">
+      <h2 style="margin-bottom:12px">Quy trình sản xuất</h2>
+      <div class="fsteps">
+        <div class="fs"><span class="fn">1</span><div><b>Đặt hàng kịch bản</b><div class="hint">KOL × SP × Nhân viên × Format</div></div></div><span class="fa">→</span>
+        <div class="fs"><span class="fn">2</span><div><b>Claude soạn</b><div class="hint">theo DNA cấu trúc → card Chờ duyệt</div></div></div><span class="fa">→</span>
+        <div class="fs"><span class="fn">3</span><div><b>Bạn duyệt</b><div class="hint">sửa thoại / đổi KOL / đổi format</div></div></div><span class="fa">→</span>
+        <div class="fs"><span class="fn">4</span><div><b>Sản xuất</b><div class="hint">skill nhân viên render + QC tự động</div></div></div><span class="fa">→</span>
+        <div class="fs"><span class="fn">5</span><div><b>Video hoàn thiện</b><div class="hint">dọc 1080×1920 trong Dự án</div></div></div>
+      </div>
+    </div>
+    <h2>Dự án gần nhất <span class="wbtn" style="margin-left:auto" onclick="go('projects')">Xem tất cả →</span></h2>
+    <div class="grid">${recent||'<div class="sub">Chưa có dự án nào — bấm ＋ Đặt hàng kịch bản để bắt đầu.</div>'}</div>`;
+}
+
+/* (Soạn brief + Hàng đợi brief đã gộp vào 1 luồng Kịch bản duyệt 2026-07-11 — cửa vào duy nhất: ＋ Đặt hàng kịch bản / ＋ Nhập kịch bản) */
+function kolGroups(rows){
+  const g={}; rows.forEach(k=>{const x=(k.group||'').trim(); if(x) g[x]=(g[x]||0)+1;});
+  return Object.entries(g).sort((a,b)=>b[1]-a[1]);
+}
+/* ===== KÊNH (Facebook/TikTok) ===== */
+function renderChannels(){
+  const cards=CHANS.map(c=>{
+    const p=PLAT[c.platform]||PLAT.khac;
+    const nk=KOLS.filter(k=>k.channel===c.id).length, np=PROJS.filter(x=>x.channel===c.id).length;
+    return `<div class="card">
+      <div class="tools"><span onclick="openChan('${c.id}')" title="Sửa">✎</span><span onclick="delChan('${c.id}')" title="Xoá kênh">×</span></div>
+      <div class="nm">${p.e} ${esc(c.name)} ${codeChip(c.code)}${window.PORTAL&&c.nguoi_tao?`<span class="authchip">👤 ${esc(c.nguoi_tao)}</span>`:''}</div>
+      <div class="sub" style="margin-top:3px"><span class="niche">${p.n}</span> · 👤 ${nk} KOL · 🎬 ${np} dự án</div>
+      ${c.url?`<div class="sub2"><a href="${esc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${esc(c.url).replace(/^https?:\/\//,'').slice(0,42)}</a></div>`:''}
+      ${c.note?`<div class="sub" style="margin-top:3px;-webkit-line-clamp:2">${esc(c.note)}</div>`:''}</div>`;
+  }).join("");
+  $("#app").innerHTML=`<h2>Kênh (${CHANS.length}) <button class="mini" style="margin-left:auto" onclick="openChan()">＋ Thêm kênh</button></h2>
+    <div class="hint" style="margin-bottom:12px">Mỗi <b>KOL</b> và <b>dự án</b> gắn với 1 kênh (fanpage FB / kênh TikTok) để lọc, thống kê và biết video đăng ở đâu.</div>
+    <div class="grid">${cards||'<div class="sub">Chưa có kênh. Bấm ＋ Thêm kênh để khai báo fanpage/kênh của bạn.</div>'}<div class="card add" onclick="openChan()">+ Thêm kênh</div></div>`;
+}
+window.openChan=id=>{
+  const c=id?chanById(id):{};
+  const plat=c.platform||"facebook";
+  const opt=(v,e,n)=>`<option value="${v}" ${plat===v?'selected':''}>${e} ${n}</option>`;
+  openModal(`<h3>${id?'Sửa':'Thêm'} kênh</h3>
+    <div class="cfg" style="margin-bottom:10px">
+      <div><label>Tên kênh / fanpage</label><input id="ch-name" value="${esc(c.name||'')}" placeholder="Phạm Thảo Vy"></div>
+      <div><label>Nền tảng</label><select id="ch-plat">${opt('facebook','📘','Facebook')}${opt('tiktok','🎵','TikTok')}${opt('youtube','▶️','YouTube')}${opt('khac','📡','Khác')}</select></div>
+    </div>
+    <div class="fld"><label>Link kênh (tuỳ chọn)</label><input id="ch-url" value="${esc(c.url||'')}" placeholder="https://facebook.com/..."></div>
+    <div class="fld"><label>Ghi chú (tuỳ chọn — ngách, đối tượng…)</label><textarea id="ch-note">${esc(c.note||'')}</textarea></div>
+    <div class="row"><button class="primary" onclick="saveChan('${id||''}')">Lưu</button><button onclick="closeModal()">Huỷ</button></div>`);
+};
+window.saveChan=async id=>{
+  const name=$("#ch-name").value.trim(); if(!name){alert("Nhập tên kênh");return;}
+  const body={name,platform:$("#ch-plat").value,url:$("#ch-url").value.trim(),note:$("#ch-note").value.trim()};
+  await api("/api/channels"+(id?"/"+id:""),{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  closeModal(); await load(); go('channels');
+};
+window.delChan=id=>{
+  const nk=KOLS.filter(k=>k.channel===id).length, np=PROJS.filter(x=>x.channel===id).length;
+  const warn=(nk||np)?`\n\n⚠ ${nk} KOL + ${np} dự án đang gắn kênh này — xoá xong chúng sẽ hiện "chưa gán kênh" (dữ liệu KOL/dự án KHÔNG mất).`:"";
+  if(!confirm("Xoá kênh này?"+warn)) return;
+  api("/api/channels/"+id,{method:"DELETE"}).then(()=>load());
+};
+function renderLib(kind,rows,word,round){
+  let bar="", shown=rows;
+  if(!round){
+    const tot=rows.length, noN=rows.filter(p=>!(p.niche||"").trim()).length;
+    const chip=(lbl,val,n)=>`<span class="nf ${nicheFilter===val?'on':''}" onclick="setNiche('${esc(val).replace(/'/g,"\\'")}')">${esc(lbl)} <b>${n}</b></span>`;
+    bar=`<div class="nfbar">${chip('Tất cả','',tot)}${NICHES.map(x=>chip(x.niche,x.niche,x.count)).join("")}${noN?chip('Chưa gán','__none__',noN):''}</div>`;
+    if(nicheFilter==='__none__') shown=rows.filter(p=>!(p.niche||"").trim());
+    else if(nicheFilter) shown=rows.filter(p=>(p.niche||"").trim()===nicheFilter);
+  } else {
+    const tot=rows.length, noG=rows.filter(k=>!(k.group||"").trim()).length, grps=kolGroups(rows);
+    const chip=(lbl,val,n)=>`<span class="nf ${kolFilter===val?'on':''}" data-v="${esc(val)}" onclick="setKGroup(this.dataset.v)">${esc(lbl)} <b>${n}</b></span>`;
+    if(grps.length) bar=`<div class="nfbar">${chip('Tất cả','',tot)}${grps.map(([g,n])=>chip(g,g,n)).join("")}${noG?chip('Chưa gán','__none__',noG):''}</div>`;
+    if(kolFilter==='__none__') shown=rows.filter(k=>!(k.group||"").trim());
+    else if(kolFilter) shown=rows.filter(k=>(k.group||"").trim()===kolFilter);
+  }
+  $("#app").innerHTML=`<h2>Thư viện ${word} (${shown.length}${shown.length!==rows.length?'/'+rows.length:''})
+    <button class="mini" onclick="openImport('${kind}')" style="margin-left:auto">⬇ Import hàng loạt</button></h2>
+    ${bar}
+    <div class="grid">${shown.map(e=>`
+    <div class="card clk" onclick="openLibDetail('${round?'kol':'prod'}','${e.id}')"><div class="tools"><span onclick="event.stopPropagation();openForm('${round?'kol':'prod'}','${e.id}')" title="Sửa">✎</span><span onclick="event.stopPropagation();del('${kind}','${e.id}')">×</span></div>
+      <div class="row">${media(e,round)}<div><div class="nm">${esc(e.name)} ${codeChip(e.code)}${window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(e.nguoi_tao)}</span>`:''}</div>
+      <div class="sub">${round?`${e.channel&&chanById(e.channel)?`<span class="niche">${esc(chanLabel(e.channel))}</span> · `:''}${e.group?`${esc(e.group)} · `:''}${e.voice_id?'🎙 giọng khoá':(e.voice?'có mô tả giọng':'')}`:`${e.niche?`<span class="niche">${esc(e.niche)}</span> · `:''}${esc(e.price||'')}`} · ${(e.refs||[]).length} ref</div>
+      ${round?`<div class="wbtn" onclick="event.stopPropagation();openWardrobe('${e.id}')">👕 Trang phục (${(e.outfits||[]).length})</div>`
+             :`<div class="wbtn napbtn" onclick="event.stopPropagation();openNapVideo('${e.id}')">🧠 Nạp video ra đơn${(e.spy_refs||[]).length?` (${e.spy_refs.length})`:''}</div>`}
+      ${!round&&e.info?`<div class="sub" style="margin-top:3px;-webkit-line-clamp:1">${esc(e.info)}</div>`:''}</div></div></div>`).join("")}
+    <div class="card add" onclick="openForm('${round?'kol':'prod'}')">+ Thêm ${word}</div></div>`;
+}
+window.setNiche=v=>{ nicheFilter = nicheFilter===v ? "" : v; render(); };
+window.setKGroup=v=>{ kolFilter = kolFilter===v ? "" : v; render(); };
+/* ===== PHỄU NẠP NÃO: video ra đơn theo SẢN PHẨM (chống nhầm SP) ===== */
+window.openNapVideo=id=>{
+  if(window.PORTAL){ alert("Chế độ Văn phòng: nạp não chạy ở Xưởng (PC)."); return; }
+  const p=PRODS.find(x=>x.id===id); if(!p) return;
+  const done=(p.spy_refs||[]).filter(r=>r.status==='done').length, pend=(p.spy_refs||[]).length-done;
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <h3>🧠 Nạp video ra đơn · ${esc(p.name).slice(0,50)}</h3>
+    ${(p.spy_refs||[]).length?`<div class="hint" style="margin:-4px 0 10px">Đã nạp ${done} ✓${pend?` · ${pend} đang xử lý`:''} — link trùng sẽ tự bỏ qua.</div>`:''}
+    <div class="cfg" style="margin-bottom:10px">
+      <div><label>Video của ai?</label><select id="nv-owner">
+        <option value="doi_thu">🕵️ Đối thủ — bóc CÔNG THỨC nạp não</option>
+        <option value="cua_minh">📈 Của tôi đã đăng — đổ SỐ LIỆU thật vào não</option></select></div>
+    </div>
+    <div class="fld"><label>Link video (mỗi dòng 1 link — TikTok chắc ăn, Facebook best-effort; nạp 3-5 video cùng format cho công thức chuẩn)</label>
+      <textarea id="nv-links" style="min-height:90px" placeholder="https://www.tiktok.com/@shop/video/123...&#10;https://www.facebook.com/reel/456..."></textarea></div>
+    <div class="fld"><label>Hoặc chọn file video từ máy</label><input type="file" id="nv-files" multiple accept="video/*" style="height:auto;padding:6px"></div>
+    <div class="fld"><label>Số liệu view/đơn (QUAN TRỌNG — bóc video flop = công thức sai; ghi tự do, vd "link1: 1.2M view ~500 đơn")</label>
+      <textarea id="nv-metrics" style="min-height:50px" placeholder="Không biết số thì để trống — video sẽ được weight thấp."></textarea></div>
+    <div class="hint" style="margin:4px 0 12px">Claude sẽ: tải về <code>SPY/theo-san-pham/${esc(p.code||'')}</code> → bóc tách → nạp <b>brain/gia-dung</b> gắn đúng sản phẩm này. KHÔNG tự đẻ kịch bản — nạp xong bạn Đặt hàng sau.</div>
+    <div class="row"><button class="primary" onclick="napVideoSend('${id}')">🧠 Nạp vào não</button><button onclick="closeModal()">Huỷ</button></div>`);
+};
+window.napVideoSend=async id=>{
+  const links=$("#nv-links").value.trim(), fs=$("#nv-files").files;
+  if(!links && !fs.length){ alert("Dán ít nhất 1 link hoặc chọn 1 file"); return; }
+  const fd=new FormData();
+  fd.append("links",links); fd.append("owner",$("#nv-owner").value); fd.append("metrics",$("#nv-metrics").value.trim());
+  for(const f of fs) fd.append("files",f);
+  const r=await fetch(`/api/products/${id}/nap-video`,{method:"POST",body:fd}).then(x=>x.json()).catch(e=>({detail:String(e)}));
+  if(r.ok){ closeModal(); await load();
+    if(!agentOpen) toggleAgent(); else pollAgent();
+  } else alert("Lỗi: "+JSON.stringify(r.detail||r));
+};
+// (Template kịch bản + Soạn brief/Hàng đợi brief đã bỏ 2026-07-11 — 1 luồng duy nhất qua Kịch bản duyệt)
+function pick(t,id){ sel[t]=id; render(); } window.pick=pick;
+window.del=async(k,id)=>{ if(confirm("Xoá?")){ await fetch("/api/"+k+"/"+id,{method:"DELETE"}); load(); } };
+window._ed={refs:[],drop:new Set()};
+function renderThumbs(){
+  const box=$("#f-existing"); if(!box) return;
+  const {refs,drop}=window._ed;
+  box.innerHTML = refs.length
+    ? refs.map((r,i)=>`<div class="thumb ${drop.has(r)?'rm':''}"><img src="${img(r)}">
+        <span class="thx" onclick="toggleRef(${i})" title="${drop.has(r)?'Khôi phục':'Gỡ ảnh này'}">${drop.has(r)?'↺':'×'}</span>
+        <span class="cap">#${i+1}</span></div>`).join("")
+    : `<span class="hint">Chưa có ảnh nào.</span>`;
+}
+window.toggleRef=i=>{ const r=window._ed.refs[i]; const d=window._ed.drop; d.has(r)?d.delete(r):d.add(r); renderThumbs(); };
+/* ===== CHI TIẾT KOL / SẢN PHẨM (bấm vào thẻ) — modal rộng 2 cột ===== */
+window.openLibDetail=(kind,id)=>{
+  const isK=kind==='kol';
+  const e=(isK?KOLS:PRODS).find(x=>x.id===id); if(!e) return;
+  const imgs=(e.refs||[]).map(r=>`<img class="dth" src="${img(r)}">`).join("")||'<span class="sub">chưa có ảnh tham chiếu</span>';
+  const row=(lbl,val)=>val?`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`:'';
+  const auth=window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(e.nguoi_tao)}</span>`:'';
+  const panel=(title,txt,code)=>txt?`<div class="dpanel"><div class="dpt">${title}</div>${code?`<code class="dcode">${esc(txt)}</code>`:`<div class="dptext">${esc(txt)}</div>`}</div>`:'';
+  let meta, right;
+  if(isK){
+    const vname=e.voice_id?('🎙 giọng khoá'+(e.voice?' · '+esc(e.voice):'')):(e.voice?esc(e.voice):'');
+    meta=row('📡 Kênh', e.channel&&chanById(e.channel)?esc(chanLabel(e.channel)):'—')
+       +row('🏷 Nhóm', e.group?esc(e.group):'—')
+       +row('🎙 Giọng', vname||'—')
+       +row('👕 Trang phục', `${(e.outfits||[]).length} bộ`);
+    right=panel('🧬 Identity — token khoá gương mặt / trang phục', e.identity, true);
+  }else{
+    meta=row('🗂 Ngách', e.niche?esc(e.niche):'—')
+       +row('💰 Giá', e.price?`<b>${esc(e.price)}</b>`:'—')
+       +row('🧠 Video ra đơn', `${(e.spy_refs||[]).length} video đã nạp`);
+    right=panel('📝 Thông tin sản phẩm', e.info)+panel('🔒 Token ảnh (EN)', e.token_block, true);
+  }
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <div class="dhead">${media(e,isK?1:0)}
+      <div><div class="nm" style="font-size:18px">${esc(e.name)} ${codeChip(e.code)}${auth}</div>
+      <div class="sub">${isK?'KOL':'Sản phẩm'}${(e.refs||[]).length?` · ${(e.refs||[]).length} ảnh ref`:''}</div></div></div>
+    <div class="dgrid">
+      <div class="dcol">
+        <div class="ddetail">${meta}</div>
+        <div class="dreflabel">Ảnh tham chiếu</div><div class="thumbs">${imgs}</div>
+      </div>
+      <div class="dcol dcol-r">${right||'<div class="sub" style="padding:8px 0">Chưa có mô tả — bấm ✎ Sửa để bổ sung.</div>'}</div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="primary" onclick="openForm('${isK?'kol':'prod'}','${id}')">✎ Sửa</button>
+      ${isK?`<button onclick="openWardrobe('${id}')">👕 Trang phục (${(e.outfits||[]).length})</button>`
+           :(window.PORTAL?'':`<button onclick="openNapVideo('${id}')">🧠 Nạp video ra đơn</button>`)}
+      <button onclick="closeModal()">Đóng</button></div>`);
+  $("#sheetbox").classList.add("detail");
+};
+window.openForm=(kind,id)=>{
+  const isK=kind==='kol';
+  const e = id ? (isK?KOLS:PRODS).find(x=>x.id===id) : {};
+  window._ed={refs:(e.refs||[]).slice(),drop:new Set()};
+  const v = f => esc(e[f]||"");
+  openModal(`<h3>${id?'Sửa':'Thêm'} ${isK?'KOL':'sản phẩm'}</h3>
+    <div class="fld"><label>Tên</label><input id="f-name" value="${v('name')}"></div>
+    <div class="fld"><label>Mã ngắn (để gọi không nhầm, vd ${isK?'annie':'ke3tang'})</label><input id="f-code" value="${v('code')}" placeholder="tự tạo nếu bỏ trống"></div>
+    ${isK?`<div class="fld"><label>📡 Kênh (KOL này chuyên đăng ở kênh nào)</label>
+            <select id="f-channel"><option value="">— chưa gán kênh —</option>${CHANS.map(c=>`<option value="${c.id}" ${e.channel===c.id?'selected':''}>${(PLAT[c.platform]||PLAT.khac).e} ${esc(c.name)}</option>`).join("")}</select>
+            ${CHANS.length?'':'<span class="hint">Chưa có kênh — tạo ở mục 📡 Kênh trước.</span>'}</div>
+          <div class="fld"><label>Giọng (mô tả EN)</label><input id="f-voice" value="${v('voice')}" placeholder="energetic friendly Northern Vietnamese sales accent"></div>
+          <div class="fld"><label style="display:flex;align-items:center;gap:10px">🎙 Giọng đọc video (Flow) — khoá giọng cố định
+            <span class="wbtn" style="margin-left:auto" onclick="refreshVoices('${e.flow_project_id||''}')">↻ Cập nhật giọng mới</span></label>
+            <select id="f-voiceid"><option value="">— tự động (Flow tự chọn, không nhất quán) —</option></select>
+            <span class="hint" id="voicehint">đang tải danh sách giọng…</span> <span id="voicesample"></span></div>
+          <div class="fld"><label>Identity (token EN khoá gương mặt/trang phục)</label><textarea id="f-id">${v('identity')}</textarea></div>
+          <div class="fld"><label>Nhóm (phân loại KOL — gõ mới hoặc chọn nhóm sẵn có)</label>
+            <input id="f-group" value="${v('group')}" list="group-opts" placeholder="vd: Nữ trẻ, Mẹ bỉm, Kho xưởng, Nam trung niên...">
+            <datalist id="group-opts">${[...new Set(KOLS.map(k=>(k.group||'').trim()).filter(Boolean))].map(g=>`<option value="${esc(g)}">`).join("")}</datalist></div>`
+        :`<div class="fld"><label>Ngách (danh mục sản phẩm — gõ mới hoặc chọn ngách sẵn có)</label>
+            <input id="f-niche" value="${v('niche')}" list="niche-opts" placeholder="vd: Nhà bếp, Mẹ & Bé, Nội thất, Gia dụng...">
+            <datalist id="niche-opts">${NICHES.map(x=>`<option value="${esc(x.niche)}">`).join("")}</datalist></div>
+          <div class="fld"><label>Giá</label><input id="f-price" value="${v('price')}" placeholder="₫179.000"></div>
+          <div class="fld"><label>Thông tin sản phẩm (đầy đủ — để Claude nắm khi viết kịch bản: công năng, bán điểm, đối tượng, link Shopee...)</label><textarea id="f-info" style="min-height:110px">${v('info')}</textarea></div>
+          <div class="fld"><label>Token EN mô tả hình ảnh (khoá cứng cho gen ảnh — tuỳ chọn)</label><textarea id="f-tok">${v('token_block')}</textarea></div>`}
+    ${id?`<div class="fld"><label>Ảnh đang dùng (bấm × để gỡ, ↺ để khôi phục)</label><div class="thumbs" id="f-existing"></div></div>`:''}
+    <div class="fld"><label>${id?'Thêm ảnh mới':'Ảnh ref '+(isK?'nhân vật 1-3':'sản phẩm THẬT 1-2')}</label><input type="file" id="f-refs" multiple accept="image/*" style="height:auto;padding:6px"></div>
+    <div class="row"><button class="primary" onclick="saveForm('${kind}','${id||''}')">Lưu</button><button onclick="closeModal()">Huỷ</button></div>`);
+  renderThumbs();
+  if(isK) loadVoices(e.flow_project_id||'', e.voice_id||'');
+};
+window._voices=[];
+async function loadVoices(projectId, selected){
+  const sel=$("#f-voiceid"), hint=$("#voicehint"); if(!sel) return;
+  window._curVoiceProject=projectId||"";
+  hint.textContent="đang tải danh sách giọng…";
+  const r=await api("/api/voices?project_id="+encodeURIComponent(projectId||""));
+  if(!r.ok){ hint.textContent="⚠️ Flow backend chưa bật (:8200) — không tải được giọng"; return; }
+  window._voices=r.voices;
+  const builtin=r.voices.filter(v=>v.source!=="custom");
+  const custom=r.voices.filter(v=>v.source==="custom");
+  const male=builtin.filter(v=>/^male/i.test(v.description||""));
+  const fem=builtin.filter(v=>/^female/i.test(v.description||""));
+  const other=builtin.filter(v=>!/^male|^female/i.test(v.description||""));
+  const opt=v=>`<option value="${v.id}" ${v.id===selected?"selected":""}>${esc(v.display_name)} — ${esc(v.desc_vi||v.description||v.source)}</option>`;
+  sel.innerHTML=`<option value="">— tự động (Flow tự chọn, không nhất quán) —</option>`
+    +(custom.length?`<optgroup label="Giọng riêng của KOL (clone)">${custom.map(opt).join("")}</optgroup>`:"")
+    +`<optgroup label="Nam (${male.length})">${male.map(opt).join("")}</optgroup>`
+    +`<optgroup label="Nữ (${fem.length})">${fem.map(opt).join("")}</optgroup>`
+    +(other.length?`<optgroup label="Khác (${other.length})">${other.map(opt).join("")}</optgroup>`:"");
+  hint.textContent=`${r.voices.length} giọng (${custom.length} clone riêng). Chọn 1 giọng để khoá cố định cho KOL.`;
+  sel.onchange=showVoiceSample; showVoiceSample();
+}
+function showVoiceSample(){
+  const id=$("#f-voiceid").value, box=$("#voicesample"); if(!box) return;
+  const v=window._voices.find(x=>x.id===id);
+  if(!v){ box.innerHTML=""; return; }
+  box.innerHTML = (v.sample_url?`<a href="${v.sample_url}" target="_blank" style="color:var(--acc)">▶ nghe thử</a> · `:"")
+    + `<span class="wbtn" onclick="editVoiceNote('${v.id}')">✎ Mô tả tiếng Việt</span>`
+    + (v.note?` <span class="sub">(${esc(v.note)})</span>`:"");
+}
+window.editVoiceNote=(vid)=>{
+  const v=window._voices.find(x=>x.id===vid);
+  const note=prompt("Mô tả giọng bằng tiếng Việt\n(vd: Nam miền Bắc, ấm, hợp bán hàng):", v?(v.note||''):'');
+  if(note===null) return;
+  api("/api/voices/note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({voice_id:vid,note})})
+    .then(()=>loadVoices(window._curVoiceProject||"", $("#f-voiceid").value));
+};
+window.refreshVoices=async(projectId)=>{
+  const sel=$("#f-voiceid");
+  await loadVoices(projectId, sel?sel.value:"");
+  $("#voicehint").textContent="↻ Đã quét lại. (Giọng mới tạo trên Flow: mở project KOL đó trên Flow 1 lần cho extension đồng bộ, rồi bấm lại.)";
+};
+window.saveForm=async(kind,id)=>{
+  const isK=kind==='kol';const fd=new FormData();
+  const put=(k,el)=>{const x=$(el);if(x)fd.append(k,x.value);};
+  put("name","#f-name");put("code","#f-code");
+  if(isK){put("voice","#f-voice");put("identity","#f-id");put("voice_id","#f-voiceid");put("group","#f-group");put("channel","#f-channel");}
+  else{put("niche","#f-niche");put("price","#f-price");put("info","#f-info");put("token_block","#f-tok");}
+  for(const f of $("#f-refs").files) fd.append("refs",f);
+  if(id && window._ed.drop.size) fd.append("drop_refs",JSON.stringify([...window._ed.drop]));
+  const ep="/api/"+(isK?"kols":"products")+(id?"/"+id:"");
+  await fetch(ep,{method:id?"PATCH":"POST",body:fd});
+  closeModal();load();
+};
+window.openWardrobe=id=>{
+  const k=KOLS.find(x=>x.id===id); if(!k) return;
+  const outs=k.outfits||[];
+  const rows=outs.map(o=>{
+    const r=(o.refs&&o.refs[0]);
+    const th=r?`<img class="oimg" src="${img(r)}">`:`<div class="oimg ph">👕</div>`;
+    return `<div class="ofit">${th}<div><div class="nm">${esc(o.name)} <span class="code">${(o.refs||[]).length} ảnh</span></div>
+      ${o.note?`<div class="sub">${esc(o.note)}</div>`:''}</div>
+      <div class="otools"><span onclick="openOutfitForm('${id}','${o.id}')" title="Sửa">✎</span><span onclick="delOutfit('${id}','${o.id}')" title="Xoá">×</span></div></div>`;
+  }).join("");
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <h3>Tủ đồ · ${esc(k.name)}</h3>
+    <p class="hint">Mỗi bộ trang phục có mô tả + token EN + ảnh riêng. Khi soạn brief chọn bộ để khoá tạo hình.</p>
+    ${rows||'<div class="sub" style="margin-bottom:10px">Chưa có bộ trang phục nào.</div>'}
+    <div class="row" style="margin-top:12px"><button class="primary" onclick="openOutfitForm('${id}')">+ Thêm trang phục</button></div>`);
+};
+window.openOutfitForm=(kid,oid)=>{
+  const k=KOLS.find(x=>x.id===kid);
+  const o = oid ? (k.outfits||[]).find(x=>x.id===oid) : {};
+  window._ed={refs:(o.refs||[]).slice(),drop:new Set()};
+  const v=f=>esc(o[f]||"");
+  openModal(`<h3>${oid?'Sửa':'Thêm'} trang phục · ${esc(k.name)}</h3>
+    <div class="fld"><label>Tên bộ (vd: Áo dài đỏ, Đồ công sở, Váy hè)</label><input id="o-name" value="${v('name')}"></div>
+    <div class="fld"><label>Mô tả (tiếng Việt — để dễ nhớ)</label><input id="o-note" value="${v('note')}" placeholder="Áo dài đỏ thêu hoa, tóc búi"></div>
+    <div class="fld"><label>Token EN khoá tạo hình (cho gen ảnh giữ nhất quán)</label><textarea id="o-token">${v('token')}</textarea></div>
+    ${oid?`<div class="fld"><label>Ảnh bộ này (bấm × để gỡ, ↺ khôi phục)</label><div class="thumbs" id="f-existing"></div></div>`:''}
+    <div class="fld"><label>${oid?'Thêm ảnh mới':'Ảnh trang phục 1-3'}</label><input type="file" id="o-refs" multiple accept="image/*" style="height:auto;padding:6px"></div>
+    <div class="row"><button class="primary" onclick="saveOutfit('${kid}','${oid||''}')">Lưu</button><button onclick="openWardrobe('${kid}')">← Quay lại tủ đồ</button></div>`);
+  renderThumbs();
+};
+window.saveOutfit=async(kid,oid)=>{
+  const fd=new FormData();
+  const put=(k,el)=>{const x=$(el);if(x)fd.append(k,x.value);};
+  put("name","#o-name");put("note","#o-note");put("token","#o-token");
+  if(!$("#o-name").value.trim()){alert("Nhập tên bộ trang phục");return;}
+  for(const f of $("#o-refs").files) fd.append("refs",f);
+  if(oid && window._ed.drop.size) fd.append("drop_refs",JSON.stringify([...window._ed.drop]));
+  const ep="/api/kols/"+kid+"/outfits"+(oid?"/"+oid:"");
+  await fetch(ep,{method:oid?"PATCH":"POST",body:fd});
+  KOLS=await api("/api/kols"); openWardrobe(kid);
+};
+window.delOutfit=async(kid,oid)=>{
+  if(!confirm("Xoá bộ trang phục này?"))return;
+  await fetch("/api/kols/"+kid+"/outfits/"+oid,{method:"DELETE"});
+  KOLS=await api("/api/kols"); openWardrobe(kid);
+};
+const fileUrl = p => "/api/file?path="+encodeURIComponent(p);
+const PSTAT={planning:["📝 Chờ duyệt kịch bản","pplan"],producing:["Đang sản xuất","pprod"],done:["Hoàn thiện","pdone"],failed:["Lỗi","pplan"]};
+function pstatBadge(s){const[t,c]=PSTAT[s]||PSTAT.producing;return `<span class="pstat ${c}">${t}</span>`;}
+let projChan="";
+window.setProjChan=v=>{ projChan=projChan===v?"":v; renderProjects(); };
+function renderProjects(){
+  if(curProj){ renderProjectDetail(); return; }
+  let list=PROJS;
+  if(projChan==="__none__") list=PROJS.filter(p=>!(p.channel&&chanById(p.channel)));
+  else if(projChan) list=PROJS.filter(p=>p.channel===projChan);
+  const cards=list.map(p=>{
+    const ns=(p.scenes||[]).length, done=(p.scenes||[]).filter(s=>s.video).length;
+    return `<div class="card" onclick="openProj('${p.id}')">
+      <div class="tools"><span onclick="event.stopPropagation();delProject('${p.id}')" title="Xoá dự án">×</span></div>
+      <div class="nm">${esc(p.title||'(chưa đặt tên)')} <span class="code">${p.code||''}</span>${window.PORTAL&&p.nguoi_tao?`<span class="authchip">👤 ${esc(p.nguoi_tao)}</span>`:''}</div>
+      <div class="sub" style="margin-top:3px">${p.channel&&chanById(p.channel)?`<span class="niche">${esc(chanLabel(p.channel))}</span> · `:''}${esc(p.kol||'')}${p.product?' × '+esc(p.product):''}</div>
+      <div class="sub" style="margin-top:4px">${pstatBadge(p.status)} · ${ns} scene${ns?` (${done} có video)`:''}${p.final_video?' · ✅ video hoàn thiện':''}</div>
+      ${p.template?`<div class="sub2">📝 ${esc(p.template)}</div>`:''}</div>`;
+  }).join("");
+  const noC=PROJS.filter(p=>!(p.channel&&chanById(p.channel))).length;
+  const chip=(lbl,val,n)=>`<span class="nf ${projChan===val?'on':''}" onclick="setProjChan('${val}')">${lbl} <b>${n}</b></span>`;
+  const bar=CHANS.length?`<div class="nfbar" style="margin-bottom:12px">${chip('Tất cả','',PROJS.length)}${CHANS.map(c=>chip((PLAT[c.platform]||PLAT.khac).e+' '+esc(c.name),c.id,PROJS.filter(p=>p.channel===c.id).length)).join("")}${noC?chip('Chưa gán kênh','__none__',noC):''}</div>`:'';
+  $("#app").innerHTML=`<h2>Dự án video (${list.length}${list.length!==PROJS.length?'/'+PROJS.length:''})</h2>
+    <div class="hint" style="margin-bottom:12px">Mỗi video là một dự án có mã (DA-xxxx), lưu trong <code>Xuong KOL AI/Du An/</code>. Bấm để xem quy trình: kịch bản → storyboard → lời thoại → video từng scene → video hoàn thiện.</div>
+    ${bar}
+    <div class="grid">${cards||'<div class="sub">Chưa có dự án nào khớp bộ lọc.</div>'}</div>`;
+}
+window.openProj=async id=>{ curProj=await api("/api/projects/"+id); view="projects"; render(); };
+window.closeProj=()=>{ curProj=null; renderProjects(); };
+/* --- XOÁ DỰ ÁN: modal xác nhận, mặc định chỉ gỡ khỏi Xưởng; tick thêm mới xoá file trên đĩa --- */
+window.delProject=id=>{
+  const p=PROJS.find(x=>x.id===id)||curProj||{};
+  openModal(`<h3>🗑 Xoá dự án ${esc(p.code||'')}</h3>
+    <div class="sub" style="margin:6px 0 12px">${esc(p.title||'')}</div>
+    <div class="hint" style="margin-bottom:12px">Mặc định chỉ <b>gỡ khỏi Xưởng KOL</b> — thư mục <code>Du An/${esc(p.code||'…')}</code> (video, storyboard) vẫn còn trên đĩa.</div>
+    <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin-bottom:14px">
+      <input type="checkbox" id="delp-files" style="margin-top:3px">
+      <span>Xoá <b>cả thư mục file trên đĩa</b> — video/storyboard mất vĩnh viễn, <b style="color:var(--err)">KHÔNG hoàn tác được</b></span></label>
+    <div class="row">
+      <button class="primary" style="background:var(--err);border-color:var(--err)" onclick="delProjectGo('${id}')">🗑 Xoá dự án</button>
+      <button onclick="closeModal()">Huỷ</button></div>`);
+};
+window.delProjectGo=async id=>{
+  const files=$("#delp-files")&&$("#delp-files").checked?1:0;
+  try{
+    await api(`/api/projects/${id}?files=${files}`,{method:"DELETE"});
+  }catch(e){ alert("Xoá lỗi: "+(e&&e.message||e)); return; }
+  closeModal(); curProj=null; await load(); go('projects');
+};
+function _fallbackCopy(t){ const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); }
+window.copyScenePrompt=(ev,idx,field)=>{
+  ev.stopPropagation();
+  const s=(curProj.scenes||[]).find(x=>x.idx===idx); if(!s) return;
+  const t=s[field||'storyboard_prompt']||""; const el=ev.currentTarget; const old=el.innerHTML;
+  const done=()=>{ el.innerHTML='✓ đã copy'; el.classList.add('copied'); setTimeout(()=>{el.innerHTML=old;el.classList.remove('copied');},1300); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done,()=>{_fallbackCopy(t);done();});
+  else { _fallbackCopy(t); done(); }
+};
+window.genStoryboard=async()=>{
+  await api(`/api/projects/${curProj.id}/storyboard_prompt`,{method:"POST"});
+  curProj=await api("/api/projects/"+curProj.id); renderProjects();
+};
+window.copyMaster=(ev)=>{
+  ev.stopPropagation();
+  const t=curProj.storyboard_master_prompt||""; const el=ev.currentTarget; const old=el.textContent;
+  const done=()=>{ el.textContent='✓ đã copy'; setTimeout(()=>el.textContent=old,1300); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done,()=>{_fallbackCopy(t);done();});
+  else { _fallbackCopy(t); done(); }
+};
+window.uploadScene=(idx,slot)=>{
+  const inp=document.createElement("input"); inp.type="file";
+  inp.accept = slot==="video" ? "video/*" : "image/*";
+  inp.onchange=async()=>{
+    if(!inp.files[0]) return;
+    const fd=new FormData(); fd.append("idx",idx); fd.append("slot",slot); fd.append("file",inp.files[0]);
+    try{
+      const r=await fetch(`/api/projects/${curProj.id}/scene_upload`,{method:"POST",body:fd});
+      if(!r.ok){ alert("Upload lỗi: "+r.status); return; }
+      curProj=await api("/api/projects/"+curProj.id); renderProjects();
+    }catch(e){ alert("Upload lỗi: "+e.message); }
+  };
+  inp.click();
+};
+function pipeBar(p){
+  const sc=p.scenes||[], ns=sc.length||1;
+  const nsb=sc.filter(s=>s.storyboard).length, nmo=sc.filter(s=>s.motion).length, nvid=sc.filter(s=>s.video).length;
+  const st=(done,part)=>done?'ok':(part?'part':'');
+  const steps=[
+    ["Kịch bản", !!p.script, false, ""],
+    ["Storyboard", sc.length>0&&nsb===sc.length, nsb>0, `${nsb}/${sc.length}`],
+    ["Prompt video", sc.length>0&&nmo===sc.length, nmo>0, `${nmo}/${sc.length}`],
+    ["Video cảnh", sc.length>0&&nvid===sc.length, nvid>0, `${nvid}/${sc.length}`],
+    ["Hoàn thiện", !!p.final_video, false, ""],
+  ];
+  return `<div class="pipe">${steps.map(([t,ok,part,n])=>
+    `<div class="pst ${st(ok,part)}"><span class="pd">${ok?'✓':(part?'…':'')}</span>${t}${n&&!ok?` <b>${n}</b>`:''}</div>`).join("")}</div>`;
+}
+window.sceneZoom=url=>openModal(`<span class="tools"><span onclick="closeModal()">×</span></span><img src="${url}" style="width:100%;border-radius:8px">`);
+function _sceneCard(s,i){
+  const idx=s.idx||i+1;
+  const sb = s.storyboard
+    ? `<div class="scsb" onclick="sceneZoom('${fileUrl(s.storyboard)}')" title="Bấm phóng to"><img src="${fileUrl(s.storyboard)}"></div>`
+    : `<div class="scsb empty">${s.storyboard_prompt?'có prompt · chưa có ảnh':'chưa có ảnh'}</div>`;
+  const vid = s.video
+    ? `<video class="scvid" controls preload="metadata" src="${fileUrl(s.video)}"></video>`
+    : `<div class="scvid ph">🎬 chưa<br>render</div>`;
+  const prompts = (s.storyboard_prompt||s.motion)?`<details class="promptdet">
+      <summary>⚙ Prompt kỹ thuật</summary>
+      ${s.storyboard_prompt?`<div class="pl">🖼 Storyboard <span class="code copy" onclick="copyScenePrompt(event,${idx},'storyboard_prompt')">copy<span class="ci">⧉</span></span></div><pre class="pv">${esc(s.storyboard_prompt)}</pre>`:''}
+      ${s.motion?`<div class="pl">🎬 Video Flow <span class="code copy" onclick="copyScenePrompt(event,${idx},'motion')">copy<span class="ci">⧉</span></span></div><pre class="pv">${esc(s.motion)}</pre>`:''}
+    </details>`
+    : (s.storyboard?`<div class="hint" style="font-size:11.5px">⏳ Claude sẽ đọc ảnh rồi viết prompt video</div>`:'');
+  return `<div class="scard">
+    <div class="scnum">Cảnh ${idx}${s.title?' · <span class="scttl">'+esc(s.title)+'</span>':''}</div>
+    <div class="scardtop">${sb}${vid}</div>
+    <div class="scvoice">🗣 ${esc(s.voice||'—')}</div>
+    ${prompts}
+    <div class="scact">
+      <button class="mini" onclick="uploadScene(${idx},'storyboard')">${s.storyboard?'↻ ảnh':'⬆ ảnh SB'}</button>
+      <span class="wbtn" onclick="uploadScene(${idx},'video')">⬆ video</span>
+    </div></div>`;
+}
+function renderProjectDetail(){
+  const p=curProj, scenes=p.scenes||[];
+  const dl = p.final_video?`<a class="wbtn" href="${fileUrl(p.final_video)}" download style="margin-top:6px">⬇ Tải video</a>`:'';
+  $("#app").innerHTML=`
+    <div class="pjhead">
+      <div style="flex:1;min-width:0">
+        <span class="back" onclick="closeProj()">← Tất cả dự án</span>
+        <div class="pjtitle">${esc(p.title||'(chưa đặt tên)')} <span class="code">${p.code||''}</span> ${pstatBadge(p.status)}</div>
+        <div class="pjmeta">${p.channel&&chanById(p.channel)?'📡 '+esc(chanLabel(p.channel))+' · ':''}${p.kol?'👤 '+esc(p.kol):''}${p.product?' · 📦 '+esc(p.product):''}${p.template?' · 📝 '+esc(p.template):''}</div>
+      </div>
+      <button class="mini" style="flex:0 0 auto;color:var(--err);border-color:var(--err)" onclick="delProject('${p.id}')">🗑 Xoá dự án</button>
+    </div>
+    ${pipeBar(p)}
+    <div class="pjgrid">
+      <div class="pjmain">
+        <div class="psec"><h3><span class="step">1</span> Kịch bản</h3>
+          <div class="scriptbox" style="max-height:180px;overflow:auto">${p.script?esc(p.script):'<span class="hint">Chưa có kịch bản.</span>'}</div></div>
+        <div class="psec"><h3><span class="step">2</span> Phân cảnh <span class="hint" style="font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px">${scenes.length} cảnh · bấm ảnh để phóng to · prompt gập trong ⚙</span>
+          <button class="mini" style="margin-left:auto" onclick="genStoryboard()" title="Sinh/cập nhật prompt storyboard cho các cảnh">✨ Sinh prompt SB</button></h3>
+          <div class="scenegrid">${scenes.map(_sceneCard).join("")||'<span class="hint">Chưa có phân cảnh.</span>'}</div></div>
+      </div>
+      <div class="pjside">
+        <div class="psec finalvid"><h3><span class="step">✔</span> Video hoàn thiện</h3>
+          ${p.final_video?`<video controls src="${fileUrl(p.final_video)}"></video>${dl}`:'<div class="hint" style="text-align:center;padding:20px 0">Chưa có.<br>Xong các cảnh → render → hiện ở đây.</div>'}
+          ${(!window.PORTAL&&p.final_video)?`<button class="primary" style="width:100%;margin-top:12px" onclick="publishMedia(event,'${p.id}')">⬆ Xuất bản lên Thư viện Media</button><div class="hint" style="margin-top:6px">Claude sẽ upload video lên Drive rồi tạo bản ghi trong Thư viện Media.</div>`:''}</div>
+      </div>
+    </div>`;
+}
+/* ===== THƯ VIỆN MEDIA ===== */
+const MSTAT={chua_dang:['Chưa đăng','chua_dang'],da_dang:['Đã đăng','da_dang'],len_lich:['Lên lịch','len_lich']};
+const _mnum=n=>(n===null||n===undefined||n==='')?'—':(typeof n==='number'?n.toLocaleString('vi-VN'):esc(''+n));
+const drivePrev=did=>"https://drive.google.com/file/d/"+encodeURIComponent(did)+"/preview";
+function mediaBadge(s){const[t,c]=MSTAT[s]||MSTAT.chua_dang;return `<span class="mbadge ${c}">${t}</span>`;}
+function renderMedia(){
+  if(!MEDIA.length){
+    $("#app").innerHTML=`<h2>Thư viện Media</h2><div class="hint" style="padding:26px;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)">Chưa có video nào trong thư viện.<br>${window.PORTAL?'Xưởng sẽ tự xuất bản video hoàn thiện lên đây.':'Mở một dự án đã hoàn thiện rồi bấm “⬆ Xuất bản lên Thư viện Media”.'}</div>`;
+    return;
+  }
+  $("#app").innerHTML=`<h2>Thư viện Media (${MEDIA.length})</h2><div class="mgrid">${MEDIA.map(mediaCard).join("")}</div>`;
+}
+function mediaCard(m){
+  const m2=m.metrics||{};
+  const chips=[m.kol?`👤 ${esc(m.kol)}`:'',m.product?`📦 ${esc(m.product)}`:'',m.channel&&chanById(m.channel)?esc(chanLabel(m.channel)):(m.channel?esc(m.channel):''),m.project_code?`🎬 ${esc(m.project_code)}`:''].filter(Boolean).map(c=>`<span class="mchip">${c}</span>`).join("");
+  const auth=window.PORTAL&&m.nguoi_tao?`<span class="mchip">👤 ${esc(m.nguoi_tao)}</span>`:'';
+  const thumb=m.drive_id
+    ?`<div class="mplay" title="Xem video" onclick="event.stopPropagation();mediaEmbedCard('${m.id}',this.parentNode)">▶</div>`
+    :`<div class="mnodrive">Chưa upload Drive</div>`;
+  return `<div class="mcard" onclick="openMediaDetail('${m.id}')">
+    <div class="mthumb" id="mth-${m.id}">${thumb}</div>
+    <div class="mbody">
+      <div class="mtt">${esc(m.title||'(chưa đặt tên)')}</div>
+      <div>${mediaBadge(m.status_dang)}</div>
+      <div class="mchips">${chips}${auth}</div>
+      <div class="mmetrics"><span>👁 ${_mnum(m2.view)}</span><span>💬 ${_mnum(m2.binh_luan)}</span><span>🛒 ${_mnum(m2.don)}</span></div>
+    </div></div>`;
+}
+window.mediaEmbedCard=(id,thumbEl)=>{
+  const m=MEDIA.find(x=>x.id===id); if(!m||!m.drive_id) return;
+  thumbEl.innerHTML=`<iframe src="${drivePrev(m.drive_id)}" allow="autoplay" allowfullscreen></iframe>`;
+};
+window.openMediaDetail=(id)=>{
+  const m=MEDIA.find(x=>x.id===id); if(!m) return;
+  const m2=m.metrics||{};
+  const player=m.drive_id
+    ?`<div class="mplayer"><iframe src="${drivePrev(m.drive_id)}" allow="autoplay" allowfullscreen></iframe></div>`
+    :`<div class="mplayer" style="display:flex;align-items:center;justify-content:center;color:#888;font-size:13px">Chưa upload Drive — chưa có video để xem</div>`;
+  const row=(lbl,val)=>`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`;
+  const auth=window.PORTAL&&m.nguoi_tao?`<span class="authchip">👤 ${esc(m.nguoi_tao)}</span>`:'';
+  const meta=row('👤 KOL',m.kol?esc(m.kol):'—')+row('📦 Sản phẩm',m.product?esc(m.product):'—')
+    +row('📡 Kênh',m.channel&&chanById(m.channel)?esc(chanLabel(m.channel)):(m.channel?esc(m.channel):'—'))
+    +row('🎬 Mã dự án',m.project_code?`<span class="code">${esc(m.project_code)}</span>`:'—')
+    +row('🔗 Drive',m.drive_link?`<a href="${esc(m.drive_link)}" target="_blank" style="color:var(--acc)">mở Drive</a>`:'—');
+  const opt=(v,lbl,cur)=>`<option value="${v}" ${cur===v?'selected':''}>${lbl}</option>`;
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <div class="dhead"><div><div class="nm" style="font-size:18px">${esc(m.title||'(chưa đặt tên)')} ${auth}</div>
+      <div class="sub">Video trong thư viện</div></div></div>
+    <div class="dgrid">
+      <div class="dcol">${player}<div class="ddetail" style="margin-top:12px">${meta}</div></div>
+      <div class="dcol dcol-r">
+        <div class="fld"><label>📝 Caption đăng</label><textarea id="md-caption" style="min-height:120px">${esc(m.caption||'')}</textarea></div>
+        <div class="fld"><label>Trạng thái đăng</label><select id="md-status">${opt('chua_dang','Chưa đăng',m.status_dang)}${opt('da_dang','Đã đăng',m.status_dang)}${opt('len_lich','Lên lịch',m.status_dang)}</select></div>
+        <div class="fld"><label>🔗 Link bài đăng</label><input id="md-link" value="${esc(m.link_dang||'')}" placeholder="https://..."></div>
+        <div class="fld"><label>Chỉ số thực tế (👁 view · 💬 bình luận · 🛒 đơn)</label>
+          <div class="mnum3">
+            <input id="md-view" type="number" min="0" placeholder="👁 view" value="${m2.view==null?'':m2.view}">
+            <input id="md-cmt" type="number" min="0" placeholder="💬 bình luận" value="${m2.binh_luan==null?'':m2.binh_luan}">
+            <input id="md-don" type="number" min="0" placeholder="🛒 đơn" value="${m2.don==null?'':m2.don}"></div></div>
+        <div class="row" style="margin-top:10px"><button class="primary" onclick="saveMedia('${id}')">💾 Lưu</button><button onclick="closeModal()">Đóng</button></div>
+      </div>
+    </div>`);
+  $("#sheetbox").classList.add("detail");
+};
+window.saveMedia=async(id)=>{
+  const body={
+    caption:$("#md-caption").value,
+    status_dang:$("#md-status").value,
+    link_dang:$("#md-link").value.trim(),
+    metrics:{view:$("#md-view").value,binh_luan:$("#md-cmt").value,don:$("#md-don").value}
+  };
+  const r=await api("/api/media/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(r&&r.id){ const i=MEDIA.findIndex(x=>x.id===id); if(i>=0) MEDIA[i]=r; }
+  closeModal(); renderMedia();
+};
+window.publishMedia=async(ev,pid)=>{
+  const btn=ev&&ev.currentTarget; if(btn){ btn.disabled=true; btn.textContent='⏳ Đang tạo lệnh…'; }
+  try{
+    const r=await api("/api/projects/"+pid+"/publish_media",{method:"POST"});
+    if(!r||!r.ok){ alert("Xuất bản lỗi: "+((r&&r.detail)||'không rõ')); if(btn){btn.disabled=false;btn.textContent='⬆ Xuất bản lên Thư viện Media';} return; }
+    if(!agentOpen) toggleAgent(); else pollAgent();
+    if(btn){ btn.textContent='✅ Đã giao Claude — theo dõi ở Agent nổi'; }
+  }catch(e){ alert("Xuất bản lỗi: "+(e&&e.message||e)); if(btn){btn.disabled=false;btn.textContent='⬆ Xuất bản lên Thư viện Media';} }
+};
+window.openImport=kind=>{
+  const word = kind==='kols'?'KOL':kind==='templates'?'template':'sản phẩm';
+  const eg = kind==='kols'
+    ? '[{"name":"Thảo Vy","code":"thaovy","voice":"warm young Vietnamese female voice","identity":"..."}]'
+    : kind==='templates'
+    ? '[{"name":"Neo giá kho xưởng","code":"neogia","format":"kho_xuong","hook":"Xả kho...","beats":[{"role":"Hook","sec":3,"script":"{san_pham} chỉ {gia}!","visual":"cận sản phẩm"}],"notes":"..."}]'
+    : '[{"name":"Bình giữ nhiệt","code":"binh-nhiet","niche":"Nhà bếp","price":"₫89.000","info":"Bình giữ nhiệt 500ml, giữ nóng 12h..."}]';
+  openModal(`<h3>Import ${word} hàng loạt</h3>
+    <p class="hint">Dán mảng JSON (mỗi phần tử 1 ${word}). ${kind==='templates'?'Thường nhờ Claude sinh JSON từ video ra đơn.':'Ảnh ref thêm sau bằng nút Sửa.'} Có thể nhờ Claude sinh JSON này.</p>
+    <textarea id="imp" style="min-height:200px;font-family:ui-monospace,monospace;font-size:13px" placeholder='${esc(eg)}'></textarea>
+    <div class="row" style="margin-top:12px"><button class="primary" onclick="doImport('${kind}')">Import</button><button onclick="closeModal()">Huỷ</button></div>`);
+};
+window.doImport=async kind=>{
+  let items; try{ items=JSON.parse($("#imp").value); }catch(e){ alert("JSON sai: "+e.message); return; }
+  if(!Array.isArray(items)){ alert("Phải là mảng [ ... ]"); return; }
+  const r=await api("/api/import",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind,items})});
+  closeModal(); alert("Đã import "+r.imported); load();
+};
+function openModal(h){$("#sheetbox").innerHTML=h;$("#modal").classList.add("on");}
+function closeModal(){$("#modal").classList.remove("on");$("#sheetbox").classList.remove("wide","detail");} window.closeModal=closeModal;
+// ===== Agent nổi =====
+let agentOpen=false, CMDS=[];
+window.toggleAgent=()=>{ agentOpen=!agentOpen; $("#apanel").classList.toggle("on",agentOpen); if(agentOpen){pollAgent();$("#ain").focus();} };
+function setAgentDots(st){
+  window._agentSt=st;
+  $("#adot").classList.toggle("on",!!st.online);
+  $("#adot2").classList.toggle("on",!!st.online);
+  $("#astside").textContent = st.online ? (st.busy?"Agent: đang chạy…":"Agent: sẵn sàng") : "Agent: offline";
+}
+async function pollAgent(){
+  try{
+    const [st,cmds]=await Promise.all([api("/api/agent/status"),api("/api/commands")]);
+    setAgentDots(st);
+    $("#ast").textContent = st.online ? (st.running?`đang chạy ${st.running}/${st.max_parallel||''} việc`:(st.busy?`đang chạy: ${st.current||'…'}`:"sẵn sàng")) : "offline — chạy START-AGENT.bat";
+    const feed=$("#afeed");
+    const atBottom = feed.scrollHeight-feed.scrollTop-feed.clientHeight<60;
+    const eName={claude:'🧠 Claude',codex:'⚡ Codex',gemini:'✦ Gemini',oss:'🖥️ OSS'};
+    CMDS=cmds.slice().reverse();
+    feed.innerHTML=CMDS.map(c=>{
+      const eng=eName[c.engine||'claude']||('🧠 '+(c.engine||'claude'));
+      const thread=c.resume_session?` <span title="tin này nối tiếp phiên trước">🔗</span>`:'';
+      const me=`<div class="msg me">${esc(c.text)}<div class="mt" style="text-align:right">${eng}${thread}</div></div>`;
+      let ai="";
+      if(c.status==="pending") ai=`<div class="msg ai run">⏳ chờ điều phối…</div>`;
+      else if(c.status==="running") ai=`<div class="msg ai run">⚙️ ${eng} đang làm…</div>`;
+      else if(c.response){
+        const reply=(c.session_id&&(c.engine||'claude')==='claude')
+          ?` · <span style="cursor:pointer;color:var(--brand)" onclick="agSetReply('${c.session_id}','${esc((c.label||c.text).slice(0,40)).replace(/'/g,"\\'")}')" title="Chat tiếp trong CÙNG phiên này (nhớ ngữ cảnh)">↩ Tiếp</span>`:'';
+        ai=`<div class="msg ai${c.status==='failed'?' run':''}">${esc(c.response)}<div class="mt">${c.status==='failed'?'⚠️ lỗi':'✅ xong'} · ${eng}${reply}</div></div>`;
+      }
+      return me+ai;
+    }).join("");
+    // mạch tự trôi: lệnh follow-up vừa gửi xong -> chuyển chip sang phiên MỚI nhất của mạch
+    if(window._agReply&&window._agReply.waitCid){
+      const c=CMDS.find(x=>x.id===window._agReply.waitCid);
+      if(c&&c.status!=="pending"&&c.status!=="running"&&c.session_id){
+        window._agReply.sid=c.session_id; window._agReply.waitCid=null;
+      }
+    }
+    if(atBottom) feed.scrollTop=feed.scrollHeight;
+  }catch(e){ $("#ast").textContent="studio lỗi"; }
+}
+async function pollStatusLight(){ if(window.PORTAL) return; try{ setAgentDots(await api("/api/agent/status")); }catch(e){} }
+window.agSetReply=(sid,label)=>{
+  window._agReply={sid,label,waitCid:null};
+  $("#areply").style.display=""; $("#areply-lb").textContent=label;
+  $("#ain").focus();
+};
+window.agClearReply=()=>{ window._agReply=null; $("#areply").style.display="none"; };
+window.sendCmd=async()=>{
+  const t=$("#ain").value.trim(); if(!t) return;
+  $("#ain").value="";
+  const body={text:t};
+  if(window._agReply&&window._agReply.sid) body.resume_session=window._agReply.sid;
+  const r=await api("/api/commands",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(window._agReply) window._agReply.waitCid=r.id; // xong thì chip trôi sang phiên mới của mạch
+  pollAgent();
+};
+$("#ain").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendCmd(); } });
+setInterval(()=>{ if(agentOpen) pollAgent(); },3000);
+setInterval(pollStatusLight,10000);
+
+document.querySelectorAll("aside nav").forEach(n=>n.addEventListener("click",e=>{
+  const a=e.target.closest("[data-v]"); if(a){ view=a.dataset.v; curProj=null; render(); }
+}));
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal();});
+window.addEventListener("hashchange",()=>{ const p=location.hash.slice(1).split("/"); if(VIEWMETA[p[0]]&&(p[0]!==view||(p[0]==="projects"&&(curProj?curProj.id:"")!==(p[1]||"")))){ view=p[0]; curProj=null; if(p[0]==="projects"&&p[1]){ openProj(p[1]).catch(()=>render()); } else render(); } });
+(async()=>{
+  try{ window.CFG=await api('/api/config'); window.PORTAL=(window.CFG.mode==='portal'); }catch(e){}
+  applyPortalUI();
+  load(); pollStatusLight();
+})();
+setInterval(async()=>{ if(window.PORTAL) return; if(view==="staff"){ loadStaff(); } if(view==="flowaccts"){ loadFlow().then(renderFlowAccounts); } if(view==="scripts"){ loadScripts(); } },4000);
+</script>
+</body>
+</html>
