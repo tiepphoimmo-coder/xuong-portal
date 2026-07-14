@@ -102,6 +102,13 @@
 
   label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px;font-weight:500}
   select,input,textarea{width:100%;height:37px;border:1px solid var(--bd2);border-radius:9px;padding:0 11px;font-size:14px;background:var(--card);color:var(--tx);font-family:inherit}
+  input[type=checkbox],input[type=radio]{width:auto;height:auto;padding:0;flex:0 0 auto}
+  /* hop xac nhan xoa nguy hiem */
+  .dngbox{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;border:1px solid var(--err);background:var(--errbg);border-radius:10px;cursor:pointer;margin-bottom:16px}
+  .dngbox input{width:18px;height:18px;margin-top:1px;accent-color:var(--err);cursor:pointer}
+  .dngbox .dtxt{font-size:13px;line-height:1.5;color:var(--tx)}
+  .dngbox .dtxt b{color:var(--err)}
+  .delnote{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--mut);line-height:1.5;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:14px}
   select:focus,input:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
   textarea{height:auto;padding:9px 11px;min-height:70px;line-height:1.5}
   .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
@@ -1498,15 +1505,16 @@ window.closeProj=()=>{ curProj=null; renderProjects(); };
 /* --- XOÁ DỰ ÁN: modal xác nhận, mặc định chỉ gỡ khỏi Xưởng; tick thêm mới xoá file trên đĩa --- */
 window.delProject=id=>{
   const p=PROJS.find(x=>x.id===id)||curProj||{};
-  openModal(`<h3>🗑 Xoá dự án ${esc(p.code||'')}</h3>
-    <div class="sub" style="margin:6px 0 12px">${esc(p.title||'')}</div>
-    <div class="hint" style="margin-bottom:12px">Mặc định chỉ <b>gỡ khỏi Xưởng KOL</b> — thư mục <code>Du An/${esc(p.code||'…')}</code> (video, storyboard) vẫn còn trên đĩa.</div>
-    <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin-bottom:14px">
-      <input type="checkbox" id="delp-files" style="margin-top:3px">
-      <span>Xoá <b>cả thư mục file trên đĩa</b> — video/storyboard mất vĩnh viễn, <b style="color:var(--err)">KHÔNG hoàn tác được</b></span></label>
-    <div class="row">
-      <button class="primary" style="background:var(--err);border-color:var(--err)" onclick="delProjectGo('${id}')">🗑 Xoá dự án</button>
-      <button onclick="closeModal()">Huỷ</button></div>`);
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <h3 style="margin-bottom:4px">🗑 Xoá dự án ${esc(p.code||'')}</h3>
+    <div class="sub" style="margin:0 0 16px">${esc(p.title||'')}</div>
+    <div class="delnote">🛡️<div>Mặc định chỉ <b>gỡ dự án khỏi Xưởng KOL</b>. Thư mục <code>Du An/${esc(p.code||'…')}</code> (video, storyboard) <b>vẫn còn trên đĩa</b>.</div></div>
+    <label class="dngbox">
+      <input type="checkbox" id="delp-files">
+      <div class="dtxt">Xoá <b>luôn cả thư mục file trên đĩa</b><br>Video &amp; storyboard mất <b>vĩnh viễn — KHÔNG hoàn tác được</b>.</div></label>
+    <div class="row" style="justify-content:flex-end">
+      <button onclick="closeModal()">Huỷ</button>
+      <button class="primary" style="background:var(--err);border-color:var(--err)" onclick="delProjectGo('${id}')">🗑 Xoá dự án</button></div>`);
 };
 window.delProjectGo=async id=>{
   const files=$("#delp-files")&&$("#delp-files").checked?1:0;
