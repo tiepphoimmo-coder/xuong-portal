@@ -832,8 +832,12 @@ async def nap_video(id: str, links: str = Form(""), owner: str = Form("doi_thu")
                   "(3) ĐỌC brain/gia-dung/cong-thuc.json — video khớp công thức có sẵn thì CỘNG bằng chứng (bang_chung.doi_thu), "
                   "lạ hẳn thì đề xuất CÔNG THỨC MỚI (đủ trường theo schema); cập nhật ban-do-san-pham nếu loại SP chưa có; "
                   "KHÔNG lưu thoại đối thủ nguyên văn — chỉ công thức; "
-                  "(4) PATCH product spy_refs: status=done + cong_thuc=<id công thức> cho từng nguồn; "
-                  "(5) ghi 1 entry nhat-ky-hoc.md. KHÔNG tự đẻ kịch bản — dừng sau khi nạp não.")
+                  "(4) BÓC THÔNG SỐ SẢN PHẨM từ video (whisper + frame): kích thước/chất liệu/công năng/bán điểm/giá NẾU video nêu — "
+                  "đây là DỮ KIỆN thật (khác công thức), viết lại bằng LỜI MÌNH, KHÔNG chép thoại đối thủ. "
+                  f"PATCH /api/products/{id}: nếu 'info' đang TRỐNG thì điền; nếu ĐÃ CÓ thì chỉ BỔ SUNG dữ kiện mới chưa có (KHÔNG ghi đè cái cũ); "
+                  "nếu video nêu giá rõ mà 'price' đang trống thì điền price; "
+                  "(5) PATCH product spy_refs: status=done + cong_thuc=<id công thức> cho từng nguồn; "
+                  "(6) ghi 1 entry nhat-ky-hoc.md. KHÔNG tự đẻ kịch bản — dừng sau khi nạp não.")
     else:
         text = (f"PHỄU NẠP NÃO GIA DỤNG — video CỦA MÌNH đã đăng, sản phẩm \"{sp_ten}\" (id {id}).\n"
                 f"Nguồn ({len(new_items)}): " + " | ".join(new_items) + "\n"
@@ -841,8 +845,10 @@ async def nap_video(id: str, links: str = Form(""), owner: str = Form("doi_thu")
                 "Việc: (1) tải/đọc video; (2) nhận diện nó khớp kịch bản nào trong brain/gia-dung/kich-ban-goc/ "
                 "(theo sản phẩm + thoại) — chưa có thì tạo record mới; (3) đổ view/đơn vào ket_qua của kịch bản đó "
                 "+ bang_chung.cua_minh của công thức tương ứng trong cong-thuc.json + do-luong.json (PATCH /api/do-luong nếu có record); "
-                "(4) tính lại diem công thức (SỐ CỦA MÌNH GHI ĐÈ số đối thủ); (5) PATCH product spy_refs status=done; "
-                "(6) ghi entry nhat-ky-hoc.md (công thức lên/xuống hạng).")
+                "(4) tính lại diem công thức (SỐ CỦA MÌNH GHI ĐÈ số đối thủ); "
+                f"(5) BÓC THÔNG SỐ SẢN PHẨM từ video (kích thước/chất liệu/công năng/giá nếu có) — PATCH /api/products/{id}: "
+                "'info' trống thì điền, có rồi thì bổ sung dữ kiện mới (không ghi đè); giá rõ mà price trống thì điền; "
+                "(6) PATCH product spy_refs status=done; (7) ghi entry nhat-ky-hoc.md (công thức lên/xuống hạng).")
     store.upsert("commands", {"text": text, "status": "pending", "response": None,
                               "engine": "claude", "staff": "san-xuat-video-gia-dung",
                               "label": (("🧠 Nạp não: " if owner == "doi_thu" else "🧠 Đổ số: ") + sp_ten)[:80]})
