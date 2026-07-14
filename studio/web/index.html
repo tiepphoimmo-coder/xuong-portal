@@ -258,6 +258,11 @@
   .kbico:hover{background:var(--bg);color:var(--tx)}
   .kbico.del:hover{color:var(--err);border-color:var(--err);background:var(--errbg)}
   .kbempty{font-size:12px;color:var(--mut);text-align:center;padding:14px 0;border:1.5px dashed var(--bd2);border-radius:8px}
+  .kbhint{font-size:11px;color:var(--mut);margin:-4px 0 8px;line-height:1.3}
+  .kbhint a{color:var(--brand);cursor:pointer;text-decoration:none}
+  .kbhint a:hover{text-decoration:underline}
+  .kbmore{margin-top:8px;text-align:center;font-size:12px;font-weight:600;color:var(--brand);cursor:pointer;padding:8px;border:1px dashed var(--bd2);border-radius:8px;background:var(--card)}
+  .kbmore:hover{background:var(--brand-bg);border-color:var(--brand)}
   /* thanh loc kich ban: dropdown gom nhom (thay chip cloud) */
   .sfbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
   .fsel{height:30px;max-width:210px;padding:0 26px 0 10px;border:1px solid var(--bd);background:var(--card) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239a9a9a' stroke-width='1.5'/></svg>") no-repeat right 9px center;color:var(--tx);border-radius:8px;font-size:12.5px;cursor:pointer;-webkit-appearance:none;appearance:none;text-overflow:ellipsis}
@@ -413,7 +418,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
-let KOLS=[], PRODS=[], BRIEFS=[], NICHES=[], TPLS=[], PROJS=[], STAFF=[], ENGINES=[], FLOWACCTS=[], FLOWPIN=null, FLOWBRIDGES=0, SCRIPTS=[], CHANS=[], MEDIA=[], scrF={}, scrShowRej=false, sel={kol:null,prod:null,tpl:""}, view="dash", nicheFilter="", curProj=null, _hashProj=null, stNiche="", stQ="", stKGroup="", stKQ="", kolFilter="";
+let KOLS=[], PRODS=[], BRIEFS=[], NICHES=[], TPLS=[], PROJS=[], STAFF=[], ENGINES=[], FLOWACCTS=[], FLOWPIN=null, FLOWBRIDGES=0, SCRIPTS=[], CHANS=[], MEDIA=[], scrF={}, scrShowRej=false, scrDoneAll=false, sel={kol:null,prod:null,tpl:""}, view="dash", nicheFilter="", curProj=null, _hashProj=null, stNiche="", stQ="", stKGroup="", stKQ="", kolFilter="";
 const PLAT={facebook:{e:"📘",n:"Facebook"},tiktok:{e:"🎵",n:"TikTok"},youtube:{e:"▶️",n:"YouTube"},khac:{e:"📡",n:"Khác"}};
 const chanById=id=>CHANS.find(c=>c.id===id);
 const chanLabel=id=>{const c=chanById(id);return c?`${(PLAT[c.platform]||PLAT.khac).e} ${c.name}`:"";};
@@ -765,14 +770,16 @@ function renderScripts(){
     if(s.status==="pending") foot=(canApprove?`<button class="kbbtn primary" onclick="event.stopPropagation();scrSet('${s.id}','approved')">✅ Duyệt</button>`:'')
       +`<button class="kbico" title="Xem / Sửa" onclick="event.stopPropagation();openScript('${s.id}')">✏️</button>`
       +(canApprove?`<button class="kbico del" title="Bỏ" onclick="event.stopPropagation();scrSet('${s.id}','rejected')">✕</button>`:'');
-    else if(s.status==="approved" && canApprove) foot=`<button class="kbbtn primary prodbtn" onclick="event.stopPropagation();scrProduce('${s.id}')">🎬 Sản xuất</button>
-      <button class="kbico" title="Trả lại Chờ duyệt" onclick="event.stopPropagation();scrSet('${s.id}','pending')">↩︎</button>`;
+    const delIco=canApprove?`<button class="kbico del" title="Xoá card khỏi bảng (video/dự án vẫn còn)" onclick="event.stopPropagation();scrDel('${s.id}')">🗑</button>`:'';
+    if(s.status==="approved" && canApprove) foot=`<button class="kbbtn primary prodbtn" onclick="event.stopPropagation();scrProduce('${s.id}')">🎬 Sản xuất</button>
+      <button class="kbico" title="Trả lại Chờ duyệt" onclick="event.stopPropagation();scrSet('${s.id}','pending')">↩︎</button>`+delIco;
     else if(s.project_id){
       if(window.PORTAL){  // portal khong co tab Du an -> tro thang vao video trong Thu vien Media
         const md=(MEDIA||[]).find(m=>m.project_id===s.project_id);
         foot=md?`<button class="kbbtn primary" onclick="event.stopPropagation();openMediaDetail('${md.id}')">🎬 Xem video</button>`
                :`<button class="kbbtn" onclick="event.stopPropagation();go('media')">🎞 Thư viện Media</button>`;
       } else foot=`<button class="kbbtn" onclick="event.stopPropagation();openProj('${s.project_id}')">📁 Mở dự án</button>`;
+      foot+=delIco;
     }
     const auth=s.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(s.nguoi_tao))}</span>`:'';
     return `<div class="kbcard" draggable="${canApprove}" ondragstart="kbDrag(event,'${s.id}')" ondragend="kbDragEnd(event)" onclick="openScript('${s.id}')">
@@ -782,11 +789,21 @@ function renderScripts(){
       <div class="kbmeta">${esc(s.kol||'')} · ${(s.scenes||[]).length} cảnh · <span title="Thời gian tạo">🕐 ${fmtTime(s.created)}</span>${auth}</div>
       <div class="kbfoot">${foot}</div></div>`;
   };
+  const DONE_LIMIT=6;
   const cols=SCR_COLS.map(([st,label])=>{
-    const items=shown.filter(s=>s.status===st);
+    const full=shown.filter(s=>s.status===st);  // SCRIPTS đã sắp mới→cũ
+    let items=full, extra="", hint="";
+    if(st==="done"){
+      hint=`<div class="kbhint">Video hoàn thiện lưu ở 🎞 <a onclick="go('media')">Thư viện Media</a></div>`;
+      if(full.length>DONE_LIMIT){
+        if(!scrDoneAll){ items=full.slice(0,DONE_LIMIT);
+          extra=`<div class="kbmore" onclick="scrDoneAll=true;renderScripts()">＋ Xem ${full.length-DONE_LIMIT} cũ hơn</div>`; }
+        else extra=`<div class="kbmore" onclick="scrDoneAll=false;renderScripts()">▲ Thu gọn</div>`;
+      }
+    }
     return `<div class="kbcol" ondragover="kbOver(event)" ondragleave="kbLeave(event)" ondrop="kbDrop(event,'${st}')">
-      <h4>${label} <span class="cnt2">${items.length}</span></h4>
-      ${items.map(card).join("")||'<div class="kbempty">trống</div>'}</div>`;
+      <h4>${label} <span class="cnt2">${full.length}</span></h4>${hint}
+      ${items.map(card).join("")||'<div class="kbempty">trống</div>'}${extra}</div>`;
   }).join("");
   const rej=shown.filter(s=>s.status==="rejected");
   const rejCol=scrShowRej?`<div class="kbcol kbrej" ondragover="kbOver(event)" ondragleave="kbLeave(event)" ondrop="kbDrop(event,'rejected')">
@@ -805,6 +822,12 @@ function renderScripts(){
     ${filterBar}
     <div class="kb">${cols}${rejCol}</div>`;
 }
+window.scrDel=async id=>{
+  const s=SCRIPTS.find(x=>x.id===id);
+  if(!confirm(`Xoá card "${(s&&s.product||'').slice(0,40)}" khỏi bảng?\n\n(Video, dự án và Thư viện Media KHÔNG bị xoá — chỉ gỡ thẻ này khỏi kanban.)`)) return;
+  try{ await api("/api/scripts/"+id,{method:"DELETE"}); }catch(e){ alert("Xoá lỗi: "+(e&&e.message||e)); return; }
+  loadScripts();
+};
 window.scrPickDim=(dim,v)=>{ if(v) scrF[dim]=v; else delete scrF[dim]; renderScripts(); };
 window.scrClearF=()=>{ scrF={}; renderScripts(); };
 window.scrSet=async(id,status)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})}); loadScripts(); };
