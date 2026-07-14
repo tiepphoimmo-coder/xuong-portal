@@ -271,6 +271,18 @@ async def _portal_gate(request: Request, call_next):
     return await call_next(request)
 
 
+@app.get("/api/sync-status")
+def api_sync_status():
+    """Trang thai sync agent (doc nhip tim). alive=True neu dap nhip trong 90s gan day."""
+    p = os.path.join(DATA_HOME, "sync_heartbeat.json")
+    try:
+        hb = json.load(open(p, encoding="utf-8"))
+        ago = time.time() - float(hb.get("t") or 0)
+        return {"alive": ago < 90, "ago": int(ago), "portal": hb.get("portal")}
+    except Exception:
+        return {"alive": False, "ago": None, "portal": None}
+
+
 @app.get("/api/config")
 def api_config():
     u = _cur()

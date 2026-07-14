@@ -69,6 +69,9 @@
   #topbar h1{font-size:16.5px;margin:0;font-weight:700;letter-spacing:.2px}
   #topbar .tdesc{font-size:12.5px;color:var(--mut)}
   #topbar .tact{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .syncstat{display:none;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap;cursor:default}
+  .syncstat.on{display:inline-block;background:var(--okbg);color:var(--ok)}
+  .syncstat.off{display:inline-block;background:var(--errbg);color:var(--err)}
   main{max-width:1320px;width:100%;margin:0 auto;padding:26px 30px 60px}
   #wrap.full main,#wrap.full #topbar .tbinner{max-width:none}
 
@@ -393,6 +396,7 @@
     <div class="tbinner">
       <div><h1 id="ttitle">Tổng quan</h1><div class="tdesc" id="tdesc"></div></div>
       <div class="tact">
+        <span id="syncstat" class="syncstat" title="Trạng thái đồng bộ với Văn phòng VPS"></span>
         <button class="mini" onclick="load()" title="Tải lại dữ liệu">↻ Làm mới</button>
         <button class="primary prodbtn" style="height:33px;padding:0 14px;font-size:13px" onclick="go('scripts');openScriptOrder()">＋ Đặt hàng kịch bản</button>
       </div>
@@ -1897,6 +1901,15 @@ async function pollAgent(){
   }catch(e){ $("#ast").textContent="studio lỗi"; }
 }
 async function pollStatusLight(){ if(window.PORTAL) return; try{ setAgentDots(await api("/api/agent/status")); }catch(e){} }
+async function pollSyncStat(){
+  const el=document.getElementById("syncstat"); if(!el) return;
+  if(window.PORTAL){ el.className="syncstat"; return; }  // VPS khong chay sync agent -> an
+  try{
+    const s=await api("/api/sync-status");
+    if(s.alive){ el.className="syncstat on"; el.textContent="🔄 Đồng bộ VPS"; el.title=`Đồng bộ Văn phòng OK (${s.ago}s trước)`; }
+    else{ el.className="syncstat off"; el.textContent="⚠️ Đồng bộ TẮT"; el.title="Sync agent không chạy — chạy START-XUONG.bat (hoặc START-SYNC.bat)"; }
+  }catch(e){ el.className="syncstat off"; el.textContent="⚠️ Đồng bộ TẮT"; }
+}
 window.agSetReply=(sid,label)=>{
   window._agReply={sid,label,waitCid:null};
   $("#areply").style.display=""; $("#areply-lb").textContent=label;
@@ -1915,6 +1928,7 @@ window.sendCmd=async()=>{
 $("#ain").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendCmd(); } });
 setInterval(()=>{ if(agentOpen) pollAgent(); },3000);
 setInterval(pollStatusLight,10000);
+pollSyncStat(); setInterval(pollSyncStat,15000);
 
 document.querySelectorAll("aside nav").forEach(n=>n.addEventListener("click",e=>{
   const a=e.target.closest("[data-v]"); if(a){ view=a.dataset.v; curProj=null; render(); }
