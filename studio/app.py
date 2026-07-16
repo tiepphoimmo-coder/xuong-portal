@@ -5,12 +5,13 @@
 Du lieu gom vao thu muc "Xuong KOL AI" (store.DATA). Model: Claude-trong-vong-lap.
 Chay: <python co fastapi> app.py   (port 8090)
 """
-import json, mimetypes, os, re, time, unicodedata, urllib.request
+import json, mimetypes, os, re, subprocess, time, unicodedata, urllib.request
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 
 import store
 import auth
+import producer  # MÁY SẢN XUẤT (deterministic, không LLM)
 
 SD = os.path.dirname(os.path.abspath(__file__))
 DATA_HOME = store.DATA
@@ -114,7 +115,7 @@ LOGIN_HTML = """<!doctype html><html lang="vi"><head><meta charset="utf-8">
 :root{--bg:#12100e;--card:#1b1815;--brand:#C15F3C;--bd:rgba(255,255,255,.09);--tx:#efe9e3;--mut:#a99;--ok:#7BC96F}
 *{box-sizing:border-box}body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
 background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.box{width:348px;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:28px 26px;
+.box{width:348px;max-width:calc(100vw - 40px);background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:28px 26px;
 box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .mk{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#D98157);
 display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;margin-bottom:14px}
@@ -124,10 +125,10 @@ h1{font-size:18px;margin:0 0 3px}p.sub{margin:0 0 16px;color:var(--mut);font-siz
 font-size:13.5px;font-weight:600;cursor:pointer}
 .tabs button.on{background:var(--brand);color:#fff}
 label{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px}
-input{width:100%;height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--bd);
-background:#221e1b;color:var(--tx);font-size:14px}
-button.act{width:100%;height:42px;margin-top:18px;border:0;border-radius:9px;background:var(--brand);
-color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+input{width:100%;height:44px;padding:0 12px;border-radius:9px;border:1px solid var(--bd);
+background:#221e1b;color:var(--tx);font-size:16px}
+button.act{width:100%;height:46px;margin-top:18px;border:0;border-radius:9px;background:var(--brand);
+color:#fff;font-size:16px;font-weight:600;cursor:pointer}
 button.act:hover{filter:brightness(1.08)}
 .err{color:#e8836b;font-size:13px;margin-top:12px;min-height:16px}
 .ok{color:var(--ok);font-size:13px;margin-top:12px;min-height:16px}
@@ -1078,36 +1079,131 @@ def _project_locks(proj):
     return kol_lock, prod_lock
 
 
+# Beat 4-o (khop i2v_prompt panels=4). Vai tro hook/demo/cta.
+_SB4_BEATS = {
+    "hook": ["wide establishing shot: the setting with the person and product visible",
+             "medium shot: the person looks warmly at camera, product beside them",
+             "close-up: the product's overall look (owner's hand may enter frame)",
+             "medium close-up: the person's engaged expression, continuity to next scene"],
+    "demo": ["medium shot: the person beside the product, about to demonstrate it",
+             "close-up: a key part/feature of the product shown clearly",
+             "over-the-shoulder/POV: the product in real use, hands interacting",
+             "medium close-up: the person reacting positively to the result"],
+    # CTA: KHÔNG ép ô cận-mặt/close-up mặt (Veo hay chặn PROMINENT_PEOPLE + i2v tả close-up dễ sinh mặt full khung).
+    # Giữ mặt ở MEDIUM, sản phẩm luôn trong khung — bám đúng storyboard.
+    "cta": ["medium shot: the person presents the product with an OPEN PALM (open hand, NOT a thumbs-up), product in frame",
+            "medium shot: the full product clean and clear on the desk beside the person",
+            "medium shot: the person makes a warm key point to camera, product visible",
+            "medium shot: the person's warm reassuring smile with the product in frame, gentle closing (no tight face close-up)"],
+}
+
+
+def _scene_beats(role, n):
+    """4-o beat cho 1 vai tro (hook/demo/cta), lap den n o. Luu vao scene.sb_beats khi sinh prompt
+    -> i2v dien DUNG beat cua tam anh user ve (khop tuyet doi anh <-> video)."""
+    b = _SB4_BEATS.get(role, _SB4_BEATS["demo"])
+    return (b + [b[-1]] * n)[:n]
+
+
+def _fmt_json(fmt):
+    """Doc formats/{fmt}.json (rong neu thieu)."""
+    try:
+        fp = os.path.expanduser(f"~/.claude/skills/san-xuat-video-gia-dung/formats/{(fmt or '').strip()}.json")
+        if (fmt or "").strip() and os.path.exists(fp):
+            return json.load(open(fp, encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
+def _sb_panels(fmt):
+    """So o storyboard = sb_panels cua format json skill (mac dinh 4) — PHAI khop i2v_prompt panels."""
+    return int(_fmt_json(fmt).get("sb_panels", 4)) or 4
+
+
+def _find_img(rows, name, keys):
+    """Tim path anh (ref/image) cua record khop TEN (uu tien ten dai nhat)."""
+    def _m(a, b):
+        a, b = (a or "").strip().lower(), (b or "").strip().lower()
+        return bool(a) and bool(b) and (a == b or a in b or b in a)
+    best = None
+    for r in rows:
+        if not _m(r.get("name"), name):
+            continue
+        for k in keys:
+            v = r.get(k)
+            if isinstance(v, list) and v:
+                v = v[0]
+            if isinstance(v, str) and v.strip():
+                if best is None or len(r.get("name", "")) > len(best[0]):
+                    best = (r.get("name", ""), v.strip())
+                break
+    return best[1] if best else ""
+
+
+def _scene_attach_lines(proj):
+    """Dong nhac user dinh kem anh ref vao ChatGPT (giu dong nhat nhan vat/san pham)."""
+    pimg = _find_img(store.list_all("products"), proj.get("product"), ("image", "images", "ref", "refs"))
+    kimg = _find_img(store.list_all("kols"), proj.get("kol"), ("ref", "refs", "image", "images"))
+    L = ["", "📎 TRƯỚC KHI GỬI — đính kèm các ảnh sau vào ChatGPT (kéo-thả vào ô chat):"]
+    if pimg:
+        L.append(f"   • Ảnh SẢN PHẨM: {pimg}")
+    if kimg:
+        L.append(f"   • Ảnh NHÂN VẬT/KOL: {kimg}")
+    if proj.get("accessory_ref"):
+        L.append(f"   • Ảnh PHỤ KIỆN: {proj['accessory_ref']}")
+    if not (pimg or kimg):
+        L.append("   • (chưa thấy ảnh ref trong kho — tự đính kèm ảnh sản phẩm/nhân vật thật)")
+    L.append("⚠️ Dùng CÙNG 1 cuộc hội thoại ChatGPT cho TẤT CẢ các cảnh của video này — nhân vật/sản phẩm mới đồng nhất.")
+    return L
+
+
 def _scene_sb_prompt(proj, scene, role, kol_lock, prod_lock):
-    """1 prompt STORYBOARD GENERATOR (3x3, 9 frame) RIENG cho 1 canh — bam thoai + vai tro canh."""
+    """Prompt STORYBOARD GENERATOR khop ENGINE i2v (luoi vuong sb_panels o, mac dinh 2x2=4).
+    Nhoi bai hoc L1-L5: logic vat ly (L2), ti le that (L4/L5), khoa phu kien (L3), cam thumbs-up (L5),
+    khong icon gia (luat rieng). User dan prompt nay vao ChatGPT web + dinh kem anh ref -> tao anh thu cong."""
     dlg = (scene.get("voice") or "").strip()
     title = (scene.get("title") or f"Scene {scene.get('idx')}").strip()
-    beats = {"hook": _HOOK_BEATS, "demo": _DEMO_BEATS, "cta": _CTA_BEATS}[role]
+    n = _sb_panels(proj.get("format"))
+    cols = 2 if n <= 4 else 3
+    grows = (n + cols - 1) // cols
+    beats = _scene_beats(role, n)
     has_p = bool((proj.get("product") or "").strip())
     has_k = bool((proj.get("kol") or "").strip())
-    case = "PRODUCT + MODEL" if (has_p and has_k) else ("PERSON ONLY" if has_k else "PRODUCT ONLY")
+    case = "PRODUCT + PERSON" if (has_p and has_k) else ("PERSON ONLY" if has_k else "PRODUCT ONLY")
     L = [f"STORYBOARD GENERATOR — 9:16 vertical. CASE: {case}. SCENE: {title}.",
-         "INPUT: attach the person image and/or the product image as reference.", "",
-         "IDENTITY LOCK (all 9 frames):", f"- PERSON: {kol_lock}", f"- PRODUCT: {prod_lock}", "",
-         "OUTPUT: one clean 3x3 grid, 9 sequential frames storyboard of THIS single ~10-second scene, "
-         "read top-left to bottom-right, strong visual continuity, thin gutters, small frame numbers 1-9. "
-         "★ NO price tags, NO price numbers/digits, NO discount/percent signs, NO freeship/sale/deal badges, "
-         "NO delivery-truck icons, NO promotional graphics, NO text overlays of any kind — pure photographic "
-         "frames of the person and product only (CTA is shown by gesture + speech, not graphics)."]
+         f"OUTPUT: ONE clean {cols}x{grows} grid = {n} sequential numbered panels (small badges 1-{n}, thin white "
+         "gutters), read top-left to bottom-right with strong visual continuity — a cinematic breakdown of THIS "
+         "single ~10-second scene.", "",
+         f"IDENTITY LOCK (identical in all {n} panels):", f"- PERSON: {kol_lock}", f"- PRODUCT: {prod_lock}"]
+    if proj.get("accessory_lock"):
+        L.append(f"- ACCESSORY LOCK: {proj['accessory_lock']}")
+    L += ["",
+          "REALISM (physical logic — bat buoc): every action must be physically logical and safe. NEVER pour oil/"
+          "liquid into a lamp or candle that is ALREADY LIT; if a panel shows filling/pouring, the lamp/candle MUST "
+          "be UNLIT and lit only AFTER it is filled. No impossible or unsafe actions.",
+          "SCALE/PROPORTION: every prop at realistic real-world size relative to the person, hands and furniture "
+          "(e.g. a tabletop altar oil lamp ~25-35cm, a bottle fits comfortably in one hand) — nothing oversized or "
+          "shrunken; keep proportions consistent across panels.",
+          "★ NO price tags/numbers/%/discount, NO freeship/sale/deal badges, NO delivery-truck icons, NO promo "
+          "graphics, NO text overlays of any kind — pure photographic frames (CTA is shown by gesture + speech)."]
     if dlg:
-        L += ["", f'SCENE CONTEXT: during this scene the person speaks this Vietnamese line: "{dlg}". '
-                  "Keep the same person, product and setting across all 9 frames."]
-    L += ["", "STORY (9 frames = a cinematic breakdown of THIS scene):"]
+        L += ["", f'SCENE CONTEXT: in this scene the person speaks this Vietnamese line: "{dlg}". '
+                  f"Keep the same person, product and setting across all {n} panels."]
+    # BỐI CẢNH: cảnh có riêng -> dùng; trống -> mặc định của format (ảnh storyboard bám đúng format)
+    env = (scene.get("environment") or "").strip() or (_fmt_json(proj.get("format")).get("environment") or "").strip()
+    if env:
+        L += [f"SETTING (one continuous location for ALL {n} panels): {env}"]
+    L += ["", f"PANELS ({n} sequential action beats of THIS scene):"]
     for i, b in enumerate(beats):
-        L.append(f"{i + 1} {b}")
-    L += ["", "CAMERA: use the composition labeled in each frame; a different composition every frame.",
-          "VISUAL QUALITY: ultra realistic, photorealistic, high-end commercial, movie-level cinematography, "
-          "natural lighting, realistic shadows, shallow depth of field, physically accurate materials, "
-          "cinematic color grading. Keep the person and product consistent across all frames.",
+        L.append(f"{i + 1}. {b}")
+    L += ["", "VISUAL QUALITY: ultra realistic, photorealistic, high-end commercial, cinematic lighting, realistic "
+          "shadows, shallow depth of field, physically accurate materials; vary the camera size each panel.",
           "ASPECT RATIO: 9:16 vertical.",
-          "NEGATIVE: distorted anatomy, duplicate subjects, inconsistent product, extra fingers, blurry objects, "
-          "unwanted text/captions/watermarks/logos, low quality, AI artifacts, floating objects, "
-          "unrealistic lighting, frame repetition."]
+          "NEGATIVE: extra grid lines beyond the labeled panels, distorted anatomy, duplicate subjects, inconsistent "
+          "product, extra fingers, thumbs-up gesture, OK-sign, cheesy salesman pose, blurry objects, unwanted "
+          "text/captions/watermarks/logos, low quality, AI artifacts, floating objects, frame repetition."]
+    L += _scene_attach_lines(proj)
     return "\n".join(L)
 
 
@@ -1121,8 +1217,11 @@ def make_storyboard_prompt(pid: str):
         raise HTTPException(404, "no project")
     kol_lock, prod_lock = _project_locks(proj)
     scenes = sorted(proj.get("scenes") or [], key=lambda s: s.get("idx", 0))
+    n = _sb_panels(proj.get("format"))
     for pos, s in enumerate(scenes):
-        s["storyboard_prompt"] = _scene_sb_prompt(proj, s, _scene_role(pos, len(scenes)), kol_lock, prod_lock)
+        role = _scene_role(pos, len(scenes))
+        s["storyboard_prompt"] = _scene_sb_prompt(proj, s, role, kol_lock, prod_lock)
+        s["sb_beats"] = _scene_beats(role, n)  # i2v diễn đúng beat của ảnh user vẽ
     p = store.patch("projects", pid, scenes=scenes)
     _write_manifest(p)
     return {"scenes": len(scenes), "roles": [_scene_role(i, len(scenes)) for i in range(len(scenes))]}
@@ -1157,6 +1256,352 @@ async def scene_upload(pid: str, idx: int = Form(...), slot: str = Form("storybo
     return p
 
 
+@app.post("/api/projects/{pid}/scene_gen_chatgpt")
+def scene_gen_chatgpt(pid: str, body: dict):
+    """Nut '🤖 ChatGPT' (user yeu cau 2026-07-15): gen anh storyboard 1 canh QUA ChatGPT bridge —
+    tu gui prompt + TU DINH KEM anh ref (san pham + KOL) vao tab chatgpt.com, cho anh ve, luu vao scene.
+    Thay the viec user copy prompt + dinh anh thu cong. Can: extension-chatgpt connected (:8200)."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    proj = store.get("projects", pid)
+    if not proj:
+        raise HTTPException(404, "no project")
+    idx = int(body.get("idx") or 0)
+    scenes = proj.get("scenes") or []
+    sc = next((s for s in scenes if s.get("idx") == idx), None)
+    if not sc:
+        raise HTTPException(404, "no scene")
+    pr = (sc.get("storyboard_prompt") or "").strip()
+    if not pr:  # chua co prompt -> tu sinh (khong bat user bam 🎨 truoc)
+        kol_lock, prod_lock = _project_locks(proj)
+        ordered = sorted(scenes, key=lambda x: x.get("idx", 0))
+        pr = _scene_sb_prompt(proj, sc, _scene_role(ordered.index(sc), len(ordered)), kol_lock, prod_lock)
+        sc["storyboard_prompt"] = pr
+    pr = pr.split("📎")[0].strip()  # khoi 📎 la huong dan cho NGUOI — bridge tu dinh ref
+    import base64 as _b64
+    refs = []
+    for label, path in (
+            ("product", _find_img(store.list_all("products"), proj.get("product"), ("image", "images", "ref", "refs"))),
+            ("kol", _find_img(store.list_all("kols"), proj.get("kol"), ("ref", "refs", "image", "images")))):
+        if path and os.path.exists(path):
+            ext = os.path.splitext(path)[1].lower()
+            mime = "image/jpeg" if ext in (".jpg", ".jpeg") else ("image/" + (ext.lstrip(".") or "png"))
+            refs.append({"data_url": f"data:{mime};base64," + _b64.b64encode(open(path, "rb").read()).decode(),
+                         "filename": label + (ext or ".png")})
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8200/api/chatgpt/generate-image",
+            data=json.dumps({"prompt": pr, "refs": refs or None, "timeout_ms": 240000,
+                             # 1 DỰ ÁN = 1 CUỘC CHAT ChatGPT (user 2026-07-15): cảnh sau nối tiếp
+                             # cuộc chat của cảnh trước — GPT thấy ảnh cũ nên giữ đồng nhất, sidebar gọn.
+                             "conversation_id": proj.get("chatgpt_conversation_id") or None}).encode(),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=300) as f:
+            r = json.load(f)
+    except Exception as e:
+        raise HTTPException(502, f"chatgpt bridge loi: {e}")
+    if not r.get("ok"):
+        raise HTTPException(502, f"chatgpt bridge: {r.get('error')}")
+    if r.get("conversation_id") and r["conversation_id"] != proj.get("chatgpt_conversation_id"):
+        proj = store.patch("projects", pid, chatgpt_conversation_id=r["conversation_id"])
+    with urllib.request.urlopen(f"http://127.0.0.1:8200/media/{r['media_id']}", timeout=60) as f:
+        img = f.read()
+    d = os.path.join(proj.get("dir"), "scenes")
+    os.makedirs(d, exist_ok=True)
+    dest = os.path.join(d, f"scene{idx}_storyboard.png")
+    open(dest, "wb").write(img)
+    sc["storyboard"] = dest
+    p = store.patch("projects", pid, scenes=scenes)
+    _write_manifest(p)
+    return {"ok": True, "path": dest, "size_kb": len(img) // 1024}
+
+
+# ─────────── MÁY SẢN XUẤT (deterministic, không LLM — user 2026-07-15) ───────────
+def _ensure_project_from_script(s):
+    """Trả project cho script (tạo DA mới nếu chưa có). Dùng bởi máy sản xuất + storyboard thủ công."""
+    pid = s.get("project_id")
+    proj = store.get("projects", pid) if pid else None
+    if proj:
+        return proj
+    scenes = [{"idx": sc.get("idx", i + 1), "title": sc.get("title", ""),
+               "voice": sc.get("voice", ""), "voice_direction": sc.get("voice_direction", ""),
+               "environment": sc.get("environment", "")}
+              for i, sc in enumerate(sorted(s.get("scenes") or [], key=lambda x: x.get("idx", 0)))]
+    proj = add_project({"title": (s.get("hook") or s.get("product") or "")[:120],
+                        "kol": s.get("kol", ""), "product": s.get("product", ""),
+                        "channel": s.get("channel", ""), "scenes": scenes, "status": "producing"})
+    store.patch("projects", proj["id"], format=s.get("format", ""), tts_voice=s.get("tts_voice", ""),
+                nguoi_tao=s.get("nguoi_tao"))
+    store.patch("scripts", s["id"], project_id=proj["id"])
+    return store.get("projects", proj["id"])
+
+
+@app.post("/api/scripts/{id}/produce")
+def script_produce(id: str):
+    """MÁY sản xuất: validate -> tạo project -> job runner code thuần (KHÔNG agent headless).
+    Lỗi validate (thiếu format / thoại lệch / thiếu ref) -> 400 kèm danh sách (không đốt quota)."""
+    if _is_member():
+        raise HTTPException(403, "san xuat chay o Xuong (PC)")
+    s = store.get("scripts", id)
+    if not s:
+        raise HTTPException(404, "no script")
+    proj = _ensure_project_from_script(s)
+    # đồng bộ scenes mới nhất của script vào project (thoại đã cân)
+    if s.get("scenes"):
+        cur = {c.get("idx"): c for c in (proj.get("scenes") or [])}
+        merged = []
+        for sc in sorted(s["scenes"], key=lambda x: x.get("idx", 0)):
+            base = dict(cur.get(sc.get("idx"), {}))
+            base.update({k: sc[k] for k in ("idx", "title", "voice", "voice_direction", "environment", "sb_beats")
+                         if k in sc})
+            merged.append(base)
+        proj = store.patch("projects", proj["id"], scenes=merged, format=s.get("format", proj.get("format", "")),
+                           tts_voice=s.get("tts_voice", proj.get("tts_voice", "")))
+    try:  # validate SỚM (build thử) — sai thì báo ngay, chưa tạo job
+        producer.build_episode(s, proj)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"build lỗi: {e}")
+    job = producer.start_produce(proj["id"], s["id"])
+    store.patch("scripts", id, status="producing")
+    return {"ok": True, "job_id": job["id"], "project_id": proj["id"]}
+
+
+def _ask_gpt(prompt: str, timeout_s: int = 90) -> str:
+    """Hoi ChatGPT web (text) qua backend :8200 — mien phi, khong ton OpenAI API.
+    Tra ve text tra loi; raise HTTPException neu bridge chua ket noi / loi."""
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8200/api/chatgpt/ask",
+            data=json.dumps({"prompt": prompt, "timeout_ms": timeout_s * 1000}).encode(),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout_s + 30) as f:
+            r = json.load(f)
+    except urllib.error.HTTPError as e:
+        if e.code == 503:
+            raise HTTPException(502, "ChatGPT chua ket noi — mo Chrome + tab chatgpt.com da dang nhap roi thu lai.")
+        raise HTTPException(502, f"chatgpt ask loi: {e}")
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(502, f"chatgpt ask loi: {e}")
+    if not r.get("ok"):
+        raise HTTPException(502, f"chatgpt ask: {r.get('error')}")
+    return (r.get("text") or "").strip()
+
+
+def _extract_json_obj(txt: str):
+    """Boc JSON object dau tien tu reply cua GPT (co the co ```json ... ``` hoac chu thua)."""
+    if not txt:
+        return None
+    t = txt.strip()
+    if "```" in t:  # bo code fence
+        import re as _re
+        m = _re.search(r"```(?:json)?\s*(.+?)```", t, _re.S)
+        if m:
+            t = m.group(1).strip()
+    i, j = t.find("{"), t.rfind("}")
+    if i < 0 or j <= i:
+        return None
+    try:
+        return json.loads(t[i:j + 1])
+    except Exception:
+        return None
+
+
+@app.post("/api/scripts/{id}/rebalance")
+def script_rebalance(id: str):
+    """TU CAN THOAI (user 2026-07-15): AI viet lai cac canh lech khoang am tiet cho khop FORMAT.
+    KHONG luu — tra ve {old,new} de user duyet roi moi apply. Dung ChatGPT web (mien phi)."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    s = store.get("scripts", id)
+    if not s:
+        raise HTTPException(404, "no script")
+    fmt = (s.get("format") or "").strip()
+    if not fmt:
+        raise HTTPException(400, "Chua chon FORMAT cho kich ban — chon Format truoc khi tu can.")
+    prof = producer.load_format(fmt)
+    smin = int(prof.get("syllables_min") or producer.SYL_MIN)
+    smax = int(prof.get("syllables_max") or producer.SYL_MAX)
+    scenes = sorted(s.get("scenes") or [], key=lambda x: x.get("idx", 0))
+    off = []  # canh lech (ngoai [smin-2, smax+2])
+    for sc in scenes:
+        dlg = (sc.get("voice") or "").strip()
+        n = producer._syl(dlg)
+        if dlg and not (smin - 2 <= n <= smax + 2):
+            off.append({"idx": sc.get("idx"), "title": sc.get("title", ""), "old": dlg, "old_n": n})
+    if not off:
+        return {"ok": True, "changed": [], "msg": "Tat ca thoai da nam trong khoang format — khong can can."}
+
+    tgt = (smin + smax) // 2
+    lines = "\n".join(f'Canh {o["idx"]} (hien {o["old_n"]} tieng, can {smin}-{smax}): "{o["old"]}"' for o in off)
+    prompt = (
+        "Ban la bien tap vien thoai video ban hang tieng Viet. Viet lai cac cau thoai duoi day cho DUNG "
+        f"so tieng yeu cau, GIU nguyen y va chat giong ban hang tu nhien.\n\n"
+        "QUY TAC DEM: moi TIENG cach nhau 1 dau cach; so tieng = so tu cach nhau boi space. "
+        'Vi du \"tui dung chan man sieu tien loi\" = 7 tieng.\n\n'
+        "YEU CAU:\n"
+        f"- Moi cau phai nam trong khoang {smin}-{smax} tieng (ly tuong ~{tgt}).\n"
+        "- GIU dung noi dung, KHONG them thong tin/gia moi, KHONG bo bot y chinh.\n"
+        "- KHONG viet HOA ca tu, KHONG dat ten rieng/tu khoa trong dau ngoac kep.\n"
+        "- Tieng Viet tu nhien, doc troi trong ~10 giay, dung dau cau.\n\n"
+        "Tra ve DUY NHAT mot JSON object: key = so canh (chuoi), value = cau thoai moi. Khong giai thich.\n\n"
+        "Cac canh can viet lai:\n" + lines
+    )
+
+    result = {}  # idx(str) -> new text
+    remain = {str(o["idx"]): o for o in off}
+    for attempt in range(2):  # tu sua toi da 2 vong cho canh con lech
+        if not remain:
+            break
+        p = prompt if attempt == 0 else (
+            "Cac cau sau VAN chua dung so tieng. Viet lai cho DUNG khoang, tra JSON nhu truoc:\n" +
+            "\n".join(f'Canh {k} (can {smin}-{smax}): "{v.get("try") or v["old"]}"' for k, v in remain.items()))
+        obj = _extract_json_obj(_ask_gpt(p))
+        if not obj:
+            break
+        for k, o in list(remain.items()):
+            nv = (obj.get(k) or obj.get(int(k)) if isinstance(obj, dict) else None)
+            nv = (nv or "").strip().strip('"')
+            if not nv:
+                continue
+            nn = producer._syl(nv)
+            if smin - 2 <= nn <= smax + 2:
+                result[k] = nv
+                remain.pop(k, None)
+            else:
+                o["try"] = nv  # gan cho vong sau
+
+    changed = []
+    for o in off:
+        k = str(o["idx"])
+        nv = result.get(k) or o.get("try")
+        changed.append({"idx": o["idx"], "title": o["title"], "old": o["old"], "old_n": o["old_n"],
+                        "new": nv or "", "new_n": producer._syl(nv) if nv else 0,
+                        "ok": bool(nv) and (smin - 2 <= producer._syl(nv or "") <= smax + 2)})
+    return {"ok": True, "range": [smin, smax], "changed": changed}
+
+
+def _script_for_project(pid):
+    return next((s for s in store.list_all("scripts") if s.get("project_id") == pid), None)
+
+
+@app.post("/api/projects/{pid}/scene_rerender")
+def scene_rerender(pid: str, body: dict):
+    """Render LẠI 1 clip lẻ rồi dựng lại final (user 2026-07-15)."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    proj = store.get("projects", pid)
+    if not proj:
+        raise HTTPException(404, "no project")
+    idx = int(body.get("idx") or 0)
+    sc = next((s for s in (proj.get("scenes") or []) if s.get("idx") == idx), None)
+    if not sc:
+        raise HTTPException(404, "no scene")
+    if not sc.get("storyboard"):
+        raise HTTPException(400, f"Cảnh {idx} chưa có ảnh storyboard — tạo ảnh trước khi render.")
+    scr = _script_for_project(pid)
+    job = producer.start_rerender_clip(pid, idx, script_id=None)
+    return {"ok": True, "job_id": job["id"], "project_id": pid, "idx": idx,
+            "script_id": (scr or {}).get("id")}
+
+
+@app.post("/api/projects/{pid}/reassemble")
+def reassemble(pid: str):
+    """Dựng LẠI khâu hoàn thiện (ghép + grade + final) từ các clip đã có (user 2026-07-15)."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    proj = store.get("projects", pid)
+    if not proj:
+        raise HTTPException(404, "no project")
+    have = [s for s in (proj.get("scenes") or []) if s.get("video")]
+    if not have:
+        raise HTTPException(400, "Chưa có clip nào để dựng — render các clip trước đã.")
+    job = producer.start_reassemble(pid, script_id=None)
+    return {"ok": True, "job_id": job["id"], "project_id": pid}
+
+
+@app.get("/api/produce_jobs")
+def produce_jobs(project_id: str = None):
+    rows = store.list_all("produce_jobs")
+    if project_id:
+        rows = [r for r in rows if r.get("project_id") == project_id]
+    return sorted(rows, key=lambda r: r.get("created", 0), reverse=True)[:30]
+
+
+@app.get("/api/produce_jobs/{jid}")
+def produce_job(jid: str):
+    j = store.get("produce_jobs", jid)
+    if not j:
+        raise HTTPException(404, "no job")
+    return j
+
+
+@app.post("/api/produce_jobs/{jid}/cancel")
+def produce_job_cancel(jid: str):
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    r = producer.cancel_job(jid)
+    if not r:
+        raise HTTPException(404, "no job")
+    return {"ok": True}
+
+
+@app.get("/api/recent_downloads")
+def recent_downloads(minutes: int = 30):
+    """KHAY NOI nap anh storyboard (user 2026-07-15): liet ke anh MOI trong ~/Downloads (user vua
+    'Tai xuong' tu ChatGPT) de bam-la-nap vao canh — khoi phai mo file picker."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    d = os.path.join(os.path.expanduser("~"), "Downloads")
+    out, now = [], time.time()
+    try:
+        for fn in os.listdir(d):
+            p = os.path.join(d, fn)
+            if not os.path.isfile(p):
+                continue
+            if os.path.splitext(fn)[1].lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+                continue
+            st = os.stat(p)
+            if now - st.st_mtime > minutes * 60 or st.st_size < 40 * 1024:
+                continue
+            out.append({"name": fn, "path": p, "mtime": int(st.st_mtime), "size_kb": st.st_size // 1024})
+    except Exception:
+        pass
+    return sorted(out, key=lambda x: -x["mtime"])[:12]
+
+
+@app.post("/api/projects/{pid}/scene_import_path")
+def scene_import_path(pid: str, body: dict):
+    """Nap anh storyboard vao 1 canh tu DUONG DAN local (khay noi bam thumbnail Downloads)."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    proj = store.get("projects", pid)
+    if not proj:
+        raise HTTPException(404, "no project")
+    idx = int(body.get("idx") or 0)
+    src = (body.get("path") or "").strip()
+    if not (src and os.path.isfile(src)):
+        raise HTTPException(400, "file khong ton tai")
+    if os.path.splitext(src)[1].lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+        raise HTTPException(400, "khong phai file anh")
+    import shutil
+    d = os.path.join(proj.get("dir"), "scenes")
+    os.makedirs(d, exist_ok=True)
+    dest = os.path.join(d, f"scene{idx}_storyboard" + os.path.splitext(src)[1].lower())
+    shutil.copyfile(src, dest)
+    scenes = proj.get("scenes") or []
+    hit = next((s for s in scenes if s.get("idx") == idx), None)
+    if hit is None:
+        hit = {"idx": idx}
+        scenes.append(hit)
+        scenes.sort(key=lambda s: s.get("idx", 0))
+    hit["storyboard"] = dest
+    p = store.patch("projects", pid, scenes=scenes)
+    _write_manifest(p)
+    return {"ok": True, "path": dest}
+
+
 @app.get("/api/file")
 def serve_file(path: str):
     """Phuc vu file bat ky (anh storyboard, video scene, video hoan thien) theo duong dan tuyet doi."""
@@ -1168,6 +1613,17 @@ def serve_file(path: str):
 
 # ---------- LENH (command) — cau noi UI <-> Claude agent ----------
 AGENT_STATE = os.path.join(DATA_HOME, "agent.json")
+
+
+@app.post("/api/agent/cancel")
+def agent_cancel():
+    """Nut ⛔ Hủy trong agent noi (user 2026-07-15): dat co — agent_worker poll thay co
+    (mtime >= luc job start) thi taskkill /T ca cay tien trinh dang chay + tra '⛔ Đã hủy'."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    with open(os.path.join(DATA_HOME, "agent_cancel.flag"), "w", encoding="utf-8") as fh:
+        fh.write(str(time.time()))
+    return {"ok": True}
 
 
 @app.get("/api/commands")
@@ -1235,12 +1691,9 @@ SKILLS_DIR = os.path.expanduser("~/.claude/skills")
 # viec de agent_worker goi `claude -p` dinh dung skill). vd = goi y o cong giao viec.
 STAFF = [
     # --- Phong Video ---
-    {"slug": "video-kol-studio", "ten": "Quản lý Xưởng phim KOL", "phong": "Phòng Media", "emoji": "🎬",
-     "mo_ta": "Sản xuất video affiliate KOL × Sản phẩm theo quy trình Studio 2 pha (kịch bản → storyboard → render 30s).",
-     "trigger": "Làm video KOL Studio", "vd": "KOL Tiệp Phối review [sản phẩm], ngách [X], 3 cảnh hook → demo → chốt."},
-    {"slug": "san-xuat-video-gia-dung", "ten": "Sản Xuất Video Gia Dụng", "phong": "Phòng Media", "emoji": "🏭",
-     "mo_ta": "Video bán hàng kiểu kho/xưởng neo giá bậc thang (format @giadungannie), MC đứng trong kho, lặp 'miễn phí ship'.",
-     "trigger": "Làm video kho xưởng", "vd": "Bán [sản phẩm] kiểu kho xưởng, neo giá từ 500k về [giá]."},
+    {"slug": "san-xuat-video-gia-dung", "ten": "Sản Xuất Video Bán Hàng", "phong": "Phòng Media", "emoji": "🛒",
+     "mo_ta": "Video bán hàng affiliate ĐA NGÁCH, NHIỀU FORMAT (chọn qua format): kho xưởng neo giá · review UGC · giấu mặt lồng tiếng mẹo · KOL talking-head (phong thủy/tâm linh). Storyboard→i2v→dựng đồng bộ thoại, khoá ref per-clip.",
+     "trigger": "Làm video bán hàng", "vd": "Bán [sản phẩm] — kho xưởng neo giá / review / giấu mặt mẹo / KOL nói phong thủy."},
     {"slug": "video-me-be", "ten": "Chuyên viên video Mẹ & Bé", "phong": "Phòng Media", "emoji": "👶",
      "mo_ta": "Video affiliate ngách Mẹ & Bé tả thực: mẹ ôm bé, chạm nỗi lo (sốt, biếng ăn…) → sản phẩm → CTA bình luận.",
      "trigger": "Làm video mẹ và bé", "vd": "Chủ đề bé [mọc răng/sốt/biếng ăn], sản phẩm [X]."},
@@ -1253,9 +1706,6 @@ STAFF = [
     {"slug": "video-chi-dau-3d", "ten": "Đạo diễn Chị Dậu 3D", "phong": "Phòng Media", "emoji": "🧸",
      "mo_ta": "Bản 3D Pixar của Chị Dậu Dạy Con — cùng nhân vật/bối cảnh quê, chất liệu render 3D CGI mềm.",
      "trigger": "Làm video Chị Dậu 3D chủ đề", "vd": "Chủ đề: [bài học sống] phong cách 3D."},
-    {"slug": "video-storyboard-snapgen", "ten": "Hoạ sĩ Storyboard", "phong": "Phòng Media", "emoji": "🖼️",
-     "mo_ta": "Vẽ tấm storyboard nhiều ô (SnapGen GPT Image) rồi Flow Omni Flash biến thành video 10s — UGC/ASMR/quy trình.",
-     "trigger": "Làm video storyboard", "vd": "Video UGC [người] cầm [sản phẩm], 1 tấm 10s."},
     # --- Phong Noi dung ---
     {"slug": "san-xuat-bai-viet-viral-facebook", "ten": "Cây viết bài viral Facebook", "phong": "Nội dung", "emoji": "✍️",
      "mo_ta": "Viết bài TEXT viral đăng Facebook ngách sách (đạo lý/chữa lành), thuần giá trị, link Shopee mềm ở bình luận; đẩy Notion theo kênh.",
@@ -1312,7 +1762,11 @@ def _staff_formats(slug):
             d = json.load(open(os.path.join(fdir, fn), encoding="utf-8"))
         except Exception:
             d = {}
-        out.append({"id": fn[:-5], "label": d.get("label", fn[:-5]), "emoji": d.get("emoji", "🎬")})
+        # th = talking-head: lay talking_head neu khai, khong thi suy tu identity_mc/mc_ref
+        th = bool(d.get("talking_head") if d.get("talking_head") is not None else (d.get("identity_mc") or d.get("mc_ref")))
+        out.append({"id": fn[:-5], "label": d.get("label", fn[:-5]), "emoji": d.get("emoji", "🎬"),
+                    "syl_min": int(d.get("syllables_min") or 40), "syl_max": int(d.get("syllables_max") or 58),
+                    "env": (d.get("environment") or ""), "th": th})  # bối cảnh mặc định + talking-head
     return out
 
 
@@ -1357,7 +1811,7 @@ _STAFF_NICHE = {
 
 
 def _resolve_staff(it):
-    """staff explicit -> niche map -> mac dinh video-kol-studio."""
+    """staff explicit -> niche map -> mac dinh san-xuat-video-gia-dung (xuong video ban hang chung)."""
     s = (it.get("staff") or "").strip()
     if s and s in _STAFF_BY:
         return s
@@ -1367,7 +1821,7 @@ def _resolve_staff(it):
     for k, v in _STAFF_NICHE.items():
         if nz and (k in nz or nz in k):
             return v
-    return "video-kol-studio"
+    return "san-xuat-video-gia-dung"
 
 
 @app.get("/api/scripts")
@@ -1408,6 +1862,42 @@ def scripts_patch(id: str, body: dict):
     if not r:
         raise HTTPException(404, "no script")
     return r
+
+
+@app.post("/api/scripts/{id}/storyboard")
+def script_to_storyboard(id: str):
+    """Chuyen kich ban sang cot STORYBOARD (che do THU CONG): tao/dung lai du an DA + sinh prompt storyboard
+    tung canh (khop engine 2x2, nhoi L1-L5). User tu tao anh qua ChatGPT web roi Import. KHONG render."""
+    if _is_member():
+        raise HTTPException(403, "storyboard/san xuat chay o Xuong (PC)")
+    s = store.get("scripts", id)
+    if not s:
+        raise HTTPException(404, "no script")
+    pid = s.get("project_id")
+    proj = store.get("projects", pid) if pid else None
+    if not proj:
+        scenes = [{"idx": sc.get("idx", i + 1), "title": sc.get("title", ""),
+                   "voice": sc.get("voice", ""), "environment": sc.get("environment", "")}
+                  for i, sc in enumerate(sorted(s.get("scenes") or [], key=lambda x: x.get("idx", 0)))]
+        proj = add_project({"title": (s.get("hook") or s.get("product") or "")[:120],
+                            "kol": s.get("kol", ""), "product": s.get("product", ""),
+                            "channel": s.get("channel", ""), "scenes": scenes, "status": "producing"})
+        pid = proj["id"]
+        proj = store.patch("projects", pid, format=s.get("format", ""), tts_voice=s.get("tts_voice", ""),
+                           storyboard_mode="manual", nguoi_tao=s.get("nguoi_tao"))
+    else:
+        proj = store.patch("projects", pid, storyboard_mode="manual")
+    kol_lock, prod_lock = _project_locks(proj)
+    scenes = sorted(proj.get("scenes") or [], key=lambda x: x.get("idx", 0))
+    n = _sb_panels(proj.get("format"))
+    for pos, sc in enumerate(scenes):
+        role = _scene_role(pos, len(scenes))
+        sc["storyboard_prompt"] = _scene_sb_prompt(proj, sc, role, kol_lock, prod_lock)
+        sc["sb_beats"] = _scene_beats(role, n)  # i2v diễn đúng beat của ảnh user vẽ
+    proj = store.patch("projects", pid, scenes=scenes)
+    _write_manifest(proj)
+    store.patch("scripts", id, status="storyboard", project_id=pid)
+    return {"ok": True, "project_id": pid, "code": proj.get("code")}
 
 
 # ---------- GAN TAI KHOAN FLOW CHO NHAN VIEN (moi nhan vien 1 account -> song song) ----------
@@ -1610,7 +2100,7 @@ def publish_media(pid: str):
         "(3) KHÔNG đăng lên bất kỳ nền tảng nào khác — chỉ upload Drive + tạo bản ghi. Dừng sau khi tạo xong.\n"
         + (f"\n--- KỊCH BẢN (lấy hook cho caption) ---\n{script[:1500]}" if script else ""))
     cmd = store.upsert("commands", {"text": text, "status": "pending", "response": None,
-                                    "engine": "claude", "staff": "video-kol-studio",
+                                    "engine": "claude", "staff": "san-xuat-video-gia-dung",
                                     "label": ("⬆ Xuất bản: " + ten)[:80]})
     return {"ok": True, "command_id": cmd["id"]}
 
@@ -2031,7 +2521,203 @@ async def sync_push(request: Request):
     return {"ok": True, "mode": mode, "counts": counts, "conflicts": conflicts}
 
 
+# ==================== KET NOI HE THONG (bat/tat/health dich vu nen) ====================
+# Panel cho user bat/tat/xem health cac dich vu nen ma Xuong phu thuoc — thay viec
+# chay tay cac file .bat. Nguon lenh khoi dong: dichvu/_services.ps1. Thuan stdlib.
+_WS = os.path.dirname(SD)  # workspace "TiepPhoi Space" (SD = .../studio)
+_AGENT_PY = os.path.join(_WS, "flowboard", "agent", ".venv", "Scripts", "python.exe")
+_TTS_PY = r"C:\Users\Admin\AppData\Local\com.debpalash.omnivoice-studio\project\.venv\Scripts\python.exe"
+_CREATE_NO_WINDOW = 0x08000000
+_DETACHED_PROCESS = 0x00000008
+
+SERVICES = {
+    "backend": {
+        "ten": "Máy render (Flowboard :8200)", "port": 8200,
+        "health": "http://127.0.0.1:8200/api/health",
+        "cmd": [_AGENT_PY, "-m", "uvicorn", "flowboard.main:app", "--port", "8200",
+                "--timeout-graceful-shutdown", "2"],
+        "cwd": os.path.join(_WS, "flowboard", "agent"),
+        "mota": "Gen ảnh/video Flow + bridge ChatGPT (bắt buộc để sản xuất)"},
+    "tts": {
+        "ten": "Giọng nói TTS (:8008)", "port": 8008,
+        "health": "http://127.0.0.1:8008/api/v1/health",
+        "cmd": [(_TTS_PY if os.path.exists(_TTS_PY) else "python"), "app.py"],
+        "cwd": r"D:\AFFILATE SHOPEE 2026\CONG CU AI\TiepPhoi Voice\VN_TTS_App",
+        "mota": "Lồng tiếng cho format giấu mặt (khởi động chậm ~1-3 phút)"},
+    "sync": {
+        "ten": "Đồng bộ Văn phòng VPS", "port": None, "health": None,
+        "proc_match": "sync_agent.py",  # nhan dien qua command line
+        "cmd": ["cmd", "/c", os.path.join(_WS, "START-SYNC.bat")], "cwd": _WS,
+        "mota": "Đẩy dữ liệu 2 chiều PC ↔ VPS (chỉ cần khi dùng Văn phòng)"},
+    "frontend": {
+        "ten": "Space TiepphoiAI (:5173)", "port": 5173, "health": None,
+        "cmd": ["cmd", "/c", "npm", "run", "dev"],
+        "cwd": os.path.join(_WS, "flowboard", "frontend"),
+        "mota": "Canvas thí nghiệm (tuỳ chọn — không bắt buộc để sản xuất)"},
+}
+_SVC_ORDER = ["backend", "tts", "sync", "frontend"]
+
+
+def _ps(cmd_str):
+    """Chay 1 lenh PowerShell, tra ve stdout ('' neu loi/timeout)."""
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", cmd_str],
+                           capture_output=True, text=True, timeout=8,
+                           creationflags=_CREATE_NO_WINDOW)
+        return r.stdout or ""
+    except Exception:
+        return ""
+
+
+def _port_pids(port):
+    """PID dang LISTEN tren <port> (list int)."""
+    if not port:
+        return []
+    out = _ps("Get-NetTCPConnection -LocalPort %d -State Listen "
+              "| Select-Object -ExpandProperty OwningProcess -Unique" % int(port))
+    return [int(x) for x in out.split() if x.strip().isdigit()]
+
+
+def _proc_pids_by_cmdline(sub):
+    """PID tien trinh python/cmd co command line chua <sub> — loai chinh studio (getpid)."""
+    if not sub:
+        return []
+    out = _ps("Get-CimInstance Win32_Process -Filter \"Name like '%python%' or Name like '%cmd%'\" "
+              "| Where-Object { $_.CommandLine -like '*" + sub + "*' } "
+              "| Select-Object -ExpandProperty ProcessId")
+    me = os.getpid()
+    return [int(x) for x in out.split() if x.strip().isdigit() and int(x) != me]
+
+
+def _svc_running(key):
+    s = SERVICES[key]
+    if s.get("port"):
+        return bool(_port_pids(s["port"]))
+    return bool(_proc_pids_by_cmdline(s.get("proc_match") or ""))
+
+
+def _svc_health(key):
+    """None neu dich vu khong khai health; else True/False."""
+    url = SERVICES[key].get("health")
+    if not url:
+        return None
+    try:
+        with urllib.request.urlopen(url, timeout=4) as r:
+            return 200 <= r.getcode() < 300
+    except Exception:
+        return False
+
+
+@app.get("/api/services")
+def api_services():
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    out = []
+    for key in _SVC_ORDER:
+        s = SERVICES[key]
+        running = _svc_running(key)
+        health = _svc_health(key) if running else None  # tat -> khoi check
+        detail = ""
+        if key == "backend" and running:
+            # trang thai bridge ChatGPT (backend con song moi hoi)
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:8200/api/chatgpt/status", timeout=3) as r:
+                    d = json.loads(r.read().decode("utf-8") or "{}")
+                conn = bool((d.get("bridge") or {}).get("connected"))
+                detail = "bridge ChatGPT: ✓ đã nối" if conn else "bridge ChatGPT: ✗ chưa nối (mở tab chatgpt.com)"
+            except Exception:
+                detail = ""
+        elif key == "sync":
+            try:
+                ss = api_sync_status()
+                detail = ("vừa đồng bộ %ss trước" % ss.get("ago")) if ss.get("alive") else "chưa hoạt động"
+            except Exception:
+                detail = "chưa hoạt động"
+        out.append({"key": key, "ten": s["ten"], "mota": s["mota"],
+                    "running": running, "health": health, "detail": detail})
+    return out
+
+
+@app.post("/api/services/chatgpt/open-tab")
+def api_service_open_chatgpt():
+    """Mo tab chatgpt.com cho user bam khi bridge chua noi."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    try:
+        subprocess.Popen(["cmd", "/c", "start", "", "https://chatgpt.com/"],
+                         creationflags=_CREATE_NO_WINDOW)
+    except Exception:
+        pass
+    return {"ok": True}
+
+
+@app.post("/api/services/{key}/start")
+def api_service_start(key: str):
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    s = SERVICES.get(key)
+    if not s:
+        raise HTTPException(404, "dich vu la")
+    if _svc_running(key):
+        return {"ok": True, "already": True}
+    # khoi dong nen, KHONG cho — UI tu poll /api/services.
+    # LUU Y (fix 2026-07-16): CREATE_NO_WINDOW va DETACHED_PROCESS XUNG KHAC (di cung -> co an
+    # bi vo hieu -> cua so den cmd hien). Chi dung CREATE_NO_WINDOW + STARTUPINFO SW_HIDE.
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0  # SW_HIDE
+    subprocess.Popen(s["cmd"], cwd=s["cwd"],
+                     creationflags=_CREATE_NO_WINDOW, startupinfo=si,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     stdin=subprocess.DEVNULL)
+    return {"ok": True}
+
+
+@app.post("/api/services/{key}/stop")
+def api_service_stop(key: str):
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    s = SERVICES.get(key)
+    if not s:
+        raise HTTPException(404, "dich vu la")
+    if key == "backend":
+        # chan tat may render khi con job san xuat dang chay/cho
+        for j in store.list_all("produce_jobs"):
+            if j.get("status") in ("queued", "running"):
+                raise HTTPException(409, "Đang có job sản xuất chạy — hủy job trước khi tắt máy render.")
+    if s.get("port"):
+        pids = _port_pids(s["port"])
+    elif key == "sync":
+        # sync = ca cmd chay START-SYNC lan python sync_agent.py
+        pids = sorted(set(_proc_pids_by_cmdline("sync_agent.py") + _proc_pids_by_cmdline("START-SYNC")))
+    else:
+        pids = _proc_pids_by_cmdline(s.get("proc_match") or "")
+    killed = []
+    for pid in pids:
+        try:
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
+                           capture_output=True, text=True, timeout=8,
+                           creationflags=_CREATE_NO_WINDOW)
+            killed.append(pid)
+        except Exception:
+            pass
+    return {"ok": True, "killed": killed}
+
+
 from fastapi.staticfiles import StaticFiles
+
+
+@app.get("/")
+@app.get("/index.html")
+def _serve_index():
+    """Serve index.html voi no-cache (user 2026-07-15): SPA 1-file (inline CSS+JS) — moi
+    lan cap nhat giao dien, browser TU lay ban moi (revalidate 304 neu khong doi), khong
+    con phai Ctrl+F5. StaticFiles ben duoi van phuc vu cac tai nguyen khac."""
+    return FileResponse(
+        os.path.join(SD, "web", "index.html"), media_type="text/html",
+        headers={"Cache-Control": "no-cache, must-revalidate"})
+
+
 app.mount("/", StaticFiles(directory=os.path.join(SD, "web"), html=True), name="web")
 
 
