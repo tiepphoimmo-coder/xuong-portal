@@ -8,7 +8,7 @@ subprocess produce_v2 tuần tự, ghi tiến độ vào store 'produce_jobs', h
 Kiến thức đạo diễn ĐÃ nằm trong code: cân âm tiết (bước duyệt), VOICE DIRECTION (scene), ref per-clip,
 format profile, L1-L5 (xuong_core). Máy chỉ LẮP RÁP — validate sớm để không đốt quota khi sai.
 """
-import json, os, re, shutil, subprocess, threading, time, unicodedata
+import json, os, re, shutil, subprocess, threading, time, unicodedata, urllib.request
 
 import store
 
@@ -244,11 +244,18 @@ def _run_job(job_id):
         # XOÁ job_dir cũ để KHÔNG dùng job_state.json (media_id clip cũ) + storyboard/clip cũ ->
         # gen lại đúng theo bản mới. Job LỖI trước đó -> GIỮ để resume (không phí quota).
         # Storyboard user tự import vẫn an toàn (nằm ở Du An/scenes, copy lại bên dưới).
-        if not job.get("scope"):
-            prior_done = any(
-                j.get("status") == "done" and j.get("id") != job_id and j.get("project_id") == job["project_id"]
-                for j in store.list_all("produce_jobs"))
-            if prior_done and os.path.isdir(job_dir):
+        if not job.get("scope") and os.path.isdir(job_dir):
+            others = [j for j in store.list_all("produce_jobs") if j.get("id") != job_id]
+            prior_done = any(j.get("status") == "done" and j.get("project_id") == job["project_id"]
+                             for j in others)
+            # RESUME chỉ khi job TRƯỚC là bản LỖI của CHÍNH dự án này + CÙNG slug (đỡ phí quota).
+            # FIX va chạm slug (2026-07-16): dự án xoá đi tạo lại TRÙNG mã DA + tên SP -> slug cũ
+            # còn job_state.json với clip THOẠI CŨ -> final sai (thoại khớp 59%). Không phải ca
+            # resume hợp lệ -> XOÁ làm mới.
+            resumable = any(j.get("status") in ("failed", "cancelled")
+                            and j.get("project_id") == job["project_id"]
+                            and j.get("slug") == ep["slug"] for j in others)
+            if prior_done or not resumable:
                 try:
                     shutil.rmtree(job_dir)
                     _jpatch(job_id, stage_detail="làm mới: xoá job cũ, gen lại từ đầu")
@@ -281,6 +288,19 @@ def _run_job(job_id):
             dl = re.search(r"clip (\d+): tai ve", line)
             if dl:
                 _push_clip_preview(job_id, proj["id"], job_dir, pdir, int(dl.group(1)))
+            # LIVE STORYBOARD (user 2026-07-16): tấm sb vừa lưu ("sbN: ...KB)") -> đẩy về Dự án ngay
+            sbm = re.search(r"^sb(\d+): .+KB\)", line.strip())
+            if sbm:
+                _push_sb_preview(proj["id"], job_dir, pdir, int(sbm.group(1)))
+            # TRẠNG THÁI TỪNG CẢNH lúc gen video (user 2026-07-16): submit -> 'gen', tải về -> 'done'
+            m2 = re.search(r"clip (\d+): (ref khoa|sb->media)", line)
+            if m2:
+                _set_clip_state(job_id, int(m2.group(1)), "gen")
+            if dl:  # "clip N: tai ve" đã bắt ở trên
+                _set_clip_state(job_id, int(dl.group(1)), "done")
+            mf = re.search(r"clip (\d+): FAIL", line)
+            if mf:
+                _set_clip_state(job_id, int(mf.group(1)), "fail")
             _jpatch(job_id, stage=stage, stage_detail=det[:80], log_tail=tail, updated=int(time.time()))
 
         # SCOPE (user 2026-07-15): chạy lẻ thay vì full.
@@ -297,16 +317,51 @@ def _run_job(job_id):
             _restore_clips(job_dir, pdir, ep)  # cần đủ clip cho assemble
             stages = [("assemble", ["--assemble"])]
         else:
-            stages = []
+            # KHÂU SB = CHATGPT extension (user 2026-07-16, bỏ SnapGen --sb): vẽ các cảnh thiếu
+            # TRƯỚC khi vào videos; ảnh lên UI live (lưu thẳng vào Dự án).
             if missing:
-                stages.append(("sb", ["--sb", "--only=" + ",".join(map(str, missing))]))
-            stages += [("videos", ["--videos"]), ("assemble", ["--assemble"])]
+                ok_sb, why_sb = _sb_via_chatgpt(job_id, proj["id"], ep, job_dir, pdir, missing)
+                if not ok_sb:
+                    if why_sb == "cancelled":
+                        _jpatch(job_id, status="cancelled", updated=int(time.time()))
+                    else:
+                        _jpatch(job_id, status="failed", stage="sb", error=f"Khâu 'sb' lỗi · {why_sb}",
+                                updated=int(time.time()))
+                    return
+            stages = [("videos", ["--videos"]), ("assemble", ["--assemble"])]
+        healed = False     # tự chữa bridge tối đa 1 lần/job
+        pp_fixed = False   # tự chữa mặt-bị-chặn tối đa 1 lần/job
         for stage, args in stages:
             if _cancelled(job_id):
                 _jpatch(job_id, status="cancelled", updated=int(time.time()))
                 return
             _jpatch(job_id, stage=stage, stage_detail="bắt đầu…", updated=int(time.time()))
             ok, why = _run_stage(job_id, args, stage, tail_cb)
+            if not ok and why != "cancelled" and not healed:
+                # TỰ CHỮA BRIDGE (user 2026-07-16): lỗi mang chữ ký 502/Bad Gateway = bridge Flow
+                # zombie -> kill Chrome profile + relaunch + chờ nối lại -> THỬ LẠI khâu này 1 lần.
+                tail = (store.get("produce_jobs", job_id) or {}).get("log_tail") or ""
+                if re.search(r"502|Bad Gateway", tail + " " + str(why), re.I):
+                    _jpatch(job_id, stage_detail="🔧 bridge Flow treo (502) — tự kill + relaunch…",
+                            updated=int(time.time()))
+                    if _heal_flow_bridge(say=lambda m: _jpatch(job_id, stage_detail=m[:80],
+                                                               updated=int(time.time()))):
+                        healed = True
+                        ok, why = _run_stage(job_id, args, stage, tail_cb)  # retry 1 lần
+            if not ok and why != "cancelled" and stage == "videos" and not pp_fixed:
+                # TỰ CHỮA MẶT BỊ CHẶN (L7, user 2026-07-16): Veo PROMINENT_PEOPLE do ảnh sheet
+                # (mặt idol) -> vẽ lại cảnh lỗi với FACE RULE rồi thử lại khâu videos 1 lần.
+                tail = (store.get("produce_jobs", job_id) or {}).get("log_tail") or ""
+                ids = sorted({int(n) for n in re.findall(r"clip (\d+): FAIL \S*PROMINENT_PEOPLE", tail)})
+                if ids:
+                    okpp, whypp = _redraw_blocked_faces(job_id, proj["id"], ep, job_dir, pdir, ids)
+                    pp_fixed = True
+                    if okpp:
+                        _jpatch(job_id, stage=stage, stage_detail="🎬 gen lại clip với gương mặt mới…",
+                                updated=int(time.time()))
+                        ok, why = _run_stage(job_id, args, stage, tail_cb)  # retry videos
+                    else:
+                        _jpatch(job_id, stage_detail=whypp[:80], updated=int(time.time()))
             if not ok:
                 if why == "cancelled":
                     _jpatch(job_id, status="cancelled", updated=int(time.time()))
@@ -324,6 +379,10 @@ def _run_job(job_id):
         os.makedirs(pdir, exist_ok=True)
         final_dst = os.path.join(pdir, f"{ep['slug']}_FINAL_1080.mp4")
         shutil.copyfile(final_job, final_dst)
+        # ĐẢM BẢO per-clip preview đủ (fix 2026-07-16): clip lấy từ cache không có log "tai ve"
+        # -> preview chưa đẩy -> QC báo 'không thấy clip'. Finish quét đẩy bù toàn bộ.
+        for c in ep["clips"]:
+            _push_clip_preview(job_id, proj["id"], job_dir, pdir, c["id"])
         # GIỮ scene.video = per-clip preview (đã set live khi render) — final vào project.final_video riêng.
         store.patch("projects", proj["id"], final_video=final_dst, status="done")
         _write_manifest(proj["id"])
@@ -343,6 +402,8 @@ _ERR_HINTS = [
                          "không (vd Cát Tường, Trấn Thành...); có → đổi chữ đó. Xem L6."),
     ("UNUSUAL_ACTIVITY", "Veo dính reCAPTCHA — nghỉ vài phút rồi chạy lại (đừng gen dồn)."),
     ("no_bridge_for_account", "Flow bridge chưa sẵn sàng — mở Space TiepphoiAI, kiểm tài khoản Flow online."),
+    ("502", "Bridge Flow treo — máy ĐÃ tự kill+relaunch và thử lại 1 lần; vẫn lỗi nghĩa là chưa hồi, "
+            "chờ 1-2 phút bấm thử lại, hoặc kiểm tài khoản Flow (đăng nhập/credits)."),
     ("SSL", "SnapGen/mạng chập lúc gen storyboard — chạy lại (idempotent, chỉ gen phần thiếu)."),
     ("timeout", "Quá thời gian cho phép của khâu — Flow chậm/kẹt; chạy lại."),
     ("THIEU clip", "Có clip gen KHÔNG ra — xem dòng FAIL phía trên để biết clip nào + vì sao."),
@@ -371,6 +432,68 @@ def _key_error(job_id, stage, why):
     return " · ".join(parts)
 
 
+_FLOW_API = "http://127.0.0.1:8200"
+
+
+def _heal_flow_bridge(say=None):
+    """TỰ CHỮA bridge Flow zombie (user 2026-07-16, bệnh án flowboard-bridge-stuck-timeout-fix):
+    bridge nhìn online nhưng MỌI request 502/timeout. Phác đồ DUY NHẤT hiệu quả:
+    KILL SẠCH Chrome của từng profile bridge -> relaunch qua launcher -> chờ nối lại.
+    Trả True nếu bridge sống lại. say(msg) = báo tiến trình lên job."""
+    say = say or (lambda m: None)
+    try:
+        acc = json.load(urllib.request.urlopen(_FLOW_API + "/api/flow-accounts", timeout=8))
+    except Exception:
+        say("🔧 không gọi được backend :8200 — bỏ qua tự chữa")
+        return False
+    items = acc if isinstance(acc, list) else (acc.get("items") or acc.get("accounts") or [])
+    profiles = [a.get("profile_dir") for a in items if (a.get("profile_dir") or "").strip()]
+    if not profiles:
+        say("🔧 không có profile bridge nào khai — bỏ qua")
+        return False
+    # 1) kill sạch chrome của từng profile (match theo tên thư mục profile — đủ đặc trưng)
+    killed = 0
+    for pd in profiles:
+        base = os.path.basename(pd.rstrip("\\/"))
+        ps = ("Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | "
+              f"Where-Object {{ $_.CommandLine -like '*{base}*' }} | "
+              "Select-Object -ExpandProperty ProcessId")
+        try:
+            r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                               capture_output=True, text=True, timeout=30, creationflags=0x08000000)
+            for pid in re.findall(r"\d+", r.stdout or ""):
+                subprocess.run(["taskkill", "/PID", pid, "/T", "/F"],
+                               capture_output=True, timeout=15, creationflags=0x08000000)
+                killed += 1
+        except Exception:
+            pass
+    say(f"🔧 đã kill {killed} tiến trình Chrome bridge — relaunch…")
+    time.sleep(3)
+    # 2) relaunch tất cả (launcher tự skip account đang online)
+    try:
+        req = urllib.request.Request(_FLOW_API + "/api/flow-accounts/launcher/launch-all",
+                                     data=b"{}", headers={"Content-Type": "application/json"},
+                                     method="POST")
+        urllib.request.urlopen(req, timeout=30)
+    except Exception as e:
+        say(f"🔧 relaunch lỗi: {str(e)[:80]}")
+        return False
+    # 3) chờ bridge nối lại (tối đa 120s) + 10s cho token ổn định
+    for _ in range(40):
+        time.sleep(3)
+        try:
+            h = json.load(urllib.request.urlopen(_FLOW_API + "/api/health", timeout=6))
+            ws = h.get("ws_stats") or {}
+            if ws.get("connected") and int(ws.get("bridge_count") or 0) >= 1:
+                time.sleep(10)
+                say("🔧 bridge đã nối lại — thử lại khâu vừa lỗi")
+                return True
+        except Exception:
+            pass
+    say("🔧 bridge KHÔNG nối lại sau 120s")
+    return False
+
+
 def _restore_clips(job_dir, pdir, ep, skip=None):
     """Job dir hay bị xoá .mp4 sau vài phút (chỉ png sống). Trước khi --assemble / render
     lẻ, copy NGƯỢC clip đã lưu bền ở Dự án (Du An/scenes/sceneN_clip.mp4) về job/clips/cN.mp4
@@ -391,6 +514,112 @@ def _restore_clips(job_dir, pdir, ep, skip=None):
                 shutil.copyfile(src, dst)
             except Exception:
                 pass
+
+
+def _sb_via_chatgpt(job_id, proj_id, ep, job_dir, pdir, missing):
+    """KHÂU STORYBOARD qua CHATGPT extension (user 2026-07-16 — BỎ SnapGen):
+    tái dùng _sb_gen_one của app (prompt + đính ref SP/KOL + 1 dự án 1 cuộc chat +
+    fail-fast quota) cho TỪNG cảnh thiếu; ảnh tự lưu vào Dự án (live UI) rồi copy
+    vào job/scenes/sbN.png cho produce_v2 --videos. Trả (ok, why)."""
+    import app as _app  # lazy import — app đã nạp xong khi job chạy (né vòng lặp import)
+    total = len(ep["clips"])
+    for i, idx in enumerate(sorted(missing)):
+        if _cancelled(job_id):
+            return False, "cancelled"
+        _jpatch(job_id, stage="sb",
+                stage_detail=f"🎨 ChatGPT vẽ cảnh {idx} ({i + 1}/{len(missing)}, tổng {total} cảnh)",
+                updated=int(time.time()))
+        _set_clip_state(job_id, idx, "sb")
+        try:
+            _app._sb_gen_one(proj_id, idx)
+            _set_clip_state(job_id, idx, "sb_done")
+        except Exception as e:  # HTTPException (quota/bridge/timeout) hoặc lỗi khác
+            _set_clip_state(job_id, idx, "fail")
+            detail = getattr(e, "detail", None) or str(e)
+            return False, f"ChatGPT vẽ cảnh {idx} lỗi: {str(detail)[:150]}"
+        src = os.path.join(pdir, "scenes", f"scene{idx}_storyboard.png")
+        if os.path.exists(src):
+            shutil.copyfile(src, os.path.join(job_dir, "scenes", f"sb{idx}.png"))
+    still = [c["id"] for c in ep["clips"]
+             if not os.path.exists(os.path.join(job_dir, "scenes", f"sb{c['id']}.png"))]
+    if still:
+        return False, f"vẫn thiếu ảnh cảnh {still}"
+    return True, ""
+
+
+def _set_clip_state(job_id, idx, state):
+    """Trạng thái TỪNG CẢNH (user 2026-07-16: hiện 'đang gen video' trên card cảnh):
+    job.clip_states = {idx: sb|gen|done|fail} — UI đọc để vẽ badge live trên thẻ cảnh."""
+    j = store.get("produce_jobs", job_id) or {}
+    cs = dict(j.get("clip_states") or {})
+    cs[str(idx)] = state
+    _jpatch(job_id, clip_states=cs, updated=int(time.time()))
+
+
+_FACE_RULE = ("\nFACE RULE (compliance, HIGHEST PRIORITY): draw a DIFFERENT person than in previous images — "
+              "an ordinary everyday Vietnamese woman with natural, slightly imperfect features; the face must "
+              "NOT resemble any celebrity, idol, actress or public figure; no flawless K-beauty idol styling.")
+
+
+def _redraw_blocked_faces(job_id, proj_id, ep, job_dir, pdir, ids):
+    """TỰ CHỮA PROMINENT_PEOPLE do ẢNH (L7, 2026-07-16): mặt vẽ kiểu idol -> Veo nghi người
+    nổi tiếng, chặn i2v (đổi ref/không ref đều vô ích). Phác đồ: VẼ LẠI ảnh cảnh lỗi qua
+    ChatGPT với FACE RULE (mặt đại trà, người KHÁC), copy sheet mới vào job, xoá media_id
+    clip trong job_state để produce_v2 gen lại. Trả (ok, why)."""
+    import app as _app  # lazy — né vòng lặp import
+    for idx in ids:
+        _jpatch(job_id, stage="sb",
+                stage_detail=f"🧑‍🎨 Veo chặn mặt cảnh {idx} — vẽ lại gương mặt đại trà…",
+                updated=int(time.time()))
+        _set_clip_state(job_id, idx, "sb")
+        try:
+            proj = store.get("projects", proj_id) or {}
+            scenes = proj.get("scenes") or []
+            for sc in scenes:
+                if sc.get("idx") == idx and (sc.get("storyboard_prompt") or "").strip():
+                    if "FACE RULE" not in sc["storyboard_prompt"]:
+                        sc["storyboard_prompt"] = sc["storyboard_prompt"] + _FACE_RULE
+            store.patch("projects", proj_id, scenes=scenes)
+            _app._sb_gen_one(proj_id, idx)
+            _set_clip_state(job_id, idx, "sb_done")
+        except Exception as e:  # quota/bridge...
+            _set_clip_state(job_id, idx, "fail")
+            return False, f"vẽ lại cảnh {idx} lỗi: {str(getattr(e, 'detail', e))[:120]}"
+        src = os.path.join(pdir, "scenes", f"scene{idx}_storyboard.png")
+        if os.path.exists(src):
+            shutil.copyfile(src, os.path.join(job_dir, "scenes", f"sb{idx}.png"))
+        # xoá state clip -> produce_v2 --videos coi là CHƯA gen, gen lại với sheet mới
+        try:
+            sp = os.path.join(job_dir, "job_state.json")
+            stj = json.load(open(sp, encoding="utf-8")) if os.path.exists(sp) else {}
+            (stj.get("clips") or {}).pop(str(idx), None)
+            json.dump(stj, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        except Exception:
+            pass
+    return True, ""
+
+
+def _push_sb_preview(proj_id, job_dir, pdir, idx):
+    """Đẩy ảnh storyboard máy vừa gen (job/scenes/sbN.png) về Dự án NGAY (user 2026-07-16:
+    'tạo ảnh xong chưa thấy lên giao diện') — copy sang Du An/scenes/sceneN_storyboard.png
+    + gắn scene.storyboard để thẻ cảnh hiện ảnh live trong lúc job còn chạy."""
+    src = os.path.join(job_dir, "scenes", f"sb{idx}.png")
+    if not os.path.exists(src):
+        return
+    try:
+        d = os.path.join(pdir, "scenes")
+        os.makedirs(d, exist_ok=True)
+        dst = os.path.join(d, f"scene{idx}_storyboard.png")
+        shutil.copyfile(src, dst)
+        proj = store.get("projects", proj_id) or {}
+        scenes = proj.get("scenes") or []
+        for sc in scenes:
+            if sc.get("idx") == idx:
+                sc["storyboard"] = dst
+        store.patch("projects", proj_id, scenes=scenes)
+        _write_manifest(proj_id)
+    except Exception:
+        pass
 
 
 def _push_clip_preview(job_id, proj_id, job_dir, pdir, clip_id):
@@ -628,6 +857,102 @@ def _qc_run(job_id):
           "transcript": transcript, "vision_ran": bool(vision),
           "mech_ran": bool(qcm), "ts": int(time.time())}
     _jpatch(job_id, qc_status="done", qc=qc)
+    # ⭐ AUTO-PUBLISH (user 2026-07-16): QC xong -> tự gửi lệnh đẩy Drive + Notion của KOL.
+    _auto_publish(job_id, proj, qc)
+
+
+def _auto_publish(job_id, proj, qc):
+    """AUTO-PUBLISH sau khi video XONG (user 2026-07-16): enqueue 1 COMMAND cho Claude agent
+    (có MCP tiepphoi-publish) upload final_video lên Drive + tạo/cập nhật page Notion của KOL
+    (KỊCH BẢN đầy đủ + CAPTION tự sinh + LINK VIDEO Drive). KHÔNG chặn QC — agent_worker tự nhặt.
+    Guard: chỉ FULL produce (không scope), có final_video, và CHƯA publish (proj.auto_pub_cmd rỗng
+    -> không lặp). VẪN publish khi qc.overall='fix' (user muốn tự động) — trạng thái QC ghi vào Notion."""
+    try:
+        job = store.get("produce_jobs", job_id) or {}
+        if job.get("scope"):
+            return  # chỉ full produce mới auto-publish (render lẻ/dựng lại -> bỏ qua)
+        pid = proj.get("id")
+        if not pid:
+            return
+        proj = store.get("projects", pid) or proj  # tra bản mới nhất (đọc auto_pub_cmd + final_video)
+        final_video = (proj.get("final_video") or "").strip()
+        if not final_video or not os.path.exists(final_video):
+            return
+        if (proj.get("auto_pub_cmd") or "").strip():
+            return  # đã gửi lệnh xuất bản trước đó -> không lặp
+
+        da = proj.get("code") or pid
+        name = proj.get("title") or da
+        kol = proj.get("kol") or ""
+        product = proj.get("product") or ""
+        kol_rec = _find_rec("kols", kol)
+        notion_db = ((kol_rec or {}).get("notion_db") or "").strip()
+        # ── Resolve KÊNH đăng (nền tảng + trang Notion để nối relation) ──
+        chan_name = (proj.get("channel") or (kol_rec or {}).get("channel") or "").strip()
+        # proj.channel có thể là ID record (vd "ead86b5b") — tra ID trước, tên sau
+        chan_rec = (store.get("channels", chan_name) or _find_rec("channels", chan_name)) if chan_name else None
+        platform = ((chan_rec or {}).get("platform") or "").lower()
+        notion_kenh = ((chan_rec or {}).get("notion_page_name") or "").strip()
+        # KỊCH BẢN đầy đủ = ghép thoại các cảnh (fallback: script gốc của dự án)
+        scenes = sorted(proj.get("scenes") or [], key=lambda s: s.get("idx", 0))
+        script_full = "\n".join(
+            f"Cảnh {sc.get('idx')}: {(sc.get('voice') or '').strip()}"
+            for sc in scenes if (sc.get("voice") or "").strip()
+        ) or (proj.get("script") or "").strip()
+        qc_overall = (qc or {}).get("overall") or "?"
+        notion_line = (f" trên DATABASE của KOL: {notion_db}" if notion_db else " (bảng mặc định)")
+
+        # ── Bước 2: CAPTION theo nền tảng kênh ──
+        if platform == "tiktok":
+            caption_line = (
+                "2. VIẾT CAPTION bán hàng TikTok (tiếng Việt, 1-2 câu chạm nỗi đau + lợi ích): "
+                f'BẮT BUỘC nhắc TÊN SẢN PHẨM "{product}" tự nhiên trong caption; TUYỆT ĐỐI KHÔNG dùng '
+                "'link ở bình luận' hay bất kỳ CTA dẫn link nào (CTA bằng hành động: 'lưu lại', "
+                "'thử ngay'…); 3-5 hashtag ngách; KHÔNG số giá. Dựa kịch bản sau: "
+                f'"{script_full}".\n'
+            )
+        else:
+            caption_line = (
+                "2. VIẾT CAPTION bán hàng TikTok (tiếng Việt, 1-2 câu chạm nỗi đau + lợi ích, 3-5 hashtag "
+                "ngách, kết 'link ở bình luận' — KHÔNG số giá): dựa kịch bản sau: "
+                f'"{script_full}".\n'
+            )
+
+        # ── Bước 4: chỉ dẫn nối relation KÊNH trên Notion ──
+        _NEN_TANG = {"tiktok": "Tiktok", "facebook": "Facebook", "youtube": "YouTube"}
+        nen_tang = _NEN_TANG.get(platform, "")
+        if notion_kenh:
+            nt_part = f' và nen_tang="{nen_tang}"' if nen_tang else ""
+            kenh_line = (
+                f" · liên kết relation KÊNH: khi gọi MCP tiepphoi-publish create_video_page/publish_full "
+                f'truyền kenh="{notion_kenh}"{nt_part}.'
+            )
+        else:
+            kenh_line = " · kênh chưa nối Notion — bỏ trống relation KÊNH."
+
+        # Command text TỰ CHỨA (build từng phần cho sạch, né f-string lồng {} JSON).
+        text = (
+            f"Xuất bản video {da} — {name}:\n"
+            f'1. Video final: "{final_video}" (đường dẫn tuyệt đối).\n'
+            + caption_line +
+            "3. Upload video lên Google Drive bằng MCP tiepphoi-publish (upload_to_drive / publish_full "
+            "theo đúng cẩm nang memory tiepphoi-publish-mcp).\n"
+            f"4. Tạo/cập nhật page Notion cho video theo mã {da}{notion_line} — điền: tiêu đề "
+            f"{da} · {product}, KỊCH BẢN đầy đủ (thoại từng cảnh), CAPTION vừa viết, LINK VIDEO Drive, "
+            f'KOL "{kol}", sản phẩm "{product}", trạng thái QC: {qc_overall}, ngày.'
+            + kenh_line + "\n"
+            f"5. PATCH http://127.0.0.1:8090/api/projects/{pid} JSON "
+            '{"drive_link": <link>, "caption": <caption>, "published_at": <ISO>} và tạo bản ghi '
+            "Thư viện Media như luồng Xuất bản hiện có (xem hướng dẫn trong lệnh publishMedia nếu cần).\n"
+            "Chạy ĐỒNG BỘ trong phiên, xong mới trả lời."
+        )
+        cmd = store.upsert("commands", {"text": text, "status": "pending", "response": None,
+                                        "engine": "claude", "staff": "san-xuat-video-gia-dung",
+                                        "label": (f"📤 Xuất bản {da}")[:80]})
+        store.patch("projects", pid, auto_pub_cmd=cmd["id"])
+        _jpatch(job_id, stage_detail="📤 đã gửi lệnh xuất bản Drive+Notion (Claude đang chạy)")
+    except Exception:
+        pass  # auto-publish best-effort — KHÔNG làm hỏng QC/job
 
 
 def start_produce(project_id, script_id=None, scope=None):

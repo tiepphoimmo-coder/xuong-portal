@@ -5,7 +5,7 @@
 Du lieu gom vao thu muc "Xuong KOL AI" (store.DATA). Model: Claude-trong-vong-lap.
 Chay: <python co fastapi> app.py   (port 8090)
 """
-import json, mimetypes, os, re, subprocess, time, unicodedata, urllib.request
+import json, mimetypes, os, re, subprocess, sys, threading, time, unicodedata, urllib.request, urllib.parse
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 
@@ -112,25 +112,25 @@ LOGIN_HTML = """<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Đăng nhập · Xưởng KOL Văn phòng</title>
 <style>
-:root{--bg:#12100e;--card:#1b1815;--brand:#C15F3C;--bd:rgba(255,255,255,.09);--tx:#efe9e3;--mut:#a99;--ok:#7BC96F}
+:root{--bg:#F1F2F4;--card:#FFFFFF;--brand:#0C66E4;--bd:#DCDFE4;--tx:#172B4D;--mut:#626F86;--ok:#1F845A}
 *{box-sizing:border-box}body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
 background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 .box{width:348px;max-width:calc(100vw - 40px);background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:28px 26px;
-box-shadow:0 18px 50px rgba(0,0,0,.45)}
-.mk{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#D98157);
+box-shadow:0 18px 50px rgba(9,30,66,.15)}
+.mk{width:44px;height:44px;border-radius:12px;background:var(--brand);
 display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;margin-bottom:14px}
 h1{font-size:18px;margin:0 0 3px}p.sub{margin:0 0 16px;color:var(--mut);font-size:13px}
-.tabs{display:flex;gap:6px;margin-bottom:6px;background:#221e1b;padding:4px;border-radius:10px}
+.tabs{display:flex;gap:6px;margin-bottom:6px;background:#F1F2F4;padding:4px;border-radius:10px}
 .tabs button{flex:1;height:34px;margin:0;border:0;border-radius:7px;background:transparent;color:var(--mut);
 font-size:13.5px;font-weight:600;cursor:pointer}
 .tabs button.on{background:var(--brand);color:#fff}
 label{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px}
 input{width:100%;height:44px;padding:0 12px;border-radius:9px;border:1px solid var(--bd);
-background:#221e1b;color:var(--tx);font-size:16px}
+background:#FFFFFF;color:var(--tx);font-size:16px}
 button.act{width:100%;height:46px;margin-top:18px;border:0;border-radius:9px;background:var(--brand);
 color:#fff;font-size:16px;font-weight:600;cursor:pointer}
 button.act:hover{filter:brightness(1.08)}
-.err{color:#e8836b;font-size:13px;margin-top:12px;min-height:16px}
+.err{color:#C9372C;font-size:13px;margin-top:12px;min-height:16px}
 .ok{color:var(--ok);font-size:13px;margin-top:12px;min-height:16px}
 .badge{display:inline-block;font-size:10px;letter-spacing:1px;color:var(--brand);border:1px solid var(--brand);
 border-radius:6px;padding:2px 7px;margin-bottom:12px;text-transform:uppercase}
@@ -558,20 +558,68 @@ def add_channel(body: dict):
     plat = (body.get("platform") or "facebook").strip().lower()
     if plat not in ("facebook", "tiktok", "youtube", "khac"):
         plat = "facebook"
-    return store.upsert("channels", {
+    rec = {
         "name": name, "platform": plat,
         "code": _uniq_code("channels", name, (body.get("code") or "").strip()),
-        "url": (body.get("url") or "").strip(), "note": (body.get("note") or "").strip()})
+        "url": (body.get("url") or "").strip(), "note": (body.get("note") or "").strip()}
+    # Liên kết trang KÊNH trên Notion (tuỳ chọn) — chỉ ghi khi có
+    npid = (body.get("notion_page_id") or "").strip()
+    npname = (body.get("notion_page_name") or "").strip()
+    if npid:
+        rec["notion_page_id"] = npid
+    if npname:
+        rec["notion_page_name"] = npname
+    return store.upsert("channels", rec)
 
 
 @app.patch("/api/channels/{id}")
 def edit_channel(id: str, body: dict):
     if not store.get("channels", id):
         raise HTTPException(404, "no channel")
-    up = {k: v for k, v in body.items() if k in ("name", "platform", "url", "note")}
+    up = {k: v for k, v in body.items()
+          if k in ("name", "platform", "url", "note", "notion_page_id", "notion_page_name")}
+    # strip liên kết Notion
+    for k in ("notion_page_id", "notion_page_name"):
+        if k in up:
+            up[k] = (up[k] or "").strip()
     if body.get("code"):
         up["code"] = body["code"].strip()
     return store.patch("channels", id, **up)
+
+
+# ---------- KÊNH trên NOTION (cache + đồng bộ qua agent worker) ----------
+NOTION_KENH_FILE = os.path.join(DATA_HOME, "notion_kenh.json")
+NOTION_KENH_SOURCE = "collection://2642f71c-1d3b-8211-82a3-8721615a1055"
+
+
+@app.get("/api/notion/kenh")
+def notion_kenh():
+    """Đọc cache notion_kenh.json (không có -> rỗng)."""
+    if not os.path.exists(NOTION_KENH_FILE):
+        return {"synced_at": 0, "items": []}
+    try:
+        return json.load(open(NOTION_KENH_FILE, encoding="utf-8"))
+    except Exception:
+        return {"synced_at": 0, "items": []}
+
+
+@app.post("/api/notion/kenh/sync")
+def notion_kenh_sync():
+    """Enqueue lệnh cho agent worker (có MCP Notion) đồng bộ bảng KÊNH -> ghi đè cache."""
+    text = (
+        f"Dùng MCP Notion query data source {NOTION_KENH_SOURCE} "
+        "(bảng KÊNH trong 'Hệ Thống Kênh Affilate 2026'), lấy TOÀN BỘ page với các trường: "
+        "id, tên (cột title 'Kênh'), Nền Tảng, NGÁCH, Trạng Thái, url. "
+        f"GHI ĐÈ file '{NOTION_KENH_FILE}' theo schema "
+        "{synced_at: <epoch giây hiện tại, số nguyên>, source: '" + NOTION_KENH_SOURCE + "', "
+        "items: [{id, name, platform, ngach, trang_thai, url}]}, encoding UTF-8. "
+        "Nếu KHÔNG có MCP Notion trong phiên thì trả lời 'THIẾU MCP Notion' và DỪNG. "
+        "Chạy đồng bộ ĐỒNG BỘ trong phiên, xong mới trả lời."
+    )
+    cmd = store.upsert("commands", {"text": text, "status": "pending", "response": None,
+                                    "engine": "claude", "staff": "san-xuat-video-gia-dung",
+                                    "label": "🔄 Đồng bộ kênh Notion"})
+    return {"ok": True, "command_id": cmd["id"]}
 
 
 @app.get("/api/kols")
@@ -595,13 +643,14 @@ async def add_kol(name: str = Form(...), code: str = Form(""), voice: str = Form
 async def edit_kol(id: str, name: str = Form(None), code: str = Form(None), voice: str = Form(None),
                    identity: str = Form(None), flow_project_id: str = Form(None), flow_board_id: str = Form(None),
                    voice_id: str = Form(None), group: str = Form(None), channel: str = Form(None),
+                   notion_db: str = Form(None),  # bảng nội dung Notion của KOL (database id/link) — auto-publish
                    drop_refs: str = Form(None), refs: list[UploadFile] = File(default=[])):
     cur = store.get("kols", id)
     if not cur:
         raise HTTPException(404, "no kol")
     _own_guard("kols", id)
     up = {k: v for k, v in {"name": name, "voice": voice, "identity": identity, "voice_id": voice_id,
-                            "group": group, "channel": channel,
+                            "group": group, "channel": channel, "notion_db": notion_db,
                             "flow_project_id": flow_project_id, "flow_board_id": flow_board_id}.items()
           if v is not None}
     if code:
@@ -738,7 +787,10 @@ def del_outfit(id: str, oid: str):
 # ---------- SAN PHAM ----------
 @app.get("/api/products")
 def products():
-    return _own_rows(store.list_all("products"))
+    rows = _own_rows(store.list_all("products"))
+    for p in rows:  # co nao SP chua? (UI badge 🧠 + noi dat hang)
+        p["has_brain"] = os.path.exists(_brain_sp_path(p))
+    return rows
 
 
 @app.get("/api/niches")
@@ -783,6 +835,41 @@ async def edit_product(id: str, name: str = Form(None), code: str = Form(None), 
 
 # ---------- PHEU NAP VIDEO RA DON (nap nao theo SAN PHAM — chong nham SP) ----------
 SPY_SP_DIR = os.path.join(os.path.dirname(DATA_HOME), "SPY", "theo-san-pham")
+
+# ---------- BO NAO SAN PHAM (tri thuc RA DON boc tu video ra don) ----------
+# brain/san-pham/<code>.json (slug = product.code, fallback id). _media/ + _transcripts/ con.
+BRAIN_SP = os.path.join(os.path.dirname(SD), "brain", "san-pham")
+
+
+def _brain_sp_slug(p):
+    """Slug file nao cho 1 san pham = code (fallback id)."""
+    return (p.get("code") or p.get("id") or "").strip() or p.get("id")
+
+
+def _brain_sp_path(p):
+    """Duong dan tuyet doi file JSON nao cua san pham p."""
+    return os.path.join(BRAIN_SP, _brain_sp_slug(p) + ".json")
+
+
+def _brain_sp_load(p):
+    """Doc nao SP tu dia (None neu chua co)."""
+    fp = _brain_sp_path(p)
+    if not os.path.exists(fp):
+        return None
+    try:
+        with open(fp, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _brain_sp_save(p, brain):
+    """Ghi nao SP xuong dia (tao thu muc khi can)."""
+    os.makedirs(BRAIN_SP, exist_ok=True)
+    fp = _brain_sp_path(p)
+    with open(fp, "w", encoding="utf-8") as f:
+        json.dump(brain, f, ensure_ascii=False, indent=2)
+    return fp
 
 
 @app.post("/api/products/{id}/nap-video")
@@ -1171,38 +1258,58 @@ def _scene_sb_prompt(proj, scene, role, kol_lock, prod_lock):
     has_p = bool((proj.get("product") or "").strip())
     has_k = bool((proj.get("kol") or "").strip())
     case = "PRODUCT + PERSON" if (has_p and has_k) else ("PERSON ONLY" if has_k else "PRODUCT ONLY")
+    # PROMPT TỐI ƯU (2026-07-16, sau L1-L7): thêm MOTION CONTINUITY (ô kề nhau chỉ khác 1 cử động
+    # -> i2v mượt, ít morph), PRODUCT FIDELITY (cấm bịa nhãn/chữ bao bì), PANEL 1 = frame mở màn,
+    # ánh sáng đồng nhất, cấm mặt người lạ nhận diện được (né PROMINENT_PEOPLE + trôi nhân vật).
     L = [f"STORYBOARD GENERATOR — 9:16 vertical. CASE: {case}. SCENE: {title}.",
-         f"OUTPUT: ONE clean {cols}x{grows} grid = {n} sequential numbered panels (small badges 1-{n}, thin white "
-         "gutters), read top-left to bottom-right with strong visual continuity — a cinematic breakdown of THIS "
-         "single ~10-second scene.", "",
-         f"IDENTITY LOCK (identical in all {n} panels):", f"- PERSON: {kol_lock}", f"- PRODUCT: {prod_lock}"]
+         f"OUTPUT: ONE clean {cols}x{grows} grid = {n} sequential numbered panels (small number badges 1-{n}, thin "
+         "white gutters), read top-left to bottom-right — a cinematic breakdown of THIS single ~10-second scene. "
+         "Each panel is a FULL-BLEED vertical 9:16 photograph (no captions, no borders inside panels).",
+         "PANEL 1 = the OPENING FRAME of the video: a clean, stable composition that works as frame zero.", "",
+         f"IDENTITY LOCK (identical in all {n} panels):", f"- PERSON: {kol_lock}",
+         # L7: mặt vẽ quá "idol" -> Veo PROMINENT_PEOPLE chặn i2v. Ép mặt đại trà, đời thường.
+         "- FACE RULE (compliance, HIGH PRIORITY): natural, ORDINARY everyday Vietnamese features with slight "
+         "natural imperfections — must NOT resemble any celebrity, idol, actress or public figure; no flawless "
+         "K-beauty idol styling. No other recognizable faces anywhere (background people, if the setting needs "
+         "them, must be far away, out of focus and unrecognizable).",
+         f"- PRODUCT: {prod_lock}",
+         "- PRODUCT FIDELITY: draw the product EXACTLY as in the attached reference photo — same shape, colors, "
+         "proportions, materials and label design. NEVER invent, translate or alter any text on the packaging; "
+         "if label text is too small, keep it soft/illegible rather than making words up. The label should be "
+         "clearly readable in at least one closer panel."]
     if proj.get("accessory_lock"):
         L.append(f"- ACCESSORY LOCK: {proj['accessory_lock']}")
     L += ["",
-          "REALISM (physical logic — bat buoc): every action must be physically logical and safe. NEVER pour oil/"
-          "liquid into a lamp or candle that is ALREADY LIT; if a panel shows filling/pouring, the lamp/candle MUST "
-          "be UNLIT and lit only AFTER it is filled. No impossible or unsafe actions.",
-          "SCALE/PROPORTION: every prop at realistic real-world size relative to the person, hands and furniture "
-          "(e.g. a tabletop altar oil lamp ~25-35cm, a bottle fits comfortably in one hand) — nothing oversized or "
-          "shrunken; keep proportions consistent across panels.",
-          "★ NO price tags/numbers/%/discount, NO freeship/sale/deal badges, NO delivery-truck icons, NO promo "
-          "graphics, NO text overlays of any kind — pure photographic frames (CTA is shown by gesture + speech)."]
+          "MOTION CONTINUITY (for animation — QUAN TRỌNG): the panels form ONE continuous take, not separate "
+          "shots. Between consecutive panels change ONLY ONE natural movement (a hand reaches, the head turns, "
+          "the product is lifted...) — same person position/pose base, same product placement unless hands move "
+          "it, identical outfit/hair/jewelry, identical props layout. No teleporting, no jump in blocking.",
+          "REALISM (physical logic): every action physically logical and safe (e.g. never pour into a lamp/candle "
+          "that is already lit — fill first, light after). Hands hold objects naturally with correct fingers.",
+          "SCALE: every prop at realistic real-world size relative to the person, hands and furniture — nothing "
+          "oversized or shrunken; proportions consistent across panels.",
+          "★ ABSOLUTELY NO price tags/numbers/%/discount, NO freeship/sale/deal badges, NO delivery icons, NO "
+          "promo graphics, NO text overlays, NO speech bubbles, NO watermarks — pure photographic frames "
+          "(CTA is expressed by gesture + facial warmth only)."]
     if dlg:
-        L += ["", f'SCENE CONTEXT: in this scene the person speaks this Vietnamese line: "{dlg}". '
-                  f"Keep the same person, product and setting across all {n} panels."]
+        L += ["", f'SCENE CONTEXT: the person is speaking this Vietnamese line during the scene: "{dlg}" — '
+                  "let the mood, gestures and pacing of the panels match what is being said."]
     # BỐI CẢNH: cảnh có riêng -> dùng; trống -> mặc định của format (ảnh storyboard bám đúng format)
     env = (scene.get("environment") or "").strip() or (_fmt_json(proj.get("format")).get("environment") or "").strip()
     if env:
-        L += [f"SETTING (one continuous location for ALL {n} panels): {env}"]
+        L += [f"SETTING (one continuous location for ALL {n} panels): {env}",
+              "LIGHTING CONTINUITY: same light direction, color temperature and time-of-day in every panel."]
     L += ["", f"PANELS ({n} sequential action beats of THIS scene):"]
     for i, b in enumerate(beats):
         L.append(f"{i + 1}. {b}")
     L += ["", "VISUAL QUALITY: ultra realistic, photorealistic, high-end commercial, cinematic lighting, realistic "
-          "shadows, shallow depth of field, physically accurate materials; vary the camera size each panel.",
+          "shadows, shallow depth of field, physically accurate materials; vary the camera SIZE each panel "
+          "(wide/medium/close) while keeping the same continuous take feeling.",
           "ASPECT RATIO: 9:16 vertical.",
-          "NEGATIVE: extra grid lines beyond the labeled panels, distorted anatomy, duplicate subjects, inconsistent "
-          "product, extra fingers, thumbs-up gesture, OK-sign, cheesy salesman pose, blurry objects, unwanted "
-          "text/captions/watermarks/logos, low quality, AI artifacts, floating objects, frame repetition."]
+          "NEGATIVE: extra grid lines beyond the labeled panels, distorted anatomy, duplicate subjects, "
+          "inconsistent product, invented packaging text, extra fingers, thumbs-up gesture, OK-sign, cheesy "
+          "salesman pose, blurry objects, text/captions/logos, low quality, AI artifacts, floating objects, "
+          "mirrored or repeated panels."]
     L += _scene_attach_lines(proj)
     return "\n".join(L)
 
@@ -1256,21 +1363,45 @@ async def scene_upload(pid: str, idx: int = Form(...), slot: str = Form("storybo
     return p
 
 
-@app.post("/api/projects/{pid}/scene_gen_chatgpt")
-def scene_gen_chatgpt(pid: str, body: dict):
-    """Nut '🤖 ChatGPT' (user yeu cau 2026-07-15): gen anh storyboard 1 canh QUA ChatGPT bridge —
-    tu gui prompt + TU DINH KEM anh ref (san pham + KOL) vao tab chatgpt.com, cho anh ve, luu vao scene.
-    Thay the viec user copy prompt + dinh anh thu cong. Can: extension-chatgpt connected (:8200)."""
-    if _is_member():
-        raise HTTPException(403, "chay o Xuong (PC)")
+def _chatgpt_quota_guard():
+    """FAIL-FAST khi ChatGPT chạm trần ảnh/giờ (fix 2026-07-16): TRƯỚC ĐÂY request vẫn xếp hàng
+    -> đợi quá timeout 300s -> Studio báo lỗi NHƯNG job vẫn gen sau đó (ảnh mồ côi, đốt quota,
+    'tạo liên tục mà không cập nhật'). Giờ chặn ngay từ cửa, báo rõ chờ bao lâu."""
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:8200/api/chatgpt/status", timeout=5) as f:
+            q = (json.load(f).get("queue") or {})
+    except Exception:
+        return  # backend chưa chạy -> để bước sau báo lỗi kết nối như cũ
+    if q.get("paused"):
+        rem = int(q.get("paused_remaining_s") or 0)
+        raise HTTPException(429, f"ChatGPT đang nghỉ (chạm trần ảnh/giờ) — thử lại sau ~{max(1, rem // 60)} phút. Ảnh đã vẽ vẫn giữ nguyên.")
+    if int(q.get("in_last_hour") or 0) >= int(q.get("max_per_hour") or 12):
+        raise HTTPException(429, "ChatGPT đã chạm trần ảnh/giờ — chờ sang cửa sổ giờ mới rồi vẽ tiếp. Ảnh đã vẽ vẫn giữ nguyên.")
+
+
+def _sb_gen_one(pid: str, idx: int) -> dict:
+    """RUỘT của scene_gen_chatgpt (bóc ra 2026-07-16 để job nền 'Vẽ tất cả' dùng lại):
+    gen ảnh storyboard 1 cảnh QUA ChatGPT bridge — build prompt + TỰ ĐÍNH ref (sản phẩm + KOL),
+    lưu png, patch scenes + chatgpt_conversation_id, ghi manifest. raise HTTPException như cũ.
+    KHÔNG chứa guard _is_member (endpoint/ job nền tự lo). Cần: extension-chatgpt (:8200)."""
+    _chatgpt_quota_guard()
     proj = store.get("projects", pid)
     if not proj:
         raise HTTPException(404, "no project")
-    idx = int(body.get("idx") or 0)
     scenes = proj.get("scenes") or []
     sc = next((s for s in scenes if s.get("idx") == idx), None)
     if not sc:
         raise HTTPException(404, "no scene")
+    # ĐẠO DIỄN HÌNH ẢNH: format bối cảnh động + cảnh thiếu environment -> AI sinh trước khi build prompt
+    if _fmt_json(proj.get("format")).get("dynamic_environment") and not (sc.get("environment") or "").strip():
+        try:
+            s_src = next((x for x in store.list_all("scripts") if x.get("project_id") == pid), None)
+            if s_src and _ensure_dynamic_env(s_src, proj):
+                proj = store.get("projects", pid) or proj
+                scenes = proj.get("scenes") or []
+                sc = next((s for s in scenes if s.get("idx") == idx), None) or sc
+        except HTTPException:
+            raise  # bridge lỗi -> user cần biết
     pr = (sc.get("storyboard_prompt") or "").strip()
     if not pr:  # chua co prompt -> tu sinh (khong bat user bam 🎨 truoc)
         kol_lock, prod_lock = _project_locks(proj)
@@ -1316,6 +1447,667 @@ def scene_gen_chatgpt(pid: str, body: dict):
     return {"ok": True, "path": dest, "size_kb": len(img) // 1024}
 
 
+@app.post("/api/projects/{pid}/scene_gen_chatgpt")
+def scene_gen_chatgpt(pid: str, body: dict):
+    """Nut '🤖 ChatGPT' (user yeu cau 2026-07-15): gen anh storyboard 1 canh QUA ChatGPT bridge —
+    tu gui prompt + TU DINH KEM anh ref (san pham + KOL) vao tab chatgpt.com, cho anh ve, luu vao scene.
+    Thay the viec user copy prompt + dinh anh thu cong. Can: extension-chatgpt connected (:8200)."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    return _sb_gen_one(pid, int(body.get("idx") or 0))
+
+
+# ─────────── VẼ TẤT CẢ STORYBOARD (job nền server-side — user 2026-07-16) ───────────
+def _sbgen_scene_missing(proj):
+    """Danh sách idx các cảnh THIẾU storyboard, sắp theo idx (dùng cho job 'Vẽ tất cả')."""
+    return sorted(s.get("idx", 0) for s in (proj.get("scenes") or []) if not (s.get("storyboard") or "").strip())
+
+
+def _sbgen_active_job(pid):
+    """Job sbgen ĐANG chạy (queued/running) của project pid, mới nhất — hoặc None."""
+    rows = [r for r in store.list_all("sbgen_jobs")
+            if r.get("project_id") == pid and r.get("status") in ("queued", "running")]
+    return sorted(rows, key=lambda r: r.get("created", 0), reverse=True)[0] if rows else None
+
+
+def _sbgen_run(job_id):
+    """Vòng lặp nền: mỗi vòng NẠP LẠI proj, vẽ cảnh thiếu storyboard kế tiếp (theo idx).
+    CHỐNG LẶP VÔ HẠN (fix 2026-07-16): mỗi cảnh chỉ THỬ 1 LẦN/job — cảnh fail bị bỏ qua,
+    không nhặt lại (trước đây missing[0] nhặt lại đúng cảnh vừa fail -> gen liên tục đốt quota).
+    Bridge chết / chạm trần quota -> status=failed + DỪNG. User hủy -> dừng."""
+    attempted = set()
+    while True:
+        job = store.get("sbgen_jobs", job_id)
+        if not job or job.get("status") == "cancelled":  # user hủy -> dừng
+            return
+        pid = job.get("project_id")
+        proj = store.get("projects", pid)
+        if not proj:
+            store.patch("sbgen_jobs", job_id, status="failed", error="no project", updated=int(time.time()))
+            return
+        missing = [i for i in _sbgen_scene_missing(proj) if i not in attempted]
+        if not missing:  # hết cảnh CHƯA THỬ -> kết
+            j = store.get("sbgen_jobs", job_id) or {}
+            still = _sbgen_scene_missing(proj)
+            st = "done" if not still or j.get("done", 0) > 0 else "failed"
+            store.patch("sbgen_jobs", job_id, status=st, current_idx=None, updated=int(time.time()))
+            return
+        idx = missing[0]
+        attempted.add(idx)
+        store.patch("sbgen_jobs", job_id, current_idx=idx, updated=int(time.time()))
+        try:
+            _sb_gen_one(pid, idx)
+            j = store.get("sbgen_jobs", job_id) or {}
+            store.patch("sbgen_jobs", job_id, done=(j.get("done", 0) + 1), updated=int(time.time()))
+        except HTTPException as e:
+            detail = str(e.detail)
+            j = store.get("sbgen_jobs", job_id) or {}
+            store.patch("sbgen_jobs", job_id, fails=(j.get("fails", 0) + 1),
+                        error=detail[:200], updated=int(time.time()))
+            # bridge chết / CHẠM TRẦN quota -> vẽ tiếp vô ích, dừng job ngay
+            if ("chưa kết nối" in detail or "disconnected" in detail
+                    or "chạm trần" in detail or "đang nghỉ" in detail):
+                store.patch("sbgen_jobs", job_id, status="failed", current_idx=None, updated=int(time.time()))
+                return
+
+
+@app.post("/api/projects/{pid}/sb_gen_all")
+def sb_gen_all(pid: str):
+    """Vẽ TẤT CẢ storyboard còn thiếu — job nền server-side (sống qua F5). Đang có job active
+    cùng project -> trả job cũ. Ngược lại tạo record 'running' + thread daemon _sbgen_run."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    proj = store.get("projects", pid)
+    if not proj:
+        raise HTTPException(404, "no project")
+    act = _sbgen_active_job(pid)
+    if act:
+        return {"ok": True, "job_id": act["id"], "already": True}
+    rec = store.upsert("sbgen_jobs", {
+        "project_id": pid, "status": "running", "total": len(_sbgen_scene_missing(proj)),
+        "done": 0, "fails": 0, "current_idx": None, "error": "",
+        "created": int(time.time()), "updated": int(time.time())})
+    threading.Thread(target=_sbgen_run, args=(rec["id"],), daemon=True).start()
+    return {"ok": True, "job_id": rec["id"]}
+
+
+@app.get("/api/sbgen_jobs")
+def sbgen_jobs(project_id: str = None):
+    """List job vẽ-tất-cả (mới nhất trước). Có project_id -> 10 gần nhất của project đó;
+    không -> mọi job active (queued/running) + 10 job gần nhất (gộp, khử trùng)."""
+    rows = sorted(store.list_all("sbgen_jobs"), key=lambda r: r.get("created", 0), reverse=True)
+    if project_id:
+        return [r for r in rows if r.get("project_id") == project_id][:10]
+    active = [r for r in rows if r.get("status") in ("queued", "running")]
+    recent = rows[:10]
+    seen, out = set(), []
+    for r in active + recent:
+        if r.get("id") not in seen:
+            seen.add(r.get("id"))
+            out.append(r)
+    return out
+
+
+@app.post("/api/sbgen_jobs/{jid}/cancel")
+def sbgen_job_cancel(jid: str):
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    r = store.patch("sbgen_jobs", jid, status="cancelled", updated=int(time.time()))
+    if not r:
+        raise HTTPException(404, "no job")
+    return {"ok": True}
+
+
+# ═══════════ BỘ NÃO SẢN PHẨM — BÓC VIDEO RA ĐƠN (job nền, user 2026-07-16) ═══════════
+# GET/POST nao + job BÓC: tai tikwm -> whisper -> Sonnet boc tung video -> tong hop nao.
+def _brain_ffbin(name):
+    import shutil as _sh
+    return _sh.which(name) or name
+
+
+def _brain_duration(video):
+    """Do do dai video (giay) qua ffprobe; 0 neu loi."""
+    try:
+        out = subprocess.run([_brain_ffbin("ffprobe"), "-v", "error", "-show_entries",
+                              "format=duration", "-of", "default=nk=1:nw=1", video],
+                             capture_output=True, text=True, timeout=60).stdout.strip()
+        return float(out or 0)
+    except Exception:
+        return 0.0
+
+
+def _brain_whisper(video, txt_path):
+    """Transcribe video (vi) -> tra text + ghi ra txt_path. Loi -> raise."""
+    import shutil as _sh
+    wav = txt_path + ".wav"
+    try:
+        subprocess.run([_brain_ffbin("ffmpeg"), "-y", "-i", video, "-vn", "-ar", "16000",
+                        "-ac", "1", wav], capture_output=True, timeout=240)
+        from faster_whisper import WhisperModel
+        m = WhisperModel("small", device="cpu", compute_type="int8")
+        segs, _ = m.transcribe(wav, language="vi", vad_filter=True, beam_size=1)
+        text = " ".join(s.text.strip() for s in segs).strip()
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write(text)
+        return text
+    finally:
+        try:
+            if os.path.exists(wav):
+                os.remove(wav)
+        except Exception:
+            pass
+
+
+def _tikwm_download(url, dest, timeout_s=120):
+    """Tai video TikTok qua tikwm -> file dest. Tra True/False. Khong chet cho video khac."""
+    try:
+        api = "https://www.tikwm.com/api/?url=" + urllib.parse.quote(url, safe="")
+        req = urllib.request.Request(api, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read().decode("utf-8", "replace"))
+        d = (data or {}).get("data") or {}
+        play = d.get("hdplay") or d.get("play") or d.get("wmplay")
+        if not play:
+            return False
+        if play.startswith("/"):
+            play = "https://www.tikwm.com" + play
+        vreq = urllib.request.Request(play, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(vreq, timeout=timeout_s) as vr, open(dest, "wb") as fh:
+            while True:
+                chunk = vr.read(262144)
+                if not chunk:
+                    break
+                fh.write(chunk)
+        return os.path.getsize(dest) > 10240
+    except Exception:
+        return False
+
+
+def _parse_don_view(metrics):
+    """Boc so don + so view tho tu chuoi metrics user go tay (best-effort, giu nguyen chuoi)."""
+    m = (metrics or "").strip()
+    if not m:
+        return "", ""
+    don = ""
+    mo = re.search(r"([\d.,]+\s*[kКmMtỷ]?\w*)\s*đơn", m, re.I)
+    if mo:
+        don = mo.group(1).strip()
+    view = ""
+    vo = re.search(r"([\d.,]+\s*[kmM]?)\s*(?:view|lượt xem|xem)", m, re.I)
+    if vo:
+        view = vo.group(1).strip()
+    return don, view
+
+
+def _bocnao_active_job(product_id):
+    """Job boc-nao DANG chay (running) cua product, moi nhat — hoac None."""
+    rows = [r for r in store.list_all("bocnao_jobs")
+            if r.get("product_id") == product_id and r.get("status") == "running"]
+    return sorted(rows, key=lambda r: r.get("created", 0), reverse=True)[0] if rows else None
+
+
+def _bocnao_run(job_id):
+    """Vong nen: boc TUNG spy_ref chua 'da_boc' -> tai + whisper + Sonnet boc -> tong hop nao.
+    Job huy giua chung -> dung; loi 1 video -> fails++, khong chet ca job."""
+    job = store.get("bocnao_jobs", job_id)
+    if not job:
+        return
+    pid = job.get("product_id")
+    p = store.get("products", pid)
+    if not p:
+        store.patch("bocnao_jobs", job_id, status="failed", error="no product", updated=int(time.time()))
+        return
+    os.makedirs(os.path.join(BRAIN_SP, "_media"), exist_ok=True)
+    os.makedirs(os.path.join(BRAIN_SP, "_transcripts"), exist_ok=True)
+    slug = _brain_sp_slug(p)
+    limit = job.get("limit") or 0  # 0 = het (mac dinh); >0 = chi boc N video (dung cho E2E)
+    brain = _brain_sp_load(p) or {}
+    vids_new = []          # cac video_ra_don moi build o luot nay
+    extractions = []       # extraction JSON cua tung video (dau vao tong hop)
+    done = 0
+    fails = 0
+    last_err = ""
+    # danh sach spy_ref chua boc (giu index de patch dung phan tu)
+    refs = list(p.get("spy_refs") or [])
+    todo = [(i, r) for i, r in enumerate(refs) if r.get("status") != "da_boc"]
+    if limit > 0:
+        todo = todo[:limit]
+    total = len(todo)
+    store.patch("bocnao_jobs", job_id, total=total, updated=int(time.time()))
+    for n, (ridx, ref) in enumerate(todo, 1):
+        j = store.get("bocnao_jobs", job_id)
+        if not j or j.get("status") == "cancelled":  # user huy -> dung
+            return
+        src = (ref.get("src") or "").strip()
+        vpath = os.path.join(BRAIN_SP, "_media", f"{slug}-v{ridx+1}.mp4")
+        # a. tai video
+        store.patch("bocnao_jobs", job_id, current=f"tải video {n}/{total}", updated=int(time.time()))
+        got = False
+        if src.startswith("http"):
+            got = _tikwm_download(src, vpath, timeout_s=120)
+        elif os.path.exists(src):  # file local da nap san
+            try:
+                import shutil as _sh
+                _sh.copyfile(src, vpath)
+                got = True
+            except Exception:
+                got = False
+        if not got:
+            fails += 1
+            last_err = f"tải lỗi: {src[:60]}"
+            refs = list(store.get("products", pid).get("spy_refs") or [])
+            if ridx < len(refs):
+                refs[ridx]["status"] = "loi_tai"
+                store.patch("products", pid, spy_refs=refs)
+            store.patch("bocnao_jobs", job_id, fails=fails, error=last_err, updated=int(time.time()))
+            continue
+        # b. whisper + do dai + nhip am tiet/10s
+        store.patch("bocnao_jobs", job_id, current=f"whisper {n}/{total}", updated=int(time.time()))
+        txt_path = os.path.join(BRAIN_SP, "_transcripts", f"{slug}-v{ridx+1}.txt")
+        try:
+            transcript = _brain_whisper(vpath, txt_path)
+        except Exception as e:  # noqa: BLE001
+            fails += 1
+            last_err = f"whisper lỗi: {str(e)[:80]}"
+            store.patch("bocnao_jobs", job_id, fails=fails, error=last_err, updated=int(time.time()))
+            continue
+        dur = _brain_duration(vpath)
+        n_words = len(transcript.split())
+        nhip = round(n_words / dur * 10) if dur > 0 else 0  # tu/10s (xap xi am tiet vi tieng Viet)
+        don, view = _parse_don_view(ref.get("metrics"))
+        # c. Sonnet boc 1 video
+        store.patch("bocnao_jobs", job_id, current=f"Sonnet bóc {n}/{total}", updated=int(time.time()))
+        prompt = (
+            "Bạn là chuyên gia bóc tách video bán hàng TikTok để rút công thức RA ĐƠN.\n"
+            f"SẢN PHẨM: {p.get('name','')}\n"
+            f"THÔNG TIN SP: {(p.get('info') or '(chưa có)')}\n"
+            f"GIÁ: {(p.get('price') or '(chưa rõ)')}\n"
+            f"SỐ LIỆU user khai: {(ref.get('metrics') or '(không có — weight thấp)')}\n"
+            f"GHI CHÚ: {(ref.get('note') or '')}\n"
+            f"THỜI LƯỢNG: {dur:.0f}s · NHỊP: {nhip} âm tiết/10s\n"
+            f"TRANSCRIPT (giọng đọc video):\n{transcript[:6000]}\n\n"
+            "Trả về DUY NHẤT một JSON (không giải thích, không markdown) đúng schema, mỗi mảng ≤4 mục "
+            "NGẮN GỌN tiếng Việt, KHÔNG chép nguyên văn thoại đối thủ (viết lại bằng lời mình):\n"
+            '{"hook":"câu hook mở đầu","tom_tat_cau_truc":["beat 1...","beat 2..."],'
+            '"khach_va_khoanh_khac":["ai xem / khoảnh khắc chạm"],'
+            '"objections":["cản mua -> video trả lời thế nào"],'
+            '"winning_shots":["shot cụ thể giữ chân"],'
+            '"ngon_ngu_khach":["cụm từ khách hay dùng"],'
+            '"cau_neo_gia":["cách neo giá trong video"],'
+            '"thong_so_boc":["thông số SP video nêu"],'
+            '"diem_cam":["điều nên tránh"]}')
+        try:
+            ext = _extract_json_obj(_ask_claude(prompt, timeout_s=240)) or {}
+        except HTTPException as e:
+            fails += 1
+            last_err = f"Sonnet lỗi: {str(e.detail)[:80]}"
+            store.patch("bocnao_jobs", job_id, fails=fails, error=last_err, updated=int(time.time()))
+            continue
+        # d. append video_ra_don + danh dau da_boc
+        vid = {"src": src, "don": don, "view": view, "hook": ext.get("hook", ""),
+               "tom_tat_cau_truc": ext.get("tom_tat_cau_truc", []), "nhip_syl_10s": nhip,
+               "transcript_file": os.path.relpath(txt_path, os.path.dirname(SD)).replace("\\", "/"),
+               "ngay_boc": time.strftime("%Y-%m-%d")}
+        vids_new.append(vid)
+        extractions.append(ext)
+        refs = list(store.get("products", pid).get("spy_refs") or [])
+        if ridx < len(refs):
+            refs[ridx]["status"] = "da_boc"
+            store.patch("products", pid, spy_refs=refs)
+        done += 1
+        # luu nao TAM (video_ra_don) sau moi video -> khong mat neu dut giua chung
+        brain.setdefault("video_ra_don", [])
+        brain["video_ra_don"].append(vid)
+        _brain_sp_save(p, brain)
+        store.patch("bocnao_jobs", job_id, done=done, updated=int(time.time()))
+    # ── TỔNG HỢP NÃO (Sonnet lan cuoi) ──
+    if extractions:
+        store.patch("bocnao_jobs", job_id, current="tổng hợp não", updated=int(time.time()))
+        old = _brain_sp_load(p) or {}
+        old_for_prompt = {k: v for k, v in old.items() if k not in ("video_ra_don", "nhat_ky")}
+        prompt = (
+            "Bạn là chuyên gia hệ thống hoá tri thức bán hàng. Tổng hợp NÃO SẢN PHẨM từ các bản bóc video ra đơn.\n"
+            f"SẢN PHẨM: {p.get('name','')} (id {pid})\n"
+            f"NÃO CŨ (nếu có, hợp nhất — GIỮ cái đúng, bổ sung cái mới): {json.dumps(old_for_prompt, ensure_ascii=False)[:3000]}\n"
+            f"CÁC BẢN BÓC MỚI: {json.dumps(extractions, ensure_ascii=False)[:8000]}\n\n"
+            "Quy tắc: TINH CHẤT, toàn não ≤3KB; mỗi khối ≤5 gạch đầu dòng; mục nào kèm số đơn thì GIỮ số đơn làm "
+            "trọng số (ưu tiên video nhiều đơn); KHÔNG bịa; viết lại bằng lời mình, KHÔNG chép thoại đối thủ.\n"
+            "Trả về DUY NHẤT JSON đúng schema (KHÔNG tự sinh video_ra_don/nhat_ky — server tự giữ):\n"
+            '{"product_id":"' + pid + '","name":"' + p.get("name", "").replace('"', "'") + '",'
+            '"cap_nhat":"auto","thong_so":[],"khach_va_khoanh_khac":[],"objections":[],"winning_shots":[],'
+            '"ngon_ngu_khach":[],"gia_neo":{"gia_hien_tai":"","cau_neo_ra_don":[],"bien_the_chay":""},'
+            '"dna":{"hook_formula":[],"cau_truc":[],"cta_style":[],"nhip_syl_10s":""},'
+            '"diem_cam":[],"video_ra_don":[],"nhat_ky":[]}')
+        try:
+            synth = _extract_json_obj(_ask_claude(prompt, timeout_s=240)) or {}
+        except HTTPException as e:
+            synth = {}
+            last_err = f"tổng hợp lỗi: {str(e.detail)[:80]}"
+        # merge: video_ra_don + nhat_ky GIU cua server
+        final = _brain_sp_load(p) or {}
+        for k, v in synth.items():
+            if k in ("video_ra_don", "nhat_ky"):
+                continue
+            final[k] = v
+        final["product_id"] = pid
+        final.setdefault("name", p.get("name", ""))
+        final["cap_nhat"] = time.strftime("%Y-%m-%d")
+        final.setdefault("video_ra_don", [])
+        # dam bao video moi da nam trong video_ra_don (da append o vong lap)
+        final.setdefault("nhat_ky", [])
+        final["nhat_ky"].append(f"{time.strftime('%Y-%m-%d')} bóc {done} video, fails {fails}")
+        _brain_sp_save(p, final)
+        # lam giau SP: token_block RONG + co thong_so -> build token_block ngan (KHONG dung info)
+        prod_now = store.get("products", pid) or {}
+        if not (prod_now.get("token_block") or "").strip() and final.get("thong_so"):
+            tb = "; ".join(str(x) for x in final["thong_so"] if x)[:600]
+            if tb:
+                store.patch("products", pid, token_block=tb)
+    # ── kết ──
+    j = store.get("bocnao_jobs", job_id) or {}
+    if j.get("status") == "cancelled":
+        return
+    store.patch("bocnao_jobs", job_id, status="done", current="", error=last_err,
+                updated=int(time.time()))
+
+
+@app.get("/api/products/{id}/brain")
+def get_brain(id: str):
+    """Doc nao 1 san pham -> {exists, brain, path}."""
+    p = store.get("products", id)
+    if not p:
+        raise HTTPException(404, "no product")
+    brain = _brain_sp_load(p)
+    return {"exists": brain is not None, "brain": brain, "path": _brain_sp_path(p)}
+
+
+@app.post("/api/products/{id}/brain")
+def save_brain(id: str, body: dict):
+    """Ghi de nao 1 san pham (nut 'Sua JSON' tren UI). Chan portal member."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    p = store.get("products", id)
+    if not p:
+        raise HTTPException(404, "no product")
+    brain = body.get("brain")
+    if not isinstance(brain, dict):
+        raise HTTPException(400, "thieu brain (object)")
+    fp = _brain_sp_save(p, brain)
+    return {"ok": True, "path": fp}
+
+
+def _kalodata_parse(data: bytes):
+    """Đọc bytes xlsx Kalodata -> (rows, cols dict). raise HTTPException nếu sai định dạng."""
+    import io as _io
+    import openpyxl
+    try:
+        wb = openpyxl.load_workbook(_io.BytesIO(data), read_only=True, data_only=True)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"File không đọc được (cần .xlsx Kalodata): {e}")
+    ws = wb.worksheets[0]
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        raise HTTPException(400, "File rỗng")
+    return rows
+
+
+@app.post("/api/products/spy_import_xlsx")
+async def spy_import_xlsx(file: UploadFile = File(...), preview: int = 0):
+    """IMPORT EXCEL KALODATA (user 2026-07-16): đọc file export Video của Kalodata ->
+    TỰ KHỚP sản phẩm trong kho theo cột 'Tiêu đề sản phẩm' -> append spy_refs (dedupe theo
+    link TikTok, sort Lượt bán giảm dần để bóc não video nhiều đơn trước).
+    preview=1 (user 2026-07-16 — CHO CHỌN SP): chỉ PHÂN TÍCH, lưu file tạm, trả về danh sách
+    nhóm + gợi ý SP khớp để UI hiện bảng chọn; sau đó gọi /spy_import_confirm với mapping."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    data = await file.read()
+    rows = _kalodata_parse(data)
+    head = [str(c or "").strip().lower() for c in rows[0]]
+
+    def _col(*keys):
+        for i, h in enumerate(head):
+            if any(k in h for k in keys):
+                return i
+        return None
+    c_link = _col("link tiktok")
+    c_title = _col("tiêu đề sản phẩm", "tieu de san pham", "product")
+    c_sold = _col("lượt bán", "luot ban", "sold")
+    c_rev = _col("doanh thu (", "revenue")
+    c_view = _col("lượt xem", "luot xem", "views")
+    c_gpm = _col("gpm")
+    c_acc = _col("tài khoản", "tai khoan", "creator")
+    c_desc = _col("mô tả video", "mo ta video")
+    c_date = _col("ngày đăng", "ngay dang")
+    if c_link is None:
+        raise HTTPException(400, "Không thấy cột 'Link TikTok' — đúng file export Video của Kalodata chứ?")
+
+    def _num(v):
+        try:
+            return float(str(v).replace(",", ""))
+        except Exception:
+            return 0.0
+    # gom theo tiêu đề SP (1 file có thể nhiều SP)
+    groups = {}
+    for r in rows[1:]:
+        link = str(r[c_link] or "").strip() if c_link < len(r) else ""
+        if not link.startswith("http"):
+            continue
+        title = str(r[c_title] or "").strip() if (c_title is not None and c_title < len(r)) else ""
+        groups.setdefault(title, []).append(r)
+
+    prods = store.list_all("products")
+
+    def _match(title):
+        t = title.lower()
+        best = None
+        for p in prods:
+            nm = (p.get("name") or "").lower()
+            if nm and (nm in t or t[:40] in nm or nm[:40] in t):
+                if best is None or len(p.get("name", "")) > len(best.get("name", "")):
+                    best = p
+        return best
+    # PREVIEW (cho CHỌN SP — user 2026-07-16): không nạp gì, lưu file tạm + trả nhóm + gợi ý khớp
+    if preview:
+        import uuid as _uuid
+        os.makedirs(os.path.join(BRAIN_SP, "_imports"), exist_ok=True)
+        token = _uuid.uuid4().hex[:12]
+        open(os.path.join(BRAIN_SP, "_imports", token + ".xlsx"), "wb").write(data)
+        out = []
+        for title, rws in groups.items():
+            sg = _match(title)
+            tops = sorted((int(_num(r[c_sold])) if c_sold is not None else 0) for r in rws)[::-1][:3]
+            out.append({"title": title[:80], "videos": len(rws), "top_don": tops,
+                        "suggest_id": sg and sg["id"], "suggest_name": sg and sg.get("name", "")[:50]})
+        return {"ok": True, "preview": True, "token": token, "groups": out}
+
+    def _ingest(p, rws):
+        refs = list(p.get("spy_refs") or [])
+        by_src = {(x.get("src") or "").split("?")[0]: x for x in refs}
+        rws.sort(key=lambda r: -_num(r[c_sold]) if (c_sold is not None and c_sold < len(r)) else 0)
+        added = skipped = updated = 0
+        for r in rws:
+            link = str(r[c_link]).strip()
+            key = link.split("?")[0]
+            sold = int(_num(r[c_sold])) if c_sold is not None else 0
+            rev = int(_num(r[c_rev])) if c_rev is not None else 0
+            view = int(_num(r[c_view])) if c_view is not None else 0
+            gpm = int(_num(r[c_gpm])) if c_gpm is not None else 0
+            metrics = f"{sold} đơn · {rev:,}đ · {view:,} view" + (f" · GPM {gpm:,}đ" if gpm else "")
+            note = " · ".join(x for x in (
+                str(r[c_acc] or "").strip() if c_acc is not None else "",
+                (str(r[c_desc] or "").strip()[:60]) if c_desc is not None else "") if x)
+            ngay = str(r[c_date] or "")[:10] if c_date is not None else ""
+            if key in by_src:
+                ex = by_src[key]
+                # link ĐÃ có nhưng thiếu số -> ĐỔ BÙ metrics từ file (trọng số cho não), không bỏ phí
+                if not (ex.get("metrics") or "").strip():
+                    ex["metrics"] = metrics
+                    if not (ex.get("note") or "").strip():
+                        ex["note"] = note
+                    if not (ex.get("ngay") or "").strip():
+                        ex["ngay"] = ngay
+                    updated += 1
+                else:
+                    skipped += 1
+                continue
+            refs.append({"src": link, "owner": "doi_thu", "metrics": metrics, "note": note,
+                         "status": "pending", "ngay": ngay, "nguon": "kalodata"})
+            by_src[key] = refs[-1]
+            added += 1
+        store.patch("products", p["id"], spy_refs=refs)
+        return added, updated, skipped
+
+    matched, unmatched = [], []
+    for title, rws in groups.items():
+        p = _match(title)
+        if not p:
+            unmatched.append({"title": title[:60], "videos": len(rws)})
+            continue
+        added, updated, skipped = _ingest(p, rws)
+        matched.append({"product": p.get("name", "")[:50], "product_id": p["id"],
+                        "added": added, "updated": updated, "skipped": skipped})
+    return {"ok": True, "matched": matched, "unmatched": unmatched}
+
+
+@app.post("/api/products/spy_import_confirm")
+def spy_import_confirm(body: dict):
+    """Bước 2 của import CÓ CHỌN SP: nhận {token, mapping:{title: product_id|""}} — nạp theo
+    lựa chọn của user (title -> SP đã chọn; "" = bỏ qua nhóm đó). Xoá file tạm sau khi xong."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    token = re.sub(r"[^0-9a-f]", "", str(body.get("token") or ""))[:12]
+    fp = os.path.join(BRAIN_SP, "_imports", token + ".xlsx")
+    if not token or not os.path.exists(fp):
+        raise HTTPException(404, "phiên import hết hạn — chọn lại file")
+    mapping = body.get("mapping") or {}
+    rows = _kalodata_parse(open(fp, "rb").read())
+    head = [str(c or "").strip().lower() for c in rows[0]]
+
+    def _col(*keys):
+        for i, h in enumerate(head):
+            if any(k in h for k in keys):
+                return i
+        return None
+    c_link, c_title = _col("link tiktok"), _col("tiêu đề sản phẩm", "tieu de san pham", "product")
+    c_sold, c_rev = _col("lượt bán", "luot ban", "sold"), _col("doanh thu (", "revenue")
+    c_view, c_gpm = _col("lượt xem", "luot xem", "views"), _col("gpm")
+    c_acc, c_desc = _col("tài khoản", "tai khoan", "creator"), _col("mô tả video", "mo ta video")
+    c_date = _col("ngày đăng", "ngay dang")
+
+    def _num(v):
+        try:
+            return float(str(v).replace(",", ""))
+        except Exception:
+            return 0.0
+    groups = {}
+    for r in rows[1:]:
+        link = str(r[c_link] or "").strip() if c_link < len(r) else ""
+        if not link.startswith("http"):
+            continue
+        title = str(r[c_title] or "").strip() if (c_title is not None and c_title < len(r)) else ""
+        groups.setdefault(title, []).append(r)
+    matched, skipped_groups = [], []
+    for title, rws in groups.items():
+        pid = (mapping.get(title[:80]) or mapping.get(title) or "").strip()
+        if not pid:
+            skipped_groups.append(title[:60])
+            continue
+        p = store.get("products", pid)
+        if not p:
+            skipped_groups.append(title[:60] + " (SP không tồn tại)")
+            continue
+        refs = list(p.get("spy_refs") or [])
+        by_src = {(x.get("src") or "").split("?")[0]: x for x in refs}
+        rws.sort(key=lambda r: -_num(r[c_sold]) if (c_sold is not None and c_sold < len(r)) else 0)
+        added = updated = skipped = 0
+        for r in rws:
+            link = str(r[c_link]).strip()
+            key = link.split("?")[0]
+            sold = int(_num(r[c_sold])) if c_sold is not None else 0
+            rev = int(_num(r[c_rev])) if c_rev is not None else 0
+            view = int(_num(r[c_view])) if c_view is not None else 0
+            gpm = int(_num(r[c_gpm])) if c_gpm is not None else 0
+            metrics = f"{sold} đơn · {rev:,}đ · {view:,} view" + (f" · GPM {gpm:,}đ" if gpm else "")
+            note = " · ".join(x for x in (
+                str(r[c_acc] or "").strip() if c_acc is not None else "",
+                (str(r[c_desc] or "").strip()[:60]) if c_desc is not None else "") if x)
+            ngay = str(r[c_date] or "")[:10] if c_date is not None else ""
+            if key in by_src:
+                ex = by_src[key]
+                if not (ex.get("metrics") or "").strip():
+                    ex["metrics"] = metrics
+                    if not (ex.get("note") or "").strip():
+                        ex["note"] = note
+                    if not (ex.get("ngay") or "").strip():
+                        ex["ngay"] = ngay
+                    updated += 1
+                else:
+                    skipped += 1
+                continue
+            refs.append({"src": link, "owner": "doi_thu", "metrics": metrics, "note": note,
+                         "status": "pending", "ngay": ngay, "nguon": "kalodata"})
+            by_src[key] = refs[-1]
+            added += 1
+        store.patch("products", pid, spy_refs=refs)
+        matched.append({"product": p.get("name", "")[:50], "product_id": pid,
+                        "added": added, "updated": updated, "skipped": skipped})
+    try:
+        os.remove(fp)
+    except Exception:
+        pass
+    return {"ok": True, "matched": matched, "skipped_groups": skipped_groups}
+
+
+@app.post("/api/products/{id}/boc_nao")
+def boc_nao(id: str, limit: int = 0):
+    """Khoi dong job BÓC NÃO cho 1 SP (tai + whisper + Sonnet boc + tong hop). Chan portal.
+    limit>0: chi boc N spy_ref dau (dung cho E2E/thu nghiem); 0 = het."""
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    p = store.get("products", id)
+    if not p:
+        raise HTTPException(404, "no product")
+    act = _bocnao_active_job(id)
+    if act:
+        return {"ok": True, "job_id": act["id"], "already": True}
+    pend = [r for r in (p.get("spy_refs") or []) if r.get("status") != "da_boc"]
+    total = min(len(pend), limit) if limit and limit > 0 else len(pend)
+    if total == 0:
+        raise HTTPException(400, "khong co video cho boc (spy_refs pending rong)")
+    rec = store.upsert("bocnao_jobs", {
+        "product_id": id, "status": "running", "total": total, "done": 0, "fails": 0,
+        "current": "", "error": "", "limit": (limit if limit and limit > 0 else 0),
+        "created": int(time.time()), "updated": int(time.time())})
+    threading.Thread(target=_bocnao_run, args=(rec["id"],), daemon=True).start()
+    return {"ok": True, "job_id": rec["id"]}
+
+
+@app.get("/api/bocnao_jobs")
+def bocnao_jobs(product_id: str = None):
+    """List job boc-nao (moi nhat truoc). Co product_id -> 10 gan nhat cua SP do."""
+    rows = sorted(store.list_all("bocnao_jobs"), key=lambda r: r.get("created", 0), reverse=True)
+    if product_id:
+        return [r for r in rows if r.get("product_id") == product_id][:10]
+    active = [r for r in rows if r.get("status") == "running"]
+    recent = rows[:10]
+    seen, out = set(), []
+    for r in active + recent:
+        if r.get("id") not in seen:
+            seen.add(r.get("id"))
+            out.append(r)
+    return out
+
+
+@app.post("/api/bocnao_jobs/{jid}/cancel")
+def bocnao_job_cancel(jid: str):
+    if _is_member():
+        raise HTTPException(403, "chay o Xuong (PC)")
+    r = store.patch("bocnao_jobs", jid, status="cancelled", updated=int(time.time()))
+    if not r:
+        raise HTTPException(404, "no job")
+    return {"ok": True}
+
+
 # ─────────── MÁY SẢN XUẤT (deterministic, không LLM — user 2026-07-15) ───────────
 def _ensure_project_from_script(s):
     """Trả project cho script (tạo DA mới nếu chưa có). Dùng bởi máy sản xuất + storyboard thủ công."""
@@ -1345,6 +2137,9 @@ def script_produce(id: str):
     s = store.get("scripts", id)
     if not s:
         raise HTTPException(404, "no script")
+    # ĐẠO DIỄN HÌNH ẢNH: format bối cảnh động -> AI sinh environment per-cảnh (merge scenes phía dưới mang sang project)
+    if _ensure_dynamic_env(s):
+        s = store.get("scripts", id) or s
     proj = _ensure_project_from_script(s)
     # đồng bộ scenes mới nhất của script vào project (thoại đã cân)
     if s.get("scenes"):
@@ -1389,6 +2184,36 @@ def _ask_gpt(prompt: str, timeout_s: int = 90) -> str:
     return (r.get("text") or "").strip()
 
 
+def _ask_claude(prompt: str, timeout_s: int = 120, model: str = "claude-sonnet-5") -> str:
+    """Hoi CLAUDE (CLI, mac dinh Sonnet 5) — user 2026-07-16 chi dinh dung cho buoc TOI UU
+    KICH BAN / CAN AM TIET (viet lai thoai chat luong hon ChatGPT web). Prompt qua STDIN
+    (ne quoting); Windows: claude la .CMD -> phai goi qua cmd /c."""
+    cb = _shutil.which("claude") or _shutil.which("claude.cmd") or "claude"
+    base = ["cmd", "/c", cb] if (os.name == "nt" and cb.lower().endswith((".cmd", ".bat"))) else [cb]
+    cmd = base + ["-p", "--model", model, "--output-format", "json", "--permission-mode", "bypassPermissions"]
+    try:
+        r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout_s,
+                           encoding="utf-8", errors="replace",
+                           creationflags=(0x08000000 if os.name == "nt" else 0))
+    except subprocess.TimeoutExpired:
+        raise HTTPException(502, f"Claude ({model}) qua {timeout_s}s khong tra loi — thu lai.")
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(502, f"Claude CLI loi: {e}")
+    out = (r.stdout or "").strip()
+    try:  # --output-format json boc ngoai {"result": "..."}
+        env = json.loads(out)
+        txt = env.get("result") or env.get("text") or ""
+        if env.get("is_error"):
+            raise HTTPException(502, f"Claude tra loi loi: {str(txt)[:150]}")
+    except HTTPException:
+        raise
+    except Exception:
+        txt = out
+    if not (txt or "").strip():
+        raise HTTPException(502, f"Claude ({model}) tra ve rong (exit {r.returncode}) — kiem `claude` CLI da login.")
+    return txt.strip()
+
+
 def _extract_json_obj(txt: str):
     """Boc JSON object dau tien tu reply cua GPT (co the co ```json ... ``` hoac chu thua)."""
     if not txt:
@@ -1406,6 +2231,71 @@ def _extract_json_obj(txt: str):
         return json.loads(t[i:j + 1])
     except Exception:
         return None
+
+
+def _ensure_dynamic_env(script, proj=None):
+    """Format có dynamic_environment: AI (Claude Sonnet 5) đọc kịch bản -> sinh bối cảnh per-cảnh
+    (tiếng Anh, để prompt ảnh/i2v) GHI vào scenes[].environment CHỖ TRỐNG (user gõ tay thì giữ).
+    Trả True nếu có thay đổi. Best-effort: bridge lỗi -> raise HTTPException từ _ask_claude."""
+    fmt = (script.get("format") or (proj or {}).get("format") or "").strip()
+    prof = _fmt_json(fmt)
+    if not prof.get("dynamic_environment"):
+        return False
+    scenes = script.get("scenes") or []
+    missing = [sc for sc in scenes if not (sc.get("environment") or "").strip()]
+    if not missing:
+        return False
+    # Mô tả sản phẩm (token_block/desc/info) để đạo diễn chọn bối cảnh hợp SP — khớp tên kiểu _find_img
+    prod_name = (script.get("product") or "").strip()
+
+    def _m(a, b):
+        a, b = (a or "").strip().lower(), (b or "").strip().lower()
+        return bool(a) and bool(b) and (a == b or a in b or b in a)
+    prod_rec = None
+    for r in store.list_all("products"):
+        if _m(r.get("name"), prod_name) and (prod_rec is None or len(r.get("name", "")) > len(prod_rec.get("name", ""))):
+            prod_rec = r
+    prod_desc = ""
+    if prod_rec:
+        prod_desc = (prod_rec.get("token_block") or prod_rec.get("desc") or prod_rec.get("info") or "").strip()
+    hook = (script.get("hook") or "").strip()
+    # danh sách cảnh (idx + thoại) cho đạo diễn
+    scene_lines = "\n".join(
+        f'Cảnh {sc.get("idx")}: {(sc.get("voice") or "").strip() or "(không thoại)"}'
+        for sc in sorted(scenes, key=lambda x: x.get("idx", 0)))
+    prompt = (
+        "Bạn là PRODUCTION DESIGNER cho video bán hàng TikTok DỌC 9:16.\n"
+        f"SẢN PHẨM: {prod_name or '(không rõ)'}"
+        + (f" — {prod_desc}" if prod_desc else "") + "\n"
+        + (f"HOOK: {hook}\n" if hook else "")
+        + "CÁC CẢNH (theo thoại):\n" + scene_lines + "\n\n"
+        "YÊU CẦU:\n"
+        "1) Chọn 1 ĐỊA ĐIỂM CHÍNH nhất quán, hợp với sản phẩm + câu chuyện (KHÔNG mặc định nhà kho).\n"
+        "2) Viết cho MỖI CẢNH 1 mô tả bối cảnh TIẾNG ANH 1-2 câu: địa điểm + chi tiết props + ánh sáng + không khí; "
+        "cùng địa điểm chính nhưng khác góc/chi tiết theo thoại từng cảnh.\n"
+        "3) TRÁNH mọi chữ/logo/giá xuất hiện trong cảnh.\n"
+        'TRẢ VỀ DUY NHẤT 1 JSON object, key = chỉ số cảnh (chuỗi), value = mô tả tiếng Anh. '
+        'Ví dụ: {"1":"...","2":"..."}. KHÔNG kèm giải thích.')
+    reply = _ask_claude(prompt, timeout_s=120)  # user 2026-07-16: bối cảnh động dùng Claude
+    obj = _extract_json_obj(reply) or {}
+    changed = False
+    for sc in missing:
+        v = obj.get(str(sc.get("idx")))
+        if isinstance(v, str) and v.strip():
+            sc["environment"] = v.strip()
+            changed = True
+    if not changed:
+        return False
+    store.patch("scripts", script["id"], scenes=scenes)
+    if proj:  # đồng bộ environment sang project theo idx
+        pscenes = proj.get("scenes") or []
+        by_idx = {sc.get("idx"): (sc.get("environment") or "") for sc in scenes}
+        for ps in pscenes:
+            ev = by_idx.get(ps.get("idx"))
+            if ev and not (ps.get("environment") or "").strip():
+                ps["environment"] = ev
+        store.patch("projects", proj["id"], scenes=pscenes)
+    return True
 
 
 @app.post("/api/scripts/{id}/rebalance")
@@ -1457,7 +2347,8 @@ def script_rebalance(id: str):
         p = prompt if attempt == 0 else (
             "Cac cau sau VAN chua dung so tieng. Viet lai cho DUNG khoang, tra JSON nhu truoc:\n" +
             "\n".join(f'Canh {k} (can {smin}-{smax}): "{v.get("try") or v["old"]}"' for k, v in remain.items()))
-        obj = _extract_json_obj(_ask_gpt(p))
+        # TỐI ƯU THOẠI bằng CLAUDE Sonnet 5 (user 2026-07-16) — viết lại chất hơn ChatGPT web
+        obj = _extract_json_obj(_ask_claude(p))
         if not obj:
             break
         for k, o in list(remain.items()):
@@ -1836,7 +2727,7 @@ def scripts_create(body: dict):
     member = _is_member()  # portal member: kich ban luon pending
     out = []
     for it in items:
-        if not (it.get("product") or it.get("scenes")):
+        if not (it.get("product") or it.get("scenes") or it.get("script_text")):
             continue
         status = "pending" if member else it.get("status", "pending")
         out.append(store.upsert("scripts", {
@@ -1847,9 +2738,122 @@ def scripts_create(body: dict):
             "channel": (it.get("channel") or "").strip(),
             "cau_truc": it.get("cau_truc", ""), "tags": it.get("tags") or [],
             "hook": it.get("hook", ""), "ly_do": it.get("ly_do", ""),
+            "script_text": (it.get("script_text") or "").strip(),  # kịch bản NGUYÊN KHỐI (chia cảnh khi duyệt)
             "scenes": it.get("scenes") or [], "status": status,
             "project_id": it.get("project_id"), "note": it.get("note", "")}))
     return {"created": len(out), "items": out}
+
+
+@app.post("/api/scripts/{id}/approve")
+def script_approve(id: str):
+    """DUYỆT = Claude Sonnet 5 CHIA CẢNH + CÂN ÂM TIẾT theo format (user 2026-07-16).
+    Nguồn chữ: script_text (nguyên khối) nếu có, else ghép thoại scenes hiện có.
+    Scenes đã có + TẤT CẢ trong khoảng format -> fast-path: chỉ set approved (không gọi AI)."""
+    if _is_member():
+        raise HTTPException(403, "chi admin duoc duyet")
+    s = store.get("scripts", id)
+    if not s:
+        raise HTTPException(404, "no script")
+    fmt = (s.get("format") or "").strip()
+    if not fmt:
+        raise HTTPException(400, "Chọn FORMAT trước khi duyệt (Claude cần biết nhịp thoại).")
+    prof = producer.load_format(fmt)
+    smin = int(prof.get("syllables_min") or 40)
+    smax = int(prof.get("syllables_max") or 58)
+    scenes_cur = s.get("scenes") or []
+    raw_txt = (s.get("script_text") or "").strip()
+
+    # FAST-PATH: scenes có sẵn ĐỦ (mọi cảnh có thoại, mọi âm tiết trong [smin-2, smax+2])
+    # VÀ không có script_text NGUYÊN KHỐI chưa-chia (script_text còn mà chưa có scenes) -> khỏi gọi AI.
+    def _scene_ok(sc):
+        v = (sc.get("voice") or "").strip()
+        return bool(v) and (smin - 2 <= producer._syl(v) <= smax + 2)
+    raw_unchia = bool(raw_txt) and not scenes_cur  # nguyên khối chưa chia cảnh
+    if scenes_cur and all(_scene_ok(sc) for sc in scenes_cur) and not raw_unchia:
+        store.patch("scripts", id, status="approved")
+        return {"ok": True, "fast": True, "scenes": scenes_cur}
+
+    # Nguồn chữ để chia: script_text nguyên khối, else ghép thoại scenes hiện có.
+    raw = raw_txt or " ".join((sc.get("voice") or "").strip() for sc in scenes_cur).strip()
+    if not raw.strip():
+        raise HTTPException(400, "Chưa có nội dung kịch bản.")
+
+    prod = (s.get("product") or "").strip()
+    hook = (s.get("hook") or "").strip()
+    prompt = (
+        "Bạn là ĐẠO DIỄN chia cảnh video bán hàng dọc 9:16 (mỗi cảnh = 1 clip 10 giây).\n"
+        f"SẢN PHẨM: {prod or '(không rõ)'}\n"
+        + (f"HOOK: {hook}\n" if hook else "")
+        + "KỊCH BẢN (nguyên văn):\n" + raw + "\n\n"
+        "YÊU CẦU:\n"
+        f"- Chia thành các CẢNH, TỰ QUYẾT số cảnh (2-6) sao cho MỖI cảnh {smin}-{smax} tiếng.\n"
+        '  (đếm tiếng = số từ cách nhau bởi dấu cách, ví dụ "túi đựng chăn màn siêu tiện" = 6 tiếng).\n'
+        "- GIỮ TRỌN nội dung + giọng văn gốc; được chỉnh nhẹ câu chữ cho tròn nhịp đọc.\n"
+        "- KHÔNG thêm thông tin/giá mới, KHÔNG viết HOA cả từ, KHÔNG từ khoá đặt trong ngoặc kép.\n"
+        "- Mỗi cảnh 1 title 2-4 chữ (vd hook/demo/chốt).\n"
+        'TRẢ VỀ DUY NHẤT 1 JSON: {"scenes":[{"idx":1,"title":"...","voice":"..."}]}. Không giải thích.')
+    obj = _extract_json_obj(_ask_claude(prompt, timeout_s=180))
+    if not isinstance(obj, dict) or not isinstance(obj.get("scenes"), list) or not obj["scenes"]:
+        raise HTTPException(502, "Claude trả về không đúng định dạng — thử lại.")
+
+    # Chuẩn hoá scenes mới (idx tăng dần từ 1)
+    new_scenes = []
+    for i, sc in enumerate(obj["scenes"], 1):
+        if not isinstance(sc, dict):
+            continue
+        new_scenes.append({"idx": i, "title": str(sc.get("title") or "").strip(),
+                            "voice": str(sc.get("voice") or "").strip()})
+    if not new_scenes:
+        raise HTTPException(502, "Claude trả về không đúng định dạng — thử lại.")
+
+    # KIỂM âm tiết -> RETRY 1 LẦN cho các cảnh lệch ngoài [smin-2, smax+2]
+    off = [sc for sc in new_scenes if not (smin - 2 <= producer._syl(sc["voice"]) <= smax + 2)]
+    if off:
+        lines = "\n".join(
+            f'Cảnh {sc["idx"]} hiện {producer._syl(sc["voice"])} tiếng, cần {smin}-{smax}: "{sc["voice"]}"'
+            for sc in off)
+        p2 = ("Các cảnh sau chưa đúng số tiếng. Viết lại CHỈ các cảnh này, GIỮ ý, mỗi cảnh "
+              f"{smin}-{smax} tiếng (đếm = số từ cách nhau dấu cách).\n" + lines +
+              '\nTrả JSON {"<idx>":"thoại mới"}. Không giải thích.')
+        fix = _extract_json_obj(_ask_claude(p2, timeout_s=180)) or {}
+        if isinstance(fix, dict):
+            for sc in new_scenes:
+                nv = fix.get(str(sc["idx"]))
+                if nv is None:
+                    nv = fix.get(sc["idx"])
+                nv = (str(nv).strip() if nv is not None else "")
+                if nv:
+                    sc["voice"] = nv
+
+    warnings = [f"Cảnh {sc['idx']}: {producer._syl(sc['voice'])} âm tiết (cần {smin}-{smax})"
+                for sc in new_scenes if not (smin - 2 <= producer._syl(sc["voice"]) <= smax + 2)]
+    # GIỮ script_text để chia lại được
+    store.patch("scripts", id, scenes=new_scenes, status="approved")
+    return {"ok": True, "scenes": new_scenes, "warnings": warnings}
+
+
+@app.post("/api/scripts/{id}/duplicate")
+def scripts_duplicate(id: str):
+    """SAO CHÉP CARD (user 2026-07-16, kiểu Trello Copy card): nhân bản kịch bản thành card MỚI
+    ở cột Chờ duyệt — copy nội dung (KOL/SP/format/thoại/bối cảnh...), KHÔNG mang theo
+    project_id/trạng thái sản xuất. Dùng để đổi KOL/format hoặc làm biến thể."""
+    s = store.get("scripts", id)
+    if not s:
+        raise HTTPException(404, "no script")
+    if _is_member():
+        _own_guard("scripts", id)
+    scenes = [{k: sc.get(k) for k in ("idx", "title", "voice", "voice_direction", "environment", "sb_beats")
+               if sc.get(k) is not None} for sc in (s.get("scenes") or [])]
+    dup = store.upsert("scripts", {
+        "kol": s.get("kol", ""), "product": s.get("product", ""),
+        "niche": s.get("niche", ""), "staff": s.get("staff", ""),
+        "format": s.get("format", ""), "tts_voice": s.get("tts_voice", ""),
+        "channel": s.get("channel", ""), "cau_truc": s.get("cau_truc", ""),
+        "tags": list(s.get("tags") or []), "hook": s.get("hook", ""),
+        "ly_do": s.get("ly_do", ""), "scenes": scenes,
+        "status": "pending", "project_id": None,
+        "note": s.get("note", ""), "copied_from": id})
+    return {"ok": True, "id": dup["id"]}
 
 
 @app.patch("/api/scripts/{id}")
@@ -1887,6 +2891,10 @@ def script_to_storyboard(id: str):
                            storyboard_mode="manual", nguoi_tao=s.get("nguoi_tao"))
     else:
         proj = store.patch("projects", pid, storyboard_mode="manual")
+    # ĐẠO DIỄN HÌNH ẢNH: format bối cảnh động -> AI sinh environment per-cảnh trước khi ra prompt
+    if _ensure_dynamic_env(s, proj):
+        s = store.get("scripts", id) or s
+        proj = store.get("projects", pid) or proj
     kol_lock, prod_lock = _project_locks(proj)
     scenes = sorted(proj.get("scenes") or [], key=lambda x: x.get("idx", 0))
     n = _sb_panels(proj.get("format"))
@@ -2022,6 +3030,48 @@ def _media_do_luong(rec):
 @app.get("/api/media")
 def media_list():
     return sorted(_own_rows(store.list_all("media")), key=lambda m: m.get("created", 0), reverse=True)
+
+
+THUMB_DIR = os.path.join(DATA_HOME, "thumbs")
+
+
+@app.get("/api/media/{id}/thumb")
+def media_thumb(id: str):
+    """Anh thumbnail cho card Thu vien Media: cache -> trich khung video local -> anh storyboard scene -> 404.
+    Moi loi ffmpeg nuot gon roi roi xuong fallback; het cach -> 404 (UI hien placeholder)."""
+    rec = store.get("media", id)
+    if not rec:
+        raise HTTPException(404, "no media")
+    os.makedirs(THUMB_DIR, exist_ok=True)
+    cache_path = os.path.join(THUMB_DIR, f"media-{id}.jpg")
+    if os.path.exists(cache_path):
+        return FileResponse(cache_path, media_type="image/jpeg")
+
+    # 1) Trich khung hinh giay 1.0 tu video local
+    vp = (rec.get("video_path") or "").strip()
+    if vp and os.path.exists(vp):
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-loglevel", "error", "-ss", "1", "-i", vp,
+                 "-frames:v", "1", "-vf", "scale=-2:480", cache_path],
+                timeout=30, check=False,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+        if os.path.exists(cache_path) and os.path.getsize(cache_path) > 0:
+            return FileResponse(cache_path, media_type="image/jpeg")
+
+    # 2) Fallback: anh storyboard cua 1 scene trong du an
+    pid = rec.get("project_id")
+    if pid:
+        proj = store.get("projects", pid)
+        if proj:
+            for sc in (proj.get("scenes") or []):
+                sb = (sc.get("storyboard") or "").strip() if isinstance(sc.get("storyboard"), str) else ""
+                if sb and os.path.exists(sb):
+                    return FileResponse(sb, media_type=mimetypes.guess_type(sb)[0] or "image/png")
+
+    raise HTTPException(404, "no thumb")
 
 
 @app.post("/api/media")
@@ -2547,7 +3597,8 @@ SERVICES = {
     "sync": {
         "ten": "Đồng bộ Văn phòng VPS", "port": None, "health": None,
         "proc_match": "sync_agent.py",  # nhan dien qua command line
-        "cmd": ["cmd", "/c", os.path.join(_WS, "START-SYNC.bat")], "cwd": _WS,
+        # goi THANG python (fix 2026-07-16: bat chet ngam khi chay an — timeout/console; sync_agent tu doc sync.env + tu loop)
+        "cmd": [sys.executable, os.path.join(_WS, "studio", "sync_agent.py")], "cwd": os.path.join(_WS, "studio"),
         "mota": "Đẩy dữ liệu 2 chiều PC ↔ VPS (chỉ cần khi dùng Văn phòng)"},
     "frontend": {
         "ten": "Space TiepphoiAI (:5173)", "port": 5173, "health": None,
@@ -2721,10 +3772,29 @@ def _serve_index():
 app.mount("/", StaticFiles(directory=os.path.join(SD, "web"), html=True), name="web")
 
 
+def _sweep_orphan_jobs():
+    """Studio khởi động (fix 2026-07-16): job produce/sbgen còn 'running' là MỒ CÔI
+    (thread chết cùng tiến trình cũ — vd đóng cửa sổ app giữa chừng) -> đánh dấu failed
+    kèm hướng dẫn, để UI không hiện 'đang chạy' ma + hiện nút Sản xuất lại."""
+    now = int(time.time())
+    for kind, msg in (("produce_jobs", "Studio khởi động lại giữa chừng (job mồ côi) — bấm 🎬 Sản xuất để chạy tiếp."),
+                      ("sbgen_jobs", "Studio khởi động lại giữa chừng — bấm 🤖 Vẽ tất cả để vẽ tiếp (ảnh đã vẽ vẫn còn)."),
+                      ("bocnao_jobs", "Studio khởi động lại giữa chừng — bấm 🧬 Bóc não để chạy tiếp (video đã bóc vẫn còn).")):
+        try:
+            for j in store.list_all(kind):
+                if j.get("status") in ("queued", "running"):
+                    store.patch(kind, j["id"], status="failed", error=msg, updated=now)
+                    if kind == "produce_jobs":
+                        producer._reset_script_after_stop(j)
+        except Exception:
+            pass
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", "8090"))
     host = os.environ.get("HOST", "127.0.0.1")  # container: HOST=0.0.0.0 de cong anh xa ra ngoai
+    _sweep_orphan_jobs()  # dọn job 'running' ma từ tiến trình trước
     seeded = auth.bootstrap_admin()  # tao admin mac dinh tu ADMIN_USER/ADMIN_PASSWORD neu chua co
     if seeded:
         print(f"[bootstrap] Da tao admin mac dinh: {seeded}", flush=True)

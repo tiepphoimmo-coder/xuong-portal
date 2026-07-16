@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <!-- PWA-lite: cài lên màn hình chính điện thoại -->
 <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
-<meta name="theme-color" content="#221E18">
+<meta name="theme-color" content="#0C66E4">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Xưởng KOL · TiếpPhối Space</title>
 <style>
   :root{
-    --brand:#C15F3C; --brand-600:#A84E30; --brand-bg:#FBEEE8;
-    --side:#221E18; --side-2:#2E2921; --side-tx:#B8B1A4; --side-on:#F5EFE6;
-    --bg:#F6F4EF; --card:#FFFFFF; --bd:#E8E4DB; --bd2:#D5D0C4;
-    --tx:#26231E; --mut:#8B867B;
-    --acc:#185FA5; --accbg:#E8F1FA;
-    --ok:#3B6D11; --okbg:#EAF3DE; --run:#0F6E56; --runbg:#E1F5EE;
-    --warn:#854F0B; --warnbg:#FAEEDA; --err:#A32D2D; --errbg:#FCEBEB;
-    --r:12px; --sh:0 1px 2px rgba(35,30,22,.05); --sh2:0 6px 20px rgba(35,30,22,.10);
+    --brand:#0C66E4; --brand-600:#0055CC; --brand-bg:#E9F2FF;
+    --side:#FFFFFF; --side-2:#F1F2F4; --side-tx:#44546F; --side-on:#172B4D;
+    --bg:#F1F2F4; --card:#FFFFFF; --bd:#DCDFE4; --bd2:#B3B9C4;
+    --tx:#172B4D; --mut:#626F86;
+    --acc:#0055CC; --accbg:#E9F2FF;
+    --ok:#1F845A; --okbg:#DCFFF1; --run:#0C66E4; --runbg:#E9F2FF;
+    --warn:#946F00; --warnbg:#FFF7D6; --err:#C9372C; --errbg:#FFECEB;
+    --r:8px; --sh:0 1px 1px rgba(9,30,66,.25),0 0 1px rgba(9,30,66,.31); --sh2:0 8px 12px rgba(9,30,66,.15),0 0 1px rgba(9,30,66,.31);
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -30,7 +30,7 @@
   aside{width:222px;flex:0 0 222px;background:var(--side);color:var(--side-tx);display:flex;flex-direction:column;position:fixed;left:0;top:0;height:100vh;z-index:8;transition:width .16s ease,flex-basis .16s ease}
   .sidescroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
   .sidescroll::-webkit-scrollbar{width:7px}
-  .sidescroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
+  .sidescroll::-webkit-scrollbar-thumb{background:rgba(9,30,66,.14);border-radius:99px}
   body.sidecollapsed aside{width:64px;flex-basis:64px}
   body.sidecollapsed .logo .lt,body.sidecollapsed .navgrp .gt,body.sidecollapsed nav a .lb,
   body.sidecollapsed nav a .cnt,body.sidecollapsed .sfoot .sl2{display:none}
@@ -38,11 +38,11 @@
   body.sidecollapsed .logo{padding:16px 0;justify-content:center}
   body.sidecollapsed .sfoot{justify-content:center;padding:12px 0}
   body.sidecollapsed .sidetoggle{transform:rotate(180deg)}
-  .sidetoggle{margin-left:auto;flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:transparent;color:var(--side-tx);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .16s,background .12s}
+  .sidetoggle{margin-left:auto;flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1px solid #DCDFE4;background:transparent;color:var(--side-tx);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .16s,background .12s}
   .sidetoggle:hover{background:var(--side-2);color:var(--side-on)}
   body.sidecollapsed .sidetoggle{margin:0}
-  .logo{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
-  .logo .mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#D98157);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:15px;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 2px 8px rgba(193,95,60,.45)}
+  .logo{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;border-bottom:1px solid #DCDFE4}
+  .logo .mark{width:38px;height:38px;border-radius:10px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:15px;letter-spacing:.5px;flex:0 0 auto;box-shadow:0 2px 8px rgba(12,102,228,.45)}
   .logo .lt b{display:block;color:var(--side-on);font-size:15px;letter-spacing:.2px}
   .logo .lt span{font-size:11px;color:var(--side-tx);letter-spacing:.6px;text-transform:uppercase}
   /* ===== CHE DO VAN PHONG (portal) ===== */
@@ -51,16 +51,16 @@
   /* avatar header + trang Tai khoan */
   .mebtn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bd);border-radius:99px;padding:3px 12px 3px 3px;cursor:pointer;height:33px}
   .mebtn:hover{border-color:var(--bd2)}
-  .meav{width:27px;height:27px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;overflow:hidden}
+  .meav{width:27px;height:27px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;overflow:hidden}
   .meav img{width:100%;height:100%;object-fit:cover}
   .mename{font-size:13px;font-weight:600;color:var(--tx);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .avbig{width:82px;height:82px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;overflow:hidden}
+  .avbig{width:82px;height:82px;border-radius:50%;object-fit:cover;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;overflow:hidden}
   .avbig img{width:100%;height:100%;object-fit:cover}
   .urow{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--bd);border-radius:var(--r);background:var(--card);margin-bottom:8px;flex-wrap:wrap}
   .urow select{width:auto;flex:0 0 auto;min-width:120px;height:32px}
   .urow .mini,.urow .ust{flex:0 0 auto;white-space:nowrap}
   .pcard .mini{flex:0 0 auto;white-space:nowrap}
-  .urow .uav{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;overflow:hidden}
+  .urow .uav{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;overflow:hidden}
   .urow .uav img{width:100%;height:100%;object-fit:cover}
   .ust{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
   .ust.active{background:var(--okbg);color:var(--ok)} .ust.pending{background:var(--warnbg);color:var(--warn)} .ust.disabled{background:var(--errbg);color:var(--err)}
@@ -95,19 +95,19 @@
   .sbtthumb:hover{outline:2px solid var(--acc,#3b82f6)}
   .pcard{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--warn);background:var(--warnbg);border-radius:var(--r);margin-bottom:8px}
   .tmpbox{margin-top:8px;padding:8px 10px;background:var(--accbg);color:var(--acc);border-radius:8px;font-family:ui-monospace,monospace;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-  body.portal #fab,body.portal #apanel,body.portal .sfoot,
+  body.portal #fab,body.portal #apanel,body.portal #pet,body.portal #petlog,body.portal .sfoot,
   body.portal nav a[data-v="staff"],body.portal nav a[data-v="flowaccts"],
-  body.portal nav a[data-v="projects"],
+  body.portal nav a[data-v="projects"],body.portal nav a[data-v="brains"],
   body.portal .prodbtn,body.portal .napbtn{display:none!important}
   .navgrp{padding:14px 10px 2px}
-  .navgrp .gt{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:#736D60;padding:0 10px;margin-bottom:6px}
+  .navgrp .gt{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:#626F86;padding:0 10px;margin-bottom:6px}
   nav a{display:flex;align-items:center;gap:10px;color:var(--side-tx);text-decoration:none;font-size:13.5px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px;border-left:3px solid transparent}
   nav a .ic{width:18px;text-align:center;font-size:14px;opacity:.9}
   nav a:hover{background:var(--side-2);color:var(--side-on)}
   nav a.on{background:var(--side-2);color:var(--side-on);border-left-color:var(--brand);font-weight:600}
-  nav a .cnt{margin-left:auto;font-size:11px;background:rgba(255,255,255,.09);padding:1px 7px;border-radius:99px}
+  nav a .cnt{margin-left:auto;font-size:11px;background:#DCDFE4;padding:1px 7px;border-radius:99px}
   nav a .cnt.hot{background:var(--brand);color:#fff}
-  .sfoot{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;display:flex;align-items:center;gap:8px}
+  .sfoot{margin-top:auto;padding:12px 14px;border-top:1px solid #DCDFE4;font-size:12px;display:flex;align-items:center;gap:8px}
   .sfoot .adot2{width:8px;height:8px;border-radius:50%;background:#777;flex:0 0 auto}
   .sfoot .adot2.on{background:#2FBF71;box-shadow:0 0 6px rgba(47,191,113,.8)}
 
@@ -164,15 +164,15 @@
   .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
   button{height:37px;border:1px solid var(--bd2);background:var(--card);color:var(--tx);border-radius:9px;padding:0 15px;font-size:13px;cursor:pointer;font-weight:500;font-family:inherit}
   button:hover{background:var(--bg);border-color:var(--bd2)}
-  button.primary{background:var(--brand);color:#fff;border:none;height:39px;padding:0 18px;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(193,95,60,.35)}
+  button.primary{background:var(--brand);color:#fff;border:none;height:39px;padding:0 18px;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(12,102,228,.35)}
   button.primary:hover{background:var(--brand-600)}
   button.mini{height:27px;padding:0 10px;font-size:12px}
 
   .brief{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 15px;margin-bottom:9px;box-shadow:var(--sh)}
   .badge{font-size:12px;padding:2px 10px;border-radius:99px;min-width:96px;text-align:center;white-space:nowrap;font-weight:500}
-  .modal{position:fixed;inset:0;background:rgba(30,25,18,.45);display:none;align-items:center;justify-content:center;z-index:9;backdrop-filter:blur(2px)}
+  .modal{position:fixed;inset:0;background:rgba(9,30,66,.45);display:none;align-items:center;justify-content:center;z-index:9;backdrop-filter:blur(2px)}
   .modal.on{display:flex}
-  .sheet{background:var(--card);border-radius:16px;padding:22px;width:490px;max-width:92vw;max-height:90vh;overflow:auto;box-shadow:0 18px 60px rgba(30,25,18,.35)}
+  .sheet{background:var(--card);border-radius:16px;padding:22px;width:490px;max-width:92vw;max-height:90vh;overflow:auto;box-shadow:0 18px 60px rgba(9,30,66,.35)}
   .sheet h3{margin:0 0 14px;font-size:16px}
   .fld{margin-bottom:12px}
   .hint{font-size:12px;color:var(--mut)}
@@ -231,7 +231,7 @@
   @media (max-width:560px){ .scdcols{grid-template-columns:1fr} }
   .scdcol{min-width:0}
   .scdlbl{font-size:12px;font-weight:700;color:var(--mut);margin:0 0 5px;display:flex;align-items:center;gap:7px}
-  .scdimg{width:100%;border-radius:9px;border:1px solid var(--bd);background:#141414;object-fit:contain;max-height:340px;cursor:zoom-in;display:block}
+  .scdimg{width:100%;border-radius:9px;border:1px solid var(--bd);background:#22272B;object-fit:contain;max-height:340px;cursor:zoom-in;display:block}
   .scdvid{width:100%;border-radius:9px;background:#000;max-height:340px;display:block}
   .scdempty{border:1px dashed var(--bd2);border-radius:9px;background:var(--bg);color:var(--mut);font-size:12.5px;text-align:center;padding:34px 10px}
   .scdbox{font-size:13px;line-height:1.6;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:9px 11px}
@@ -254,8 +254,28 @@
   .scstate.ok{background:var(--okbg);color:var(--ok)}
   .scstate.sb{background:var(--accbg);color:var(--acc)}
   .scstate.no{background:var(--bg);color:var(--mut);border:1px solid var(--bd)}
+  .scstate.live{background:#E9F2FF;color:#0C66E4;animation:scLivePulse 1.2s ease-in-out infinite}
+  .scstate.err{background:#FFECEB;color:#C9372C}
+  @keyframes scLivePulse{0%,100%{opacity:1}50%{opacity:.45}}
+  /* HỘP XÁC NHẬN riêng (user 2026-07-16 — thay confirm() thô của trình duyệt) */
+  #cfm{position:fixed;inset:0;background:rgba(9,30,66,.48);backdrop-filter:blur(2px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:cfmIn .14s ease}
+  @keyframes cfmIn{from{opacity:0}to{opacity:1}}
+  .cfmbox{background:#fff;border-radius:16px;width:400px;max-width:92vw;padding:24px 22px 18px;box-shadow:0 18px 50px rgba(9,30,66,.35);text-align:center;animation:cfmPop .16s ease}
+  @keyframes cfmPop{from{transform:scale(.94);opacity:.6}to{transform:scale(1);opacity:1}}
+  .cfmicon{width:52px;height:52px;border-radius:50%;background:var(--brand-bg);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px}
+  .cfmbox.danger .cfmicon{background:#FFECEB}
+  .cfmtitle{font-size:16px;font-weight:700;color:var(--tx);margin-bottom:8px}
+  .cfmbody{font-size:13px;line-height:1.6;color:var(--mut);margin-bottom:18px;text-align:left;background:var(--bg);border-radius:10px;padding:10px 13px}
+  .cfmact{display:flex;gap:8px}
+  .cfmact button{flex:1;height:40px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  .cfmok{background:var(--brand);color:#fff;border:none}
+  .cfmok:hover{background:var(--brand-600)}
+  .cfmbox.danger .cfmok{background:#C9372C}
+  .cfmbox.danger .cfmok:hover{background:#AE2A1F}
+  .cfmcancel{background:#fff;color:var(--tx);border:1px solid var(--bd2)}
+  .cfmcancel:hover{background:var(--bg)}
   /* Khung media: ảnh storyboard nền tối, hiện TRỌN (contain) — bấm = xem video nếu có, else phóng to */
-  .scmedia{position:relative;margin:0 12px;border-radius:9px;overflow:hidden;background:#141414;border:1px solid var(--bd);height:200px;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
+  .scmedia{position:relative;margin:0 12px;border-radius:9px;overflow:hidden;background:#22272B;border:1px solid var(--bd);height:200px;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
   .scmedia img{width:100%;height:100%;object-fit:contain;display:block}
   .scmedia.empty{cursor:default;color:var(--mut);font-size:12px;text-align:center;background:var(--bg);border-style:dashed;line-height:1.7;flex-direction:column}
   .scmedia.empty .bi{font-size:26px;opacity:.5}
@@ -274,16 +294,16 @@
      gradient "Tạo ảnh ChatGPT" + 2 nút phụ ghost đồng bộ (Ảnh / Video). */
   .scact{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--bd);padding:10px 12px 12px;margin-top:10px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.012))}
   /* Nút XEM VIDEO — nổi bật riêng (nền tối, khác hẳn nút gen brand) */
-  .scbtn.watch{width:100%;background:#1f2937;color:#fff;border:none;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-  .scbtn.watch:hover{background:#111827;box-shadow:0 4px 12px rgba(0,0,0,.28)}
-  .scbtn.watch .i{color:#4ade80;font-size:12px}
+  .scbtn.watch{width:100%;background:#172B4D;color:#fff;border:none;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+  .scbtn.watch:hover{background:#091E42;box-shadow:0 4px 12px rgba(0,0,0,.28)}
+  .scbtn.watch .i{color:#4BCE97;font-size:12px}
   .scact-row{display:flex;gap:6px}
   .scbtn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 8px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--bd2);background:var(--card);color:var(--tx);transition:background .12s,border-color .12s,color .12s,box-shadow .12s,filter .12s;white-space:nowrap;line-height:1;overflow:hidden;text-overflow:ellipsis}
   .scbtn .i{font-size:13.5px;line-height:1;flex:0 0 auto}
   .scbtn.ghost{padding:0 6px;font-size:11.5px}
-  .scbtn.gen{width:100%;background:linear-gradient(135deg,var(--brand),#D98157);color:#fff;border:none;box-shadow:0 2px 7px rgba(193,95,60,.32);font-weight:700}
-  .scbtn.gen:hover{filter:brightness(1.06);box-shadow:0 4px 12px rgba(193,95,60,.42)}
-  .scbtn.gen:active{filter:brightness(.97);box-shadow:0 1px 4px rgba(193,95,60,.3)}
+  .scbtn.gen{width:100%;background:var(--brand);color:#fff;border:none;box-shadow:0 2px 7px rgba(12,102,228,.32);font-weight:700}
+  .scbtn.gen:hover{filter:brightness(1.06);box-shadow:0 4px 12px rgba(12,102,228,.42)}
+  .scbtn.gen:active{filter:brightness(.97);box-shadow:0 1px 4px rgba(12,102,228,.3)}
   .scbtn.gen .via{font-size:10px;font-weight:700;letter-spacing:.2px;background:rgba(255,255,255,.24);color:#fff;padding:2px 6px;border-radius:5px;margin-left:1px}
   .scbtn.gen[disabled]{filter:none;opacity:.75;cursor:progress;box-shadow:none}
   .scbtn.gen.loading .i{animation:scspin .9s linear infinite}
@@ -334,21 +354,36 @@
   .acctrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .acctrow .al{font-size:11.5px;color:var(--mut);font-weight:600;white-space:nowrap}
   .acctrow select{height:30px;font-size:12.5px;padding:0 8px}
-  /* kanban kich ban */
-  .kb{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:10px}
-  .kbcol{min-width:240px;flex:0 0 240px;background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;min-height:120px}
-  .kbcol h4{margin:0 0 10px;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);display:flex;align-items:center;gap:6px}
-  .kbcol .cnt2{background:var(--card);border:1px solid var(--bd);border-radius:99px;padding:0 7px;font-size:11px}
-  .kbrej{background:var(--errbg);border-color:#EAC8C8}
-  .kbcard{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px;cursor:grab;box-shadow:var(--sh)}
-  .kbcard:hover{border-color:var(--bd2);box-shadow:var(--sh2)}
+  /* kanban kich ban — KHÔNG GIAN BOARD kiểu Trello cổ điển (user 2026-07-16):
+     nền board XANH #0079BF, cột xám #EBECF0 nổi khối, card trắng gọn.
+     BOARDVIEW (fix cuộn 2026-07-16): TRANG KHÔNG CUỘN — board chiếm hết chiều cao còn lại,
+     TỪNG CỘT tự cuộn dọc bên trong (như Trello), thanh cuộn ngang luôn ở đáy board. */
+  body.boardview #wrap{height:100vh}
+  body.boardview main{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+  body.boardview main>*{flex:0 0 auto}          /* intro + filter giữ cao tự nhiên, không bị bóp */
+  body.boardview .kb{flex:1 1 0;min-height:0;overflow-y:hidden}
+  .kb{display:flex;gap:10px;overflow-x:auto;align-items:flex-start;background:#0079BF;padding:12px;border-radius:12px}
+  body.boardview .kbcol{max-height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+  body.boardview .kbcol::-webkit-scrollbar{width:8px}
+  body.boardview .kbcol::-webkit-scrollbar-thumb{background:rgba(9,30,66,.18);border-radius:99px}
+  body.boardview .kbcol h4{position:sticky;top:-8px;z-index:2;background:#EBECF0;margin:-8px -4px 8px;padding:12px 8px 8px}
+  body.boardview .kbrej h4{background:#F6D5D2}
+  .kb::-webkit-scrollbar{height:10px}
+  .kb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:99px}
+  .kb::-webkit-scrollbar-track{background:rgba(0,0,0,.12);border-radius:99px}
+  .kbcol{min-width:272px;flex:0 0 272px;background:#EBECF0;border:none;border-radius:10px;padding:8px 8px 10px;min-height:120px;box-shadow:0 1px 1px rgba(9,30,66,.18)}
+  .kbcol h4{margin:2px 4px 8px;font-size:13.5px;text-transform:none;letter-spacing:0;font-weight:700;color:#172B4D;display:flex;align-items:center;gap:6px}
+  .kbcol .cnt2{background:rgba(9,30,66,.08);border:none;border-radius:99px;padding:0 8px;font-size:11px;color:#44546F;font-weight:600}
+  .kbrej{background:#F6D5D2}
+  .kbcard{background:var(--card);border:none;border-radius:8px;padding:9px 10px;margin-bottom:7px;cursor:grab;box-shadow:0 1px 0 rgba(9,30,66,.25)}
+  .kbcard:hover{border:none;box-shadow:0 2px 6px rgba(9,30,66,.25);background:#FCFDFE}
   .kbcard:active{cursor:grabbing}
   .kbtags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
   .tagchip{font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--bg);color:var(--mut);border:1px solid var(--bd);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box}
-  .tagchip.tc{background:var(--brand-bg);color:var(--brand);border-color:transparent}
-  .tagchip.st{background:var(--accbg);color:var(--acc);border-color:transparent;font-weight:700}
-  .tagchip.fmt{background:var(--runbg);color:var(--run);border-color:transparent;font-weight:700}
-  .tagchip.chan{background:var(--okbg);color:var(--ok);border-color:transparent;font-weight:700}
+  .tagchip.tc{background:#E9F2FF;color:#0055CC;border-color:transparent}
+  .tagchip.st{background:#F3F0FF;color:#5E4DB2;border-color:transparent;font-weight:700}
+  .tagchip.fmt{background:#DCFFF1;color:#1F845A;border-color:transparent;font-weight:700}
+  .tagchip.chan{background:#FFF7D6;color:#946F00;border-color:transparent;font-weight:700}
   button.mini.nsmode{background:var(--card);color:var(--mut)} button.mini.nsmode.on{background:var(--brand);color:#fff;border-color:var(--brand)}
   .kbtitle{font-weight:600;font-size:13px;line-height:1.35;margin-bottom:4px}
   .kbhook{font-size:12px;color:var(--tx);line-height:1.4;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -361,12 +396,13 @@
   .kbico{flex:0 0 auto;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;border:1px solid var(--bd2);background:var(--card);color:var(--mut);border-radius:8px;cursor:pointer}
   .kbico:hover{background:var(--bg);color:var(--tx)}
   .kbico.del:hover{color:var(--err);border-color:var(--err);background:var(--errbg)}
-  .kbempty{font-size:12px;color:var(--mut);text-align:center;padding:14px 0;border:1.5px dashed var(--bd2);border-radius:8px}
+  .kbempty{font-size:12px;color:#626F86;text-align:center;padding:12px 0;border:none;background:rgba(9,30,66,.045);border-radius:8px}
   .kbhint{font-size:11px;color:var(--mut);margin:-4px 0 8px;line-height:1.3}
   .kbhint a{color:var(--brand);cursor:pointer;text-decoration:none}
   .kbhint a:hover{text-decoration:underline}
-  .kbmore{margin-top:8px;text-align:center;font-size:12px;font-weight:600;color:var(--brand);cursor:pointer;padding:8px;border:1px dashed var(--bd2);border-radius:8px;background:var(--card)}
-  .kbmore:hover{background:var(--brand-bg);border-color:var(--brand)}
+  /* kiểu "Add a card" của Trello: nút chữ chìm, hover nổi nhẹ */
+  .kbmore{margin-top:6px;text-align:center;font-size:12.5px;font-weight:600;color:#44546F;cursor:pointer;padding:7px;border:none;border-radius:8px;background:transparent}
+  .kbmore:hover{background:rgba(9,30,66,.08);color:#172B4D}
   /* thanh loc kich ban: dropdown gom nhom (thay chip cloud) */
   .sfbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
   .fsel{height:30px;max-width:210px;padding:0 26px 0 10px;border:1px solid var(--bd);background:var(--card) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239a9a9a' stroke-width='1.5'/></svg>") no-repeat right 9px center;color:var(--tx);border-radius:8px;font-size:12.5px;cursor:pointer;-webkit-appearance:none;appearance:none;text-overflow:ellipsis}
@@ -402,6 +438,12 @@
   .scrlabels{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
   .scrlabels .tagchip{font-size:12px;padding:4px 12px;border-radius:6px}
   .scrsec{margin-bottom:16px}
+  /* Não sản phẩm — badge + list bóc */
+  .bnbadge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:600;background:var(--bg);color:var(--mut);border:1px solid var(--bd)}
+  .bnbadge.ok{background:var(--brand-bg,#E9F2FF);color:var(--brand,#0C66E4);border-color:transparent}
+  .bnul{margin:0;padding-left:18px} .bnul li{font-size:13.5px;line-height:1.55;margin-bottom:3px}
+  .bntbl{width:100%;border-collapse:collapse;font-size:12.5px} .bntbl td,.bntbl th{border:1px solid var(--bd);padding:5px 8px;text-align:left;vertical-align:top}
+  .bntbl th{background:var(--bg);font-weight:600}
   .scrsec .sl{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
   .scrsec .sl .cnt3{font-weight:500;text-transform:none;letter-spacing:0;margin-left:auto;font-size:11.5px;color:var(--mut)}
   .scrsec .sl .cnt3.ok{color:var(--ok)} .scrsec .sl .cnt3.warn{color:var(--warn)}
@@ -433,16 +475,40 @@
   #abar textarea{flex:1;min-height:38px;max-height:110px;height:38px;resize:none;padding:8px 11px}
   #abar button{flex:0 0 auto}
 
+  /* ===== CARD KOL (ho so) ===== */
+  .kolcard{display:flex;flex-direction:column;gap:9px;padding:14px}
+  .kolcard .krow{display:flex;gap:12px;align-items:center;min-width:0}
+  .kolcard .av{width:56px;height:56px;font-size:18px;border:2px solid var(--bd)}
+  .kolcard .kinfo{min-width:0}
+  .kolcard .knm{font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kolcard .kcd{margin-top:4px}
+  .kchips{display:flex;flex-wrap:wrap;gap:5px}
+  .kchip{font-size:11px;background:var(--bg);border:1px solid var(--bd);color:var(--tx);padding:2px 8px;border-radius:99px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .kch-chan{background:var(--brand-bg);border-color:transparent;color:var(--brand);font-weight:600}
+  .kolcard .kmeta{font-size:11.5px;color:var(--mut)}
+  .kolcard .kfoot{margin-top:auto;padding-top:9px;border-top:1px dashed var(--bd)}
+  .kolcard .kfoot .wbtn{margin:0}
+
   /* ===== THU VIEN MEDIA ===== */
-  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+  @media (max-width:640px){.mgrid{grid-template-columns:repeat(2,1fr);gap:10px}}
   .mcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);display:flex;flex-direction:column;transition:box-shadow .12s,border-color .12s,transform .12s;cursor:pointer}
   .mcard:hover{border-color:var(--bd2);box-shadow:var(--sh2);transform:translateY(-1px)}
-  .mthumb{position:relative;width:100%;aspect-ratio:16/9;background:#141414;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .mthumb{position:relative;width:100%;aspect-ratio:9/16;background:#22272B;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .mthumb iframe{width:100%;height:100%;border:0;display:block}
-  .mplay{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.4);z-index:2}
-  .mthumb .mnodrive{color:#888;font-size:12px;text-align:center;padding:10px}
+  .mthumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:4}
+  .mplayer video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+  .mthimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0}
+  .mplay{position:relative;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.4);z-index:2;cursor:pointer;transition:transform .12s}
+  .mcard:hover .mplay{transform:scale(1.08)}
+  .mthumb .mnodrive{position:relative;z-index:2;color:#dfe1e6;font-size:12px;text-align:center;padding:6px 10px;background:rgba(0,0,0,.42);border-radius:8px;backdrop-filter:blur(2px)}
+  .mbadge-corner{position:absolute;top:8px;left:8px;z-index:3}
+  .mbadge-corner .mbadge{background:rgba(255,255,255,.9)!important;color:var(--tx)!important;backdrop-filter:blur(3px);box-shadow:0 1px 4px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.6)}
+  .mbadge-corner .mbadge.da_dang{color:var(--ok)!important}
+  .mbadge-corner .mbadge.len_lich{color:var(--warn)!important}
   .mbody{padding:11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
   .mtt{font-weight:600;font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mprod{font-size:11.5px;color:var(--mut);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mchips{display:flex;flex-wrap:wrap;gap:5px}
   .mchip{font-size:11px;background:var(--bg);border:1px solid var(--bd);color:var(--mut);padding:1px 7px;border-radius:99px}
   .mbadge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;align-self:flex-start}
@@ -473,7 +539,7 @@
     aside{display:none}
     #wrap{margin-left:0!important}                 /* đè cả body.sidecollapsed */
     #tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--side);
-      border-top:1px solid rgba(255,255,255,.08);
+      border-top:1px solid #DCDFE4;
       padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
     #tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--side-tx);
       text-decoration:none;font-size:10px;padding:4px 10px;border-radius:10px;min-width:56px}
@@ -489,6 +555,13 @@
     /* VIỆC 2 — Kanban vuốt ngang + vùng chạm to */
     .kb{scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
     .kbcol{min-width:82vw;flex:0 0 82vw;scroll-snap-align:center}
+    /* boardview mobile (fix 2026-07-16): intro chữ dài + filter 2-3 hàng nuốt hết cao -> board sập.
+       Ẩn text hướng dẫn, filter gọn 1 hàng cuộn ngang, main bớt padding đáy (board tự né tabbar). */
+    body.boardview main{padding:10px 10px 84px}
+    body.boardview main>.row .hint{display:none}
+    body.boardview main>.row{flex-wrap:wrap;margin-bottom:8px!important}
+    body.boardview .sfbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+    body.boardview .sfbar .fsel,body.boardview .sfbar .nf{flex:0 0 auto}
     .kbbtn,.kbico{min-height:36px}
     button.mini{height:34px;font-size:12.5px}
     .scbtn{height:40px;font-size:13px}
@@ -509,6 +582,49 @@
     .scenegrid{grid-template-columns:1fr}
     .pjhead{flex-wrap:wrap}
     .pjtitle{font-size:15px}
+  }
+
+  /* ===== 🐾 THÚ CƯNG XƯỞNG (mascot nổi + nhật ký live) — chỉ hiện ở Xưởng ===== */
+  #pet{position:fixed;left:18px;bottom:18px;z-index:940;width:54px;height:54px;border-radius:50%;
+    background:#fff;box-shadow:var(--sh2);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;user-select:none;border:2px solid transparent;transition:border-color .2s,transform .15s}
+  #pet:hover{transform:translateY(-2px)}
+  #pet .petface{font-size:26px;line-height:1;pointer-events:none}
+  #pet.idle{animation:petBreath 3s ease-in-out infinite}
+  #pet.sleep{animation:petBreath 3s ease-in-out infinite}
+  #pet.working{border-color:var(--brand);animation:petBounce .6s ease-in-out infinite alternate}
+  #pet.success{animation:petPop .5s ease}
+  #pet.error{border-color:#C9372C;animation:petShake .5s ease}
+  @keyframes petBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+  @keyframes petBounce{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+  @keyframes petPop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+  @keyframes petShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+  #petbadge{position:absolute;top:-1px;right:-1px;width:14px;height:14px;border-radius:50%;
+    background:#C9372C;border:2px solid #fff;display:none}
+  #pet.haserr #petbadge{display:block}
+  #petbubble{position:absolute;left:62px;bottom:6px;max-width:240px;width:max-content;
+    background:#172B4D;color:#fff;font-size:12.5px;line-height:1.4;padding:8px 11px;border-radius:12px;
+    box-shadow:var(--sh2);display:none}
+  #petbubble.on{display:block}
+  #petbubble:after{content:"";position:absolute;left:-6px;bottom:12px;
+    border:6px solid transparent;border-right-color:#172B4D;border-left:0}
+  #petlog{position:fixed;left:18px;bottom:84px;width:330px;max-height:46vh;z-index:940;
+    background:#fff;border-radius:14px;box-shadow:var(--sh2);display:none;flex-direction:column;overflow:hidden}
+  #petlog.on{display:flex}
+  #petlog .plhead{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--bd);
+    font-weight:600;font-size:14px;color:var(--tx)}
+  #petlog .plx{margin-left:auto;cursor:pointer;color:var(--mut);font-size:19px;line-height:1;padding:0 2px}
+  #petlog .plbody{overflow-y:auto;padding:4px 12px 12px}
+  #petlog .plrow{display:flex;gap:8px;padding:7px 0;border-top:1px solid var(--bd);font-size:12.5px;line-height:1.45}
+  #petlog .plrow:first-child{border-top:0}
+  #petlog .plt{color:var(--mut);flex:0 0 auto;font-variant-numeric:tabular-nums}
+  #petlog .pli{flex:0 0 auto}
+  #petlog .plm{color:var(--tx);min-width:0;word-break:break-word}
+  #petlog .plrow.err .plm{color:#C9372C}
+  #petlog .plempty{padding:22px 6px;text-align:center;color:var(--mut);font-size:12.5px;line-height:1.5}
+  @media (max-width:640px){
+    #pet{bottom:calc(96px + env(safe-area-inset-bottom))}
+    #petlog{bottom:calc(160px + env(safe-area-inset-bottom));width:calc(100vw - 36px)}
   }
 </style>
 </head>
@@ -540,6 +656,7 @@
       <a data-v="channels" title="Kênh"><span class="ic">📡</span><span class="lb">Kênh</span><span class="cnt" id="n-chans"></span></a>
       <a data-v="kols" title="KOL"><span class="ic">👤</span><span class="lb">KOL</span><span class="cnt" id="n-kols"></span></a>
       <a data-v="products" title="Sản phẩm"><span class="ic">📦</span><span class="lb">Sản phẩm</span><span class="cnt" id="n-prods"></span></a>
+      <a data-v="brains" title="Não sản phẩm"><span class="ic">🧠</span><span class="lb">Não sản phẩm</span><span class="cnt" id="n-brains"></span></a>
     </nav>
   </div>
   </div>
@@ -562,9 +679,10 @@
 
 <div class="modal" id="modal"><div class="sheet" id="sheetbox"></div></div>
 
-<div id="fab" onclick="toggleAgent()" title="Agent nổi — gửi lệnh cho Claude">🤖<span class="dot" id="adot"></span></div>
+<!-- Nút 🤖 fab đã ẨN 2026-07-16 (user: đỡ rối) — panel vẫn TỰ MỞ khi Đặt hàng kịch bản; đóng bằng × -->
+<div id="fab" style="display:none" onclick="toggleAgent()" title="Agent nổi — gửi lệnh cho Claude">🤖<span class="dot" id="adot"></span></div>
 <div id="apanel">
-  <div class="ahead">🤖 Agent nổi <span class="st" id="ast">đang kiểm tra…</span></div>
+  <div class="ahead">🤖 Agent nổi <span class="st" id="ast">đang kiểm tra…</span><span style="margin-left:auto;cursor:pointer;font-size:16px;padding:0 4px" onclick="toggleAgent()" title="Đóng">×</span></div>
   <div id="afeed"></div>
   <div id="areply" style="display:none;padding:5px 12px;font-size:12px;color:var(--brand);background:var(--brand-bg);border-top:1px solid var(--bd2)">
     🔗 tiếp mạch: <b id="areply-lb"></b>
@@ -586,7 +704,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
-let KOLS=[], PRODS=[], BRIEFS=[], NICHES=[], TPLS=[], PROJS=[], STAFF=[], ENGINES=[], FLOWACCTS=[], FLOWPIN=null, FLOWBRIDGES=0, SCRIPTS=[], CHANS=[], MEDIA=[], scrF={}, scrShowRej=false, scrDoneAll=false, sel={kol:null,prod:null,tpl:""}, view="dash", nicheFilter="", curProj=null, _hashProj=null, stNiche="", stQ="", stKGroup="", stKQ="", kolFilter="";
+let KOLS=[], PRODS=[], BRIEFS=[], NICHES=[], TPLS=[], PROJS=[], STAFF=[], ENGINES=[], FLOWACCTS=[], FLOWPIN=null, FLOWBRIDGES=0, SCRIPTS=[], CHANS=[], MEDIA=[], NOTION_KENH=[], scrF={}, scrShowRej=false, scrDoneAll=false, sel={kol:null,prod:null,tpl:""}, view="dash", nicheFilter="", curProj=null, _hashProj=null, stNiche="", stQ="", stKGroup="", stKQ="", kolFilter="", mF={q:"",kol:"",chan:"",st:""};
 const PLAT={facebook:{e:"📘",n:"Facebook"},tiktok:{e:"🎵",n:"TikTok"},youtube:{e:"▶️",n:"YouTube"},khac:{e:"📡",n:"Khác"}};
 const chanById=id=>CHANS.find(c=>c.id===id);
 const chanLabel=id=>{const c=chanById(id);return c?`${(PLAT[c.platform]||PLAT.khac).e} ${c.name}`:"";};
@@ -649,6 +767,7 @@ const VIEWMETA={
   channels:["Kênh","Fanpage Facebook / kênh TikTok — mỗi KOL và dự án thuộc 1 kênh để dễ quản lý"],
   kols:["Thư viện KOL","Nhân vật, giọng đọc, trang phục và ảnh tham chiếu"],
   products:["Thư viện sản phẩm","Quản lý theo ngách · giá · token khoá hình ảnh"],
+  brains:["Não sản phẩm","Tri thức RA ĐƠN theo từng SP — bóc từ video ra đơn: DNA, hook, objections, ngôn ngữ khách, giá neo. Đặt hàng kịch bản sẽ tự đọc não này."],
 };
 /* Khôi phục tab từ URL hash để F5 không bị quay về trang chủ */
 (()=>{ const p=(location.hash||"").slice(1).split("/"); if(VIEWMETA[p[0]]) view=p[0]; if(p[0]==="projects"&&p[1]) _hashProj=p[1]; })();
@@ -662,12 +781,13 @@ async function load(){
   _ttsVoices().then(()=>{ if(view==="scripts") renderScripts(); });  // ten giong cho chip 🎙
   render();
   if(_hashProj){ const id=_hashProj; _hashProj=null; try{ await openProj(id); }catch(e){} }
-  if(!window.PORTAL) startProduceWatch();  // resume theo dõi job sản xuất nếu có (sau F5)
+  if(!window.PORTAL){ startProduceWatch(); watchSbGen(); watchBocNao(); initPet(); }  // resume theo dõi job sản xuất + vẽ-tất-cả + bóc-não nếu có (sau F5); tự tắt nếu không có; + thú cưng nổi
 }
 function setCounts(){
   $("#n-projs").textContent=PROJS.length||"";
   $("#n-kols").textContent=KOLS.length||"";
   $("#n-prods").textContent=PRODS.length||"";
+  {const e=$("#n-brains"); if(e) e.textContent=PRODS.filter(p=>p.has_brain).length||"";}
   {const e=$("#n-chans"); if(e) e.textContent=CHANS.length||"";}
   {const e=$("#n-media"); if(e) e.textContent=MEDIA.length||"";}
   const busy=STAFF.filter(s=>s.busy).length, se=$("#n-staff");
@@ -686,8 +806,11 @@ function render(){
   $("#ttitle").textContent=t; $("#tdesc").textContent=d;
   setCounts();
   // trang chi tiet du an -> full chieu rong (video to + nhieu canh 1 hang)
-  document.querySelector("#wrap").classList.toggle("full", view==="projects" && !!curProj);
-  ({dash:renderDash,staff:renderStaff,flowaccts:renderFlowAccounts,scripts:renderScripts,channels:renderChannels,kols:()=>renderLib("kols",KOLS,"KOL",1),products:()=>renderLib("products",PRODS,"sản phẩm",0),projects:renderProjects,media:renderMedia,users:()=>{renderUsers();loadUsers();}}[view])();
+  // full-width cho trang dự án MỞ + Bảng điều hành (board Trello cần trọn bề ngang — user 2026-07-16)
+  document.querySelector("#wrap").classList.toggle("full", (view==="projects" && !!curProj) || view==="scripts");
+  // boardview: trang KHÔNG cuộn, từng cột kanban tự cuộn (fix vỡ layout do thanh cuộn trang)
+  document.body.classList.toggle("boardview", view==="scripts");
+  ({dash:renderDash,staff:renderStaff,flowaccts:renderFlowAccounts,scripts:renderScripts,channels:renderChannels,kols:()=>renderLib("kols",KOLS,"KOL",1),products:()=>renderLib("products",PRODS,"sản phẩm",0),brains:renderBrains,projects:renderProjects,media:renderMedia,users:()=>{renderUsers();loadUsers();}}[view])();
 }
 function media(e,round){const r=(e.refs&&e.refs[0]);const c=round?'av':'sq';return `<div class="${c}">${r?`<img src="${img(r)}">`:(round?initials(e.name):'#')}</div>`;}
 
@@ -943,18 +1066,21 @@ function renderScripts(){
     const tags=_chips(s);
     const canApprove=_isAdminUI();  // portal member = chi xem, khong duyet
     let foot="";
-    if(s.status==="pending") foot=(canApprove?`<button class="kbbtn primary" onclick="event.stopPropagation();scrSet('${s.id}','approved')">✅ Duyệt</button>`:'')
-      +`<button class="kbico" title="Xem / Sửa" onclick="event.stopPropagation();openScript('${s.id}')">✏️</button>`
+    const dupIco=`<button class="kbico" title="Sao chép card — bản mới vào Chờ duyệt (đổi KOL/format/biến thể)" onclick="event.stopPropagation();scrDup('${s.id}')">⧉</button>`;
+    if(s.status==="pending") foot=(canApprove?`<button class="kbbtn primary" onclick="event.stopPropagation();scrApprove('${s.id}')">✅ Duyệt</button>`:'')
+      +`<button class="kbico" title="Xem / Sửa" onclick="event.stopPropagation();openScript('${s.id}')">✏️</button>`+dupIco
       +(canApprove?`<button class="kbico del" title="Bỏ" onclick="event.stopPropagation();scrSet('${s.id}','rejected')">✕</button>`:'');
-    const delIco=canApprove?`<button class="kbico del" title="Xoá card khỏi bảng (video/dự án vẫn còn)" onclick="event.stopPropagation();scrDel('${s.id}')">🗑</button>`:'';
+    const delIco=dupIco+(canApprove?`<button class="kbico del" title="Xoá card khỏi bảng (video/dự án vẫn còn)" onclick="event.stopPropagation();scrDel('${s.id}')">🗑</button>`:'');
     if(s.status==="approved" && canApprove) foot=`<button class="kbbtn" title="Tạo prompt storyboard để vẽ tay (ChatGPT)" onclick="event.stopPropagation();scrToStoryboard('${s.id}')">🎨 Storyboard</button>
       <button class="kbbtn primary prodbtn" title="Sản xuất thẳng (tự gen storyboard)" onclick="event.stopPropagation();scrProduce('${s.id}')">🎬 Sản xuất</button>
       <button class="kbico" title="Trả lại Chờ duyệt" onclick="event.stopPropagation();scrSet('${s.id}','pending')">↩︎</button>`+delIco;
     else if(s.status==="storyboard" && canApprove){
       const pr=(PROJS||[]).find(p=>p.id===s.project_id);
       const scn=(pr&&pr.scenes)||[]; const nTot=scn.length||(s.scenes||[]).length, nHave=scn.filter(x=>x.storyboard).length;
+      const sbj=_SBGEN[s.project_id];  // job vẽ-tất-cả đang chạy -> thay nút bằng badge tiến độ
       foot=`<span class="sbprog ${nHave>=nTot&&nTot?'ok':''}" title="Số cảnh đã có ảnh storyboard">🖼 ${nHave}/${nTot}</span>
-      <button class="kbbtn primary" title="Mở mặt bàn cảnh: tạo ảnh ChatGPT / import ảnh / xem prompt" onclick="event.stopPropagation();openCard('${s.id}')">🖼 Tạo ảnh cảnh</button>
+      ${sbj?`<span class="sbprog" title="Máy đang vẽ tự động">🎨 đang vẽ ${sbj.done}/${sbj.total}</span>`
+        :`<button class="kbbtn primary" title="Mở mặt bàn cảnh: tạo ảnh ChatGPT / import ảnh / xem prompt" onclick="event.stopPropagation();openCard('${s.id}')">🖼 Tạo ảnh cảnh</button>`}
       <button class="kbbtn prodbtn" title="Sản xuất (dùng ảnh đã import)" onclick="event.stopPropagation();scrProduce('${s.id}')">🎬 Sản xuất</button>
       <button class="kbico" title="Trả lại Đã duyệt" onclick="event.stopPropagation();scrSet('${s.id}','approved')">↩︎</button>`+delIco;
     }
@@ -971,7 +1097,7 @@ function renderScripts(){
       <div class="kbtags">${tags}</div>
       <div class="kbtitle">${esc((s.product||'').slice(0,50))}</div>
       <div class="kbhook">🪝 ${esc((s.hook||'').slice(0,90))}</div>
-      <div class="kbmeta">${esc(s.kol||'')} · ${(s.scenes||[]).length} cảnh · <span title="Thời gian tạo">🕐 ${fmtTime(s.created)}</span>${auth}</div>
+      <div class="kbmeta">${esc(s.kol||'')} · ${(s.scenes||[]).length?((s.scenes||[]).length+' cảnh'):(s.script_text?_syl(s.script_text)+' âm tiết · chưa chia':'—')} · <span title="Thời gian tạo">🕐 ${fmtTime(s.created)}</span>${auth}</div>
       <div class="kbfoot">${foot}</div></div>`;
   };
   const DONE_LIMIT=6;
@@ -1007,15 +1133,40 @@ function renderScripts(){
     ${filterBar}
     <div class="kb">${cols}${rejCol}</div>`;
 }
+/* SAO CHÉP CARD (user 2026-07-16): bản mới vào Chờ duyệt, không mang trạng thái sản xuất */
+window.scrDup=async id=>{
+  try{
+    const r=await fetch(`/api/scripts/${id}/duplicate`,{method:"POST"});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ alert("Sao chép lỗi: "+(d.detail||r.status)); return; }
+    await loadScripts();
+    if(d.id) openScript(d.id);   // mở bản sao luôn để sửa (đổi KOL/format/thoại)
+  }catch(e){ alert("Sao chép lỗi: "+e.message); }
+};
 window.scrDel=async id=>{
   const s=SCRIPTS.find(x=>x.id===id);
-  if(!confirm(`Xoá card "${(s&&s.product||'').slice(0,40)}" khỏi bảng?\n\n(Video, dự án và Thư viện Media KHÔNG bị xoá — chỉ gỡ thẻ này khỏi kanban.)`)) return;
+  if(!await confirmPro({icon:'🗑', danger:true, title:'Xoá card khỏi bảng?',
+      body:`Card <b>"${esc((s&&s.product||'').slice(0,40))}"</b> sẽ bị gỡ khỏi kanban.<br>Video, dự án và Thư viện Media <b>không bị xoá</b>.`,
+      ok:'Xoá card', cancel:'Giữ lại'})) return;
   try{ await api("/api/scripts/"+id,{method:"DELETE"}); }catch(e){ alert("Xoá lỗi: "+(e&&e.message||e)); return; }
   loadScripts();
 };
 window.scrPickDim=(dim,v)=>{ if(v) scrF[dim]=v; else delete scrF[dim]; renderScripts(); };
 window.scrClearF=()=>{ scrF={}; renderScripts(); };
 window.scrSet=async(id,status)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})}); loadScripts(); };
+/* DUYỆT = Claude Sonnet 5 chia cảnh + cân âm tiết theo format (user 2026-07-16) */
+window.scrApprove=async id=>{
+  if(window.PORTAL){ alert("Chế độ Văn phòng: chỉ admin ở Xưởng mới duyệt được."); return; }
+  openModal(`<div style="padding:26px;text-align:center;font-size:14px;line-height:1.6">🎬 Claude Sonnet 5 đang chia cảnh + cân âm tiết theo format…<br><span class="hint">(~20-60s, đừng đóng cửa sổ)</span></div>`);
+  try{
+    const r=await fetch("/api/scripts/"+id+"/approve",{method:"POST"});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ closeModal(); alert("⚠️ Không duyệt được:\n\n"+(d.detail||("lỗi "+r.status))); return; }
+    await loadScripts();
+    openScript(id);  // xem phân cảnh vừa chia (thước âm tiết có sẵn)
+    if(d.warnings&&d.warnings.length){ alert("⚠️ "+d.warnings.join("\n")+"\nBạn chỉnh tay hoặc bấm Sản xuất để tự cân."); }
+  }catch(e){ closeModal(); alert("Lỗi duyệt: "+e); }
+};
 window.scrSetKol=async(id,kol)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({kol})}); const s=SCRIPTS.find(x=>x.id===id); if(s)s.kol=kol; };
 window.scrSetFmt=async(id,format)=>{ await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({format})}); const s=SCRIPTS.find(x=>x.id===id); if(s)s.format=format; loadScripts(); };
 window.kbDrag=(ev,id)=>{ ev.dataTransfer.setData("text/plain",id); ev.dataTransfer.effectAllowed="move"; ev.currentTarget.classList.add("dragging"); };
@@ -1032,6 +1183,7 @@ window.kbDrop=(ev,target)=>{
   if(!(_KB_ALLOW[s.status]||[]).includes(target)){ return; }
   if(target==="storyboard"){ scrToStoryboard(id); return; }  // cần tạo DA + prompt, không chỉ đổi status
   if(target==="producing"){ scrProduce(id); return; }  // kéo sang SX = phát lệnh sản xuất luôn (user 2026-07-15)
+  if(target==="approved"){ scrApprove(id); return; }  // duyệt = Claude chia cảnh (user 2026-07-16)
   scrSet(id,target);
 };
 window.scrToStoryboard=async id=>{
@@ -1039,8 +1191,67 @@ window.scrToStoryboard=async id=>{
   const r=await api("/api/scripts/"+id+"/storyboard",{method:"POST"}).catch(e=>{alert("Lỗi tạo storyboard: "+e);return null;});
   if(!r) return;
   await loadScripts();
-  openProj(r.project_id);  // mở thẳng tab Dự án để copy prompt + Import ảnh
+  window._projBack='scripts';
+  await openProj(r.project_id);
+  // TỰ ĐỘNG VẼ ẢNH (user 2026-07-16): kéo sang Storyboard xong hỏi 1 câu -> OK là máy vẽ TẤT CẢ cảnh
+  const miss=((curProj&&curProj.scenes)||[]).filter(s=>!s.storyboard).length;
+  if(miss>0 && await confirmPro({icon:'🎨', title:`Vẽ ${miss} ảnh storyboard tự động?`,
+      body:`ChatGPT vẽ <b>lần lượt từng cảnh</b> (~1–3 phút/cảnh) — popup tự mở rồi thu nhỏ, ảnh hiện dần lên thẻ cảnh.<br><br>Chọn <b>Tự làm tay</b> nếu muốn bấm 🎨 từng cảnh hoặc import ảnh có sẵn.`,
+      ok:'🎨 Vẽ tự động', cancel:'Tự làm tay'})){
+    genAllScenes();
+  }
 };
+/* Vẽ TẤT CẢ cảnh còn thiếu ảnh — JOB NỀN server-side (sống qua F5); client chỉ theo dõi */
+window.genAllScenes=async()=>{
+  if(window.PORTAL||!curProj) return;
+  const pid=curProj.id;
+  try{
+    const r=await fetch(`/api/projects/${pid}/sb_gen_all`,{method:"POST"});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ alert("Không khởi động được: "+(d.detail||r.status)); return; }
+    if(d.ok) watchSbGen(pid);
+  }catch(e){ alert("Lỗi: "+e); }
+};
+/* ===== THEO DÕI JOB VẼ-TẤT-CẢ (nối lại sau F5 — user 2026-07-16) ===== */
+let _SBGEN={}, _sbgenTimer=null, _sbgenFinal={};
+window.watchSbGen=pid=>{ if(_sbgenTimer) return; _sbgenTimer=setInterval(()=>pollSbGen(),4000); pollSbGen(); };
+window.cancelSbGen=async jid=>{ try{ await api("/api/sbgen_jobs/"+jid+"/cancel",{method:"POST"}); pollSbGen(); }catch(e){ alert("Hủy lỗi: "+e); } };
+function _sbgenBar(){ let b=document.getElementById('sbgenbar');
+  if(!b){ b=document.createElement('div'); b.id='sbgenbar';
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:950;background:#172B4D;color:#fff;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(9,30,66,.35)';
+    document.body.appendChild(b); }
+  return b; }
+async function pollSbGen(){
+  let jobs;
+  try{ jobs=await api("/api/sbgen_jobs"); }catch(e){ return; }
+  _SBGEN={};
+  for(const j of jobs){ if(["queued","running"].includes(j.status)&&!_SBGEN[j.project_id]) _SBGEN[j.project_id]=j; }
+  const anyActive=Object.keys(_SBGEN).length>0;
+  if(view==='scripts') renderScripts();  // kanban: badge 🎨 đang vẽ trên card storyboard
+  const cur=curProj?jobs.filter(j=>j.project_id===curProj.id).sort((a,b)=>(b.created||0)-(a.created||0))[0]:null;
+  let shownFinal=false;
+  if(curProj && _SBGEN[curProj.id]){  // đang vẽ dự án đang mở -> refetch để ảnh mới hiện LIVE
+    try{ curProj=await api("/api/projects/"+curProj.id); }catch(e){}
+    if(view==='projects') renderProjects();
+    const job=_SBGEN[curProj.id]; _sbgenFinal[curProj.id]=false;
+    _sbgenBar().innerHTML=`🎨 Đang vẽ cảnh ${job.current_idx}… (${job.done}/${job.total}${job.fails?` · ${job.fails} lỗi`:''})`
+      +`<span style="margin-left:10px;cursor:pointer" onclick="cancelSbGen('${job.id}')">⛔</span>`;
+  } else if(curProj && cur && ["done","failed","cancelled"].includes(cur.status) && !_sbgenFinal[curProj.id]){
+    _sbgenFinal[curProj.id]=true; shownFinal=true;  // job dự án đang mở vừa kết thúc -> thông điệp cuối
+    let msg=cur.status==='done'?"✅ Đã vẽ xong toàn bộ storyboard"
+           :cur.status==='failed'?"⚠️ Dừng: ChatGPT mất kết nối":"⛔ Đã hủy";
+    if(cur.fails) msg+=` (${cur.fails} lỗi)`;
+    _sbgenBar().textContent=msg;
+    setTimeout(()=>{ const x=document.getElementById('sbgenbar'); if(x) x.remove(); },8000);
+    try{ curProj=await api("/api/projects/"+curProj.id); }catch(e){}
+    if(view==='projects') renderProjects();
+    loadScripts();
+  }
+  if(!anyActive){  // hết job active toàn cục -> dừng poll
+    clearInterval(_sbgenTimer); _sbgenTimer=null;
+    if(!shownFinal){ const x=document.getElementById('sbgenbar'); if(x && (!curProj || _sbgenFinal[curProj.id])) x.remove(); }
+  }
+}
 window.scrProduce=async id=>{
   if(window.PORTAL){ alert("Chế độ Văn phòng: sản xuất chạy ở Xưởng (PC)."); return; }
   const s=SCRIPTS.find(x=>x.id===id); if(!s) return;
@@ -1101,7 +1312,8 @@ async function pollProduce(){
     if(curProj && _PJOBS[curProj.id] && ["queued","running"].includes(_PJOBS[curProj.id].status)){
       try{ curProj=await api("/api/projects/"+curProj.id); }catch(e){}
     }
-    renderScripts(); if(curProj){ renderProjects(); loadProjectLog(curProj.id); }
+    if(view==="scripts") renderScripts();  // chỉ vẽ lại khi đang ở bảng kịch bản (không đè trang khác sau F5)
+    if(curProj){ renderProjects(); loadProjectLog(curProj.id); }
     if(!active){ clearInterval(_pjobTimer); _pjobTimer=null; }
   }catch(e){}
 }
@@ -1124,7 +1336,7 @@ window.autoRebalance=async id=>{
   openModal(`<div class="scrhead">⚖️ Đang tự cân thoại…</div>
     <div style="padding:18px 4px;color:var(--mut);line-height:1.7">
       AI đang viết lại các cảnh lệch âm tiết cho khớp format <b>${esc((_scrFormat(s)||{}).label||s.format||'')}</b>.<br>
-      <span style="font-size:12.5px">Gọi ChatGPT web (miễn phí) — cần mở Chrome + tab chatgpt.com đã đăng nhập. Chờ vài giây…</span>
+      <span style="font-size:12.5px">Claude Sonnet 5 đang viết lại thoại (giữ ý, khớp nhịp format). Chờ ~10-30 giây…</span>
       <div style="margin-top:14px">⏳</div></div>`);
   let d;
   try{
@@ -1153,7 +1365,7 @@ window._renderRebalance=(id,d)=>{
   const allOk=d.changed.every(c=>c.ok);
   openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
     <div class="scrhead">⚖️ Thoại đã cân về ${lo}–${hi} âm tiết</div>
-    <div class="scrlabels" style="margin-bottom:10px"><span class="chip">AI viết lại · giữ ý · khớp format</span></div>
+    <div class="scrlabels" style="margin-bottom:10px"><span class="chip">Claude Sonnet 5 viết lại · giữ ý · khớp format</span></div>
     ${rows}
     <div class="scractions">
       <button class="primary prodbtn" onclick="_rbApply('${id}',true)">✅ Dùng bản này + Sản xuất</button>
@@ -1259,7 +1471,12 @@ window.openScript=id=>{
   const R=_sylR(s); window._curSylR=R;  // ngưỡng âm tiết theo format của kịch bản này
   const fmE=(_scrFormat(s)||{}).env||"";  // bối cảnh mặc định của format (placeholder)
   const envPh=fmE?("Để trống = dùng bối cảnh mặc định của format: "+fmE.slice(0,80)+(fmE.length>80?'…':'')):"Bối cảnh của cảnh (nơi chốn, ánh sáng, hành động) — để trống dùng mặc định";
-  const scenes=(s.scenes||[]).map(sc=>{
+  // Kịch bản NGUYÊN KHỐI (chưa chia cảnh) — Claude sẽ chia khi Duyệt
+  const scenes=(!(s.scenes||[]).length && s.script_text)
+    ? `<div class="scrsec"><div class="sl">📜 Kịch bản (nguyên khối — Claude sẽ chia cảnh khi Duyệt)
+        <span class="cnt3" id="rawcnt">${_syl(s.script_text)} âm tiết tổng</span></div>
+      <textarea class="scrauto" id="scr-rawtext" rows="8" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';document.getElementById('rawcnt').textContent=_syl(this.value)+' âm tiết tổng'">${esc(s.script_text)}</textarea></div>`
+    : (s.scenes||[]).map(sc=>{
     const n=_syl(sc.voice);
     return `<div class="scrsec">
       <div class="sl">🎬 Cảnh ${sc.idx}${sc.title?' · '+esc(sc.title):''}
@@ -1297,6 +1514,7 @@ window.openScript=id=>{
         <button onclick="scrSaveApprove('${s.id}',false)">💾 Lưu sửa</button>`
       :`${s.project_id&&!window.PORTAL?`<button class="primary" onclick="closeModal();window._projBack='scripts';openProj('${s.project_id}')">📂 Chi tiết video</button>`:''}
         <button onclick="scrSaveApprove('${s.id}',false)">💾 Lưu sửa</button>
+        <button title="Nhân bản thành card mới ở Chờ duyệt" onclick="closeModal();scrDup('${s.id}')">⧉ Sao chép</button>
         <button onclick="closeModal()">Đóng</button>`}
     </div>`);
   $("#sheetbox").classList.add("wide");
@@ -1312,8 +1530,11 @@ window.scrSaveApprove=async(id,approve)=>{
     const en=document.querySelector(`textarea[data-env-idx="${sc.idx}"]`);
     return {...sc, voice: ta?ta.value:sc.voice, environment: en?en.value.trim():(sc.environment||"")};
   });
-  const body={scenes}; if(approve) body.status="approved";
+  // kịch bản NGUYÊN KHỐI (chưa chia cảnh) -> PATCH script_text thay vì scenes
+  const rawTa=document.getElementById("scr-rawtext");
+  const body=rawTa?{script_text:rawTa.value}:{scenes};
   await api("/api/scripts/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(approve){ return scrApprove(id); }  // duyệt = Claude chia cảnh + cân âm tiết (user 2026-07-16)
   closeModal(); loadScripts();
 };
 
@@ -1419,7 +1640,12 @@ window.scriptOrderSend=async()=>{
   const brain=emp==="san-xuat-video-gia-dung"
     ?`
 - 🧠 BỘ NÃO (BẮT BUỘC): đọc "D:\\AFFILATE SHOPEE 2026\\CONG CU AI\\TiepPhoi Space\\brain\\gia-dung\\" (cong-thuc.json + ban-do-san-pham.json + hook-bank.json) TRƯỚC khi viết; tra loại sản phẩm chọn công thức điểm cao nhất còn hợp; tôn trọng mục cấm; ghi id công thức vào cau_truc; SAU khi viết lưu bản sao vào brain/gia-dung/kich-ban-goc/.`:"";
-  const text=`Soạn ${n} kịch bản cho Xưởng KOL (CHỈ SOẠN ĐỂ DUYỆT — tuyệt đối KHÔNG sản xuất):${brain}
+  // 🧠 NÃO SẢN PHẨM: SP nào đã bóc video ra đơn thì bám não riêng của SP (áp cho MỌI nhân viên)
+  const _pEntry=PRODS.find(x=>x.name===prod);
+  const brainSP=(_pEntry&&_pEntry.has_brain)
+    ?`
+- 🧠 NÃO SẢN PHẨM (BẮT BUỘC, ưu tiên cao hơn não ngách): đọc "D:\\AFFILATE SHOPEE 2026\\CONG CU AI\\TiepPhoi Space\\brain\\san-pham\\${_pEntry.code||_pEntry.id}.json" TRƯỚC khi viết — hook/objections/winning_shots/ngôn ngữ khách/giá neo PHẢI bám não này (ưu tiên mục có số đơn cao).`:"";
+  const text=`Soạn ${n} kịch bản cho Xưởng KOL (CHỈ SOẠN ĐỂ DUYỆT — tuyệt đối KHÔNG sản xuất):${brain}${brainSP}
 - Sản phẩm: "${prod}" — lấy info/giá/token_block/ảnh từ GET http://127.0.0.1:8090/api/products (khớp theo tên).
 - KOL: "${kol||'(chưa gán — để trống)'}"
 - Nhân viên: "${emp}"${st.ten?` (${st.ten})`:''} — dùng ĐÚNG skill + kho cấu trúc DNA của nhân viên này.
@@ -1428,8 +1654,8 @@ ${tv?`- Giọng TTS user đã chọn: voice_id "${tv}" (${_voiceName(tv)}) — g
 ${ch?`- Kênh đăng: "${ch}" (${chanLabel(ch)}) — ghi vào field channel của từng bản.`:''}
 ${ct?`- Cấu trúc ưu tiên: ${ct}.`:'- Đa dạng cấu trúc theo kho DNA (mỗi bản 1 cấu trúc khác nhau, ghi nhãn cau_truc).'}
 ${idea?`- Ý tưởng thêm từ user: ${idea}`:''}
-Mỗi bản gồm: hook + ly_do (vì sao bản này ra đơn, dẫn số liệu DNA) + scenes[{idx,title,voice,environment}] (bối cảnh bám thoại) + note chứa VOICE DIRECTION. KHÔNG icon giá/deal lên hình.
-POST từng bản vào http://127.0.0.1:8090/api/scripts với {"status":"pending","staff":"${emp}","format":"${fmt}","tts_voice":"${tv}","channel":"${ch}","kol":"${kol}","product":"${prod}","cau_truc":...,"tags":[...],"hook":...,"ly_do":...,"scenes":[...],"note":...}. DỪNG ở cột Chờ duyệt.`;
+Mỗi bản gồm: hook + ly_do (vì sao ra đơn, dẫn số liệu DNA) + script_text (KỊCH BẢN NGUYÊN KHỐI liền mạch ${fm?`tổng ~${(fm.syl_min||40)*3}-${(fm.syl_max||58)*4} âm tiết`:'~150-220 âm tiết'} — KHÔNG chia cảnh, hệ thống sẽ chia khi duyệt) + note chứa VOICE DIRECTION. KHÔNG icon giá/deal lên hình.
+POST từng bản vào http://127.0.0.1:8090/api/scripts với {"status":"pending","staff":"${emp}","format":"${fmt}","tts_voice":"${tv}","channel":"${ch}","kol":"${kol}","product":"${prod}","cau_truc":...,"tags":[...],"hook":...,"ly_do":...,"script_text":"...","note":...}. DỪNG ở cột Chờ duyệt.`;
   await api("/api/commands",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text,staff:emp,engine:"claude",label:("Soạn KB: "+prod).slice(0,80)})});
   closeModal(); go('scripts');
@@ -1455,24 +1681,14 @@ window.openScriptNew=()=>{
       <div><label>🎙 Giọng TTS (format lồng tiếng)</label><select id="ns-voice"><option value="">— giọng mặc định format —</option></select></div>
     </div>
     <div class="fld"><label>Hook (câu mở, tuỳ chọn)</label><input id="ns-hook"></div>
-    <div class="scrsec"><div class="sl">🎬 Kịch bản
-      <span style="margin-left:auto;display:flex;gap:6px">
-        <button class="mini ${'on'} nsmode" data-m="paste" onclick="_nsMode('paste')">📋 Dán cả kịch bản</button>
-        <button class="mini nsmode" data-m="scene" onclick="_nsMode('scene')">🎬 Nhập từng cảnh</button></span></div>
-      <div id="nsPaste">
-        <textarea id="ns-full" class="scrauto" rows="6" placeholder="Dán nguyên kịch bản vào đây — mình sẽ tự chia thành các cảnh ~10s. (Xuống dòng TRỐNG giữa các đoạn nếu muốn tự tách chỗ; không thì mình tự chia theo độ dài + dấu câu.)" style="min-height:130px" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-        <div class="row" style="margin-top:8px"><button onclick="_nsSplit()">✂️ Tự chia cảnh →</button>
-          <span class="hint" id="ns-splithint">chia xong sẽ hiện ra để bạn sửa</span></div></div>
-      <div id="nsSceneWrap" style="display:none">
-        <div id="nsScenes"></div>
-        <span class="wbtn" onclick="_nsAdd()">＋ Thêm cảnh</span></div></div>
+    <div class="scrsec"><div class="sl">📜 Kịch bản (nguyên khối)</div>
+      <textarea id="ns-full" class="scrauto" rows="8" placeholder="Dán NGUYÊN kịch bản — không cần chia cảnh, Claude chia khi bạn Duyệt." style="min-height:150px" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea></div>
     <div class="scractions">
       <button class="primary" onclick="scrCreate(false)">💾 Tạo (vào Chờ duyệt)</button>
       <button onclick="scrCreate(true)">✅ Tạo + Duyệt luôn</button>
       <button onclick="closeModal()">Huỷ</button></div>`);
   $("#sheetbox").classList.add("wide");
-  $("#nsScenes").innerHTML=_nsSceneRow()+_nsSceneRow()+_nsSceneRow();
-  _nsRenumber(); _nsEmpFmt(); _fillVoiceSel("#ns-voice");
+  _nsEmpFmt(); _fillVoiceSel("#ns-voice");
 };
 window._nsMode=m=>{
   document.querySelectorAll(".nsmode").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
@@ -1516,21 +1732,16 @@ window.scrCreate=async approve=>{
   const o=$("#ns-prod").selectedOptions[0];
   const product=$("#ns-prod").value.trim();
   if(!product){ alert("Chọn sản phẩm"); return; }
-  // dang o che do dan + chua tach -> tu tach truoc
-  const full=$("#ns-full")?$("#ns-full").value.trim():"";
-  const anyVoice=[...document.querySelectorAll('#nsScenes .scnvoice')].some(t=>t.value.trim());
-  if(full && !anyVoice){ _nsSplit(); }
-  const scenes=[...document.querySelectorAll('#nsScenes .newscene')].map((row,i)=>({
-    idx:i+1, title:row.querySelector('.scntitle').value.trim(), voice:row.querySelector('.scnvoice').value.trim()
-  })).filter(s=>s.voice);
-  if(!scenes.length){ alert("Nhập thoại ít nhất 1 cảnh"); return; }
+  const full=$("#ns-full")?$("#ns-full").value.trim():"";  // kịch bản NGUYÊN KHỐI (Claude chia khi Duyệt)
+  if(!full){ alert("Dán nội dung kịch bản"); return; }
   const body={kol:$("#ns-kol").value.trim(), product, niche:(o?o.dataset.niche:"")||"",
     staff:$("#ns-emp").value, format:$("#ns-fmt")?$("#ns-fmt").value:"", cau_truc:$("#ns-ct").value.trim(),
     tts_voice:$("#ns-voice")?$("#ns-voice").value:"", channel:$("#ns-channel")?$("#ns-channel").value:"",
     tags:$("#ns-tags").value.split(",").map(x=>x.trim()).filter(Boolean),
-    hook:$("#ns-hook").value.trim(), scenes, status:approve?"approved":"pending"};
-  await api("/api/scripts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  closeModal(); loadScripts();
+    hook:$("#ns-hook").value.trim(), script_text:full, scenes:[], status:"pending"};
+  const r=await api("/api/scripts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  closeModal(); await loadScripts();
+  if(approve){ const nid=(r&&r.items&&r.items[0]||{}).id; if(nid) return scrApprove(nid); }  // tạo xong duyệt luôn = Claude chia cảnh
 };
 
 /* ===== DASHBOARD ===== */
@@ -1585,6 +1796,7 @@ function renderChannels(){
       <div class="tools"><span onclick="openChan('${c.id}')" title="Sửa">✎</span><span onclick="delChan('${c.id}')" title="Xoá kênh">×</span></div>
       <div class="nm">${p.e} ${esc(c.name)} ${codeChip(c.code)}${window.PORTAL&&c.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(c.nguoi_tao))}</span>`:''}</div>
       <div class="sub" style="margin-top:3px"><span class="niche">${p.n}</span> · 👤 ${nk} KOL · 🎬 ${np} dự án</div>
+      <div class="sub2" style="margin-top:3px">${c.notion_page_name?`<span class="niche">📊 ${esc(c.notion_page_name)}</span>`:`<span class="niche" style="opacity:.5">📊 chưa nối Notion</span>`}</div>
       ${c.url?`<div class="sub2"><a href="${esc(c.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${esc(c.url).replace(/^https?:\/\//,'').slice(0,42)}</a></div>`:''}
       ${c.note?`<div class="sub" style="margin-top:3px;-webkit-line-clamp:2">${esc(c.note)}</div>`:''}</div>`;
   }).join("");
@@ -1592,22 +1804,59 @@ function renderChannels(){
     <div class="hint" style="margin-bottom:12px">Mỗi <b>KOL</b> và <b>dự án</b> gắn với 1 kênh (fanpage FB / kênh TikTok) để lọc, thống kê và biết video đăng ở đâu.</div>
     <div class="grid">${cards||'<div class="sub">Chưa có kênh. Bấm ＋ Thêm kênh để khai báo fanpage/kênh của bạn.</div>'}<div class="card add" onclick="openChan()">+ Thêm kênh</div></div>`;
 }
-window.openChan=id=>{
+window.openChan=async id=>{
   const c=id?chanById(id):{};
   const plat=c.platform||"facebook";
   const opt=(v,e,n)=>`<option value="${v}" ${plat===v?'selected':''}>${e} ${n}</option>`;
+  // Nạp danh sách KÊNH trên Notion (best-effort — lỗi -> select rỗng)
+  try{ const d=await api("/api/notion/kenh"); NOTION_KENH=(d&&d.items)||[]; }catch(e){ NOTION_KENH=[]; }
+  // Xác định option preselect: đã nối -> theo id; chưa nối + đang sửa -> gợi ý theo tên (contains 2 chiều)
+  let preId=(c.notion_page_id||"").trim();
+  if(!preId && id && c.name){
+    const cn=c.name.trim().toLowerCase();
+    const hit=NOTION_KENH.find(it=>{const n=(it.name||"").trim().toLowerCase(); return n&&(n.includes(cn)||cn.includes(n));});
+    if(hit) preId=hit.id;
+  }
+  const nkOpts=nkOptions(plat,preId);
   openModal(`<h3>${id?'Sửa':'Thêm'} kênh</h3>
     <div class="cfg" style="margin-bottom:10px">
       <div><label>Tên kênh / fanpage</label><input id="ch-name" value="${esc(c.name||'')}" placeholder="Phạm Thảo Vy"></div>
-      <div><label>Nền tảng</label><select id="ch-plat">${opt('facebook','📘','Facebook')}${opt('tiktok','🎵','TikTok')}${opt('youtube','▶️','YouTube')}${opt('khac','📡','Khác')}</select></div>
+      <div><label>Nền tảng</label><select id="ch-plat" onchange="nkRefilter()">${opt('facebook','📘','Facebook')}${opt('tiktok','🎵','TikTok')}${opt('youtube','▶️','YouTube')}${opt('khac','📡','Khác')}</select></div>
     </div>
+    <div class="fld"><label>📊 KÊNH trên Notion (nối relation khi xuất bản)</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="ch-notion" style="flex:1">${nkOpts}</select>
+        <button class="mini" type="button" onclick="syncNotionKenh()" title="Đồng bộ danh sách kênh từ Notion">↻ Notion</button>
+      </div></div>
     <div class="fld"><label>Link kênh (tuỳ chọn)</label><input id="ch-url" value="${esc(c.url||'')}" placeholder="https://facebook.com/..."></div>
     <div class="fld"><label>Ghi chú (tuỳ chọn — ngách, đối tượng…)</label><textarea id="ch-note">${esc(c.note||'')}</textarea></div>
     <div class="row"><button class="primary" onclick="saveChan('${id||''}')">Lưu</button><button onclick="closeModal()">Huỷ</button></div>`);
 };
+// Lọc kênh Notion theo nền tảng đang chọn (kênh ĐÃ nối luôn được giữ trong danh sách)
+function nkOptions(plat,selId){
+  const want=(plat||"").toLowerCase();
+  let items=(want&&want!=="khac")?NOTION_KENH.filter(it=>(it.platform||"").trim().toLowerCase()===want):NOTION_KENH.slice();
+  const sel=selId?NOTION_KENH.find(it=>it.id===selId):null;
+  if(sel&&!items.some(it=>it.id===selId)) items=[sel,...items]; // đã nối nhưng khác nền tảng -> vẫn hiện
+  return `<option value="">— chưa nối —</option>`+items.map(it=>{
+    const mis=(want&&want!=="khac"&&(it.platform||"").trim().toLowerCase()!==want)?' ⚠ khác nền tảng':'';
+    return `<option value="${esc(it.id)}" ${it.id===selId?'selected':''}>${esc(it.name||'')} · ${esc(it.platform||'')}${mis}</option>`;
+  }).join("");
+}
+window.nkRefilter=()=>{
+  const sl=$("#ch-notion"); if(!sl) return;
+  sl.innerHTML=nkOptions($("#ch-plat").value, sl.value||"");
+};
+window.syncNotionKenh=async()=>{
+  try{ await api("/api/notion/kenh/sync",{method:"POST"}); }catch(e){ alert("Lỗi gửi lệnh đồng bộ: "+e); return; }
+  alert("Đã gửi lệnh đồng bộ — chờ Máy trợ lý chạy xong rồi mở lại form.");
+};
 window.saveChan=async id=>{
   const name=$("#ch-name").value.trim(); if(!name){alert("Nhập tên kênh");return;}
-  const body={name,platform:$("#ch-plat").value,url:$("#ch-url").value.trim(),note:$("#ch-note").value.trim()};
+  const npid=$("#ch-notion")?$("#ch-notion").value:"";
+  const npItem=NOTION_KENH.find(it=>it.id===npid);
+  const body={name,platform:$("#ch-plat").value,url:$("#ch-url").value.trim(),note:$("#ch-note").value.trim(),
+    notion_page_id:npid, notion_page_name:npItem?(npItem.name||""):""};
   await api("/api/channels"+(id?"/"+id:""),{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   closeModal(); await load(); go('channels');
 };
@@ -1635,14 +1884,29 @@ function renderLib(kind,rows,word,round){
   $("#app").innerHTML=`<h2>Thư viện ${word} (${shown.length}${shown.length!==rows.length?'/'+rows.length:''})
     <button class="mini" onclick="openImport('${kind}')" style="margin-left:auto">⬇ Import hàng loạt</button></h2>
     ${bar}
-    <div class="grid">${shown.map(e=>`
-    <div class="card clk" onclick="openLibDetail('${round?'kol':'prod'}','${e.id}')"><div class="tools"><span onclick="event.stopPropagation();openForm('${round?'kol':'prod'}','${e.id}')" title="Sửa">✎</span><span onclick="event.stopPropagation();del('${kind}','${e.id}')">×</span></div>
-      <div class="row">${media(e,round)}<div><div class="nm">${esc(e.name)} ${codeChip(e.code)}${window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(e.nguoi_tao))}</span>`:''}</div>
-      <div class="sub">${round?`${e.channel&&chanById(e.channel)?`<span class="niche">${esc(chanLabel(e.channel))}</span> · `:''}${e.group?`${esc(e.group)} · `:''}${e.voice_id?'🎙 giọng khoá':(e.voice?'có mô tả giọng':'')}`:`${e.niche?`<span class="niche">${esc(e.niche)}</span> · `:''}${esc(e.price||'')}`} · ${(e.refs||[]).length} ref</div>
-      ${round?`<div class="wbtn" onclick="event.stopPropagation();openWardrobe('${e.id}')">👕 Trang phục (${(e.outfits||[]).length})</div>`
-             :`<div class="wbtn napbtn" onclick="event.stopPropagation();openNapVideo('${e.id}')">🧠 Nạp video ra đơn${(e.spy_refs||[]).length?` (${e.spy_refs.length})`:''}</div>`}
-      ${!round&&e.info?`<div class="sub" style="margin-top:3px;-webkit-line-clamp:1">${esc(e.info)}</div>`:''}</div></div></div>`).join("")}
+    <div class="grid">${shown.map(e=>round?kolCard(e):`
+    <div class="card clk" onclick="openLibDetail('prod','${e.id}')"><div class="tools"><span onclick="event.stopPropagation();openForm('prod','${e.id}')" title="Sửa">✎</span><span onclick="event.stopPropagation();del('${kind}','${e.id}')">×</span></div>
+      <div class="row">${media(e,0)}<div><div class="nm">${esc(e.name)} ${codeChip(e.code)}${window.PORTAL&&e.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(e.nguoi_tao))}</span>`:''}</div>
+      <div class="sub">${e.niche?`<span class="niche">${esc(e.niche)}</span> · `:''}${esc(e.price||'')} · ${(e.refs||[]).length} ref</div>
+      <div class="wbtn napbtn" onclick="event.stopPropagation();openNapVideo('${e.id}')">🧠 Nạp video ra đơn${(e.spy_refs||[]).length?` (${e.spy_refs.length})`:''}</div>
+      ${e.info?`<div class="sub" style="margin-top:3px;-webkit-line-clamp:1">${esc(e.info)}</div>`:''}</div></div></div>`).join("")}
     <div class="card add" onclick="openForm('${round?'kol':'prod'}')">+ Thêm ${word}</div></div>`;
+}
+/* Card KOL kiểu hồ sơ (redesign 2026-07-16): avatar to, tên đậm, mã riêng dòng, chip kênh/nhóm, chân card Trang phục */
+function kolCard(e){
+  const _cr=e.channel?chanById(e.channel):null;
+  const ch=_cr?`<span class="kchip kch-chan">${esc(chanLabel(e.channel))}</span>`:'';
+  const grp=e.group?`<span class="kchip">${esc(e.group)}</span>`:'';
+  const nk=_cr&&_cr.notion_page_name?`<span class="kchip" title="Kênh đã nối Notion">📊 Notion</span>`:'';
+  const voice=e.voice_id?'🎙 giọng khoá':(e.voice?'🎙 có mô tả giọng':'🎙 chưa có giọng');
+  const auth=window.PORTAL&&e.nguoi_tao?` · 👤 ${esc(authorName(e.nguoi_tao))}`:'';
+  return `<div class="card clk kolcard" onclick="openLibDetail('kol','${e.id}')">
+    <div class="tools"><span onclick="event.stopPropagation();openForm('kol','${e.id}')" title="Sửa">✎</span><span onclick="event.stopPropagation();del('kols','${e.id}')" title="Xoá">×</span></div>
+    <div class="krow">${media(e,1)}<div class="kinfo"><div class="knm">${esc(e.name)}</div><div class="kcd">${codeChip(e.code)}</div></div></div>
+    ${(ch||grp||nk)?`<div class="kchips">${ch}${grp}${nk}</div>`:''}
+    <div class="kmeta">${voice} · 🖼 ${(e.refs||[]).length} ảnh ref${auth}</div>
+    <div class="kfoot"><span class="wbtn" onclick="event.stopPropagation();openWardrobe('${e.id}')">👕 Trang phục (${(e.outfits||[]).length})</span></div>
+  </div>`;
 }
 window.setNiche=v=>{ nicheFilter = nicheFilter===v ? "" : v; render(); };
 window.setKGroup=v=>{ kolFilter = kolFilter===v ? "" : v; render(); };
@@ -1665,7 +1929,7 @@ window.openNapVideo=id=>{
     <div class="fld"><label>Số liệu view/đơn (QUAN TRỌNG — bóc video flop = công thức sai; ghi tự do, vd "link1: 1.2M view ~500 đơn")</label>
       <textarea id="nv-metrics" style="min-height:50px" placeholder="Không biết số thì để trống — video sẽ được weight thấp."></textarea></div>
     <div class="hint" style="margin:4px 0 12px">Claude sẽ: tải về <code>SPY/theo-san-pham/${esc(p.code||'')}</code> → bóc tách → nạp <b>brain/gia-dung</b> gắn đúng sản phẩm này. KHÔNG tự đẻ kịch bản — nạp xong bạn Đặt hàng sau.</div>
-    <div class="row"><button class="primary" onclick="napVideoSend('${id}')">🧠 Nạp vào não</button><button onclick="closeModal()">Huỷ</button></div>`);
+    <div class="row"><button class="primary" onclick="napVideoSend('${id}')">🧠 Nạp vào não</button><button onclick="napVideoBocNgay('${id}')">🧬 Bóc não ngay</button><button onclick="closeModal()">Huỷ</button></div>`);
 };
 window.napVideoSend=async id=>{
   const links=$("#nv-links").value.trim(), fs=$("#nv-files").files;
@@ -1678,9 +1942,200 @@ window.napVideoSend=async id=>{
     if(!agentOpen) toggleAgent(); else pollAgent();
   } else alert("Lỗi: "+JSON.stringify(r.detail||r));
 };
+/* 🧬 Bóc não ngay (trong modal nạp video): lưu link/file đang gõ rồi chạy job bóc luôn */
+window.napVideoBocNgay=async id=>{
+  if(window.PORTAL) return;
+  const links=($("#nv-links").value||"").trim(), fs=$("#nv-files").files;
+  if(links||fs.length){  // còn link/file chưa lưu -> nạp trước (thành spy_refs pending)
+    const fd=new FormData(); fd.append("links",links); fd.append("owner",$("#nv-owner").value); fd.append("metrics",($("#nv-metrics").value||"").trim());
+    for(const f of fs) fd.append("files",f);
+    await fetch(`/api/products/${id}/nap-video`,{method:"POST",body:fd}).catch(()=>{});
+    PRODS=await api("/api/products").catch(()=>PRODS);
+  }
+  closeModal();
+  await bocNaoStart(id);
+  go('brains');
+};
+
+/* ═══════════ 🧠 NÃO SẢN PHẨM — module UI (user 2026-07-16) ═══════════ */
+let _BN={}, _bnTimer=null, _bnPrev=new Set(), _brainPid=null;
+/* poll job bóc não đang chạy -> cập nhật nút/tiến độ; job xong -> reload PRODS + re-render */
+window.watchBocNao=()=>{ if(_bnTimer) return; _bnTimer=setInterval(pollBocNao,5000); pollBocNao(); };
+async function pollBocNao(){
+  let jobs; try{ jobs=await api("/api/bocnao_jobs"); }catch(e){ return; }
+  _BN={}; for(const j of jobs){ if(j.status==='running'&&!_BN[j.product_id]) _BN[j.product_id]=j; }
+  const active=new Set(Object.keys(_BN));
+  let finished=false;
+  for(const pid of _bnPrev){ if(!active.has(pid)) finished=true; }  // trước chạy, giờ xong
+  _bnPrev=active;
+  if(finished){ try{ PRODS=await api("/api/products"); }catch(e){} }
+  if(view==='brains') renderBrains();
+  if(_brainPid && document.getElementById('brainbody')) openBrain(_brainPid);  // modal mở -> tiến độ/kết quả live
+  if(active.size===0){ clearInterval(_bnTimer); _bnTimer=null; }
+}
+/* khởi động job bóc não (limit>0 chỉ để thử nghiệm) */
+window.bocNaoStart=async(pid,limit)=>{
+  if(window.PORTAL){ alert("Chế độ Văn phòng: bóc não chạy ở Xưởng (PC)."); return; }
+  try{
+    const r=await fetch(`/api/products/${pid}/boc_nao`+(limit?('?limit='+limit):''),{method:"POST"});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ alert("Không bóc được: "+(d.detail||r.status)); return; }
+    watchBocNao(); if(view==='brains') renderBrains();
+  }catch(e){ alert("Lỗi: "+e); }
+};
+/* lưới card mọi SP: badge có não / chưa có · số video chờ bóc · nút bóc */
+function renderBrains(){
+  const cards=PRODS.map(e=>{
+    const refs=e.spy_refs||[];
+    const nBoc=refs.filter(r=>r.status==='da_boc').length;
+    const nPend=refs.filter(r=>r.status!=='da_boc').length;
+    const job=_BN[e.id];
+    const badge=e.has_brain?`<span class="bnbadge ok">🧠 có não (${nBoc} video)</span>`:`<span class="bnbadge">chưa có não</span>`;
+    let btn='';
+    if(job) btn=`<button class="mini" disabled>⏳ đang bóc ${job.done||0}/${job.total||'?'}…${job.current?' · '+esc(job.current):''}</button>`;
+    else if(nPend>0) btn=`<button class="mini" onclick="event.stopPropagation();bocNaoStart('${e.id}')">🧬 Bóc não</button>`;
+    return `<div class="card clk" onclick="openBrain('${e.id}')">
+      <div class="nm">${esc(e.name)} ${codeChip(e.code)}</div>
+      <div class="sub" style="margin-top:4px">${e.niche?`<span class="niche">${esc(e.niche)}</span> · `:''}${badge}</div>
+      ${nPend>0?`<div class="sub" style="margin-top:4px">🎬 ${nPend} video chờ bóc</div>`:''}
+      ${btn?`<div class="row" style="margin-top:8px">${btn}</div>`:''}</div>`;
+  }).join("");
+  $("#app").innerHTML=`<div class="row" style="align-items:center;gap:12px;margin-bottom:4px">
+      <h2 style="flex:1;margin:0">Não sản phẩm (${PRODS.length})</h2>
+      <button class="primary" onclick="importKalodata()" title="Import file Excel export Video của Kalodata — tự khớp sản phẩm theo cột 'Tiêu đề sản phẩm', tự điền số đơn/doanh thu/view làm trọng số">📄 Import Excel Kalodata</button>
+    </div>
+    <div class="hint" style="margin-bottom:12px">${VIEWMETA.brains[1]} Import file Kalodata → link + số đơn tự vào phễu từng SP → bấm 🧬 Bóc não.</div>
+    <div class="grid">${cards}</div>`;
+  watchBocNao();
+}
+/* IMPORT EXCEL KALODATA (user 2026-07-16, bản 2 bước CÓ CHỌN SP):
+   bước 1 preview: máy phân tích + GỢI Ý SP khớp; bước 2: bạn duyệt/đổi SP từng nhóm rồi Nạp. */
+window.importKalodata=()=>{
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
+  inp.onchange=async()=>{
+    if(!inp.files[0]) return;
+    const fd=new FormData(); fd.append('file', inp.files[0]);
+    try{
+      const r=await fetch('/api/products/spy_import_xlsx?preview=1',{method:'POST',body:fd});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){ alert('Đọc file lỗi: '+(d.detail||r.status)); return; }
+      _kaloPreview(d);
+    }catch(e){ alert('Import lỗi: '+e.message); }
+  };
+  inp.click();
+};
+window._kaloPreview=d=>{
+  const opts=pid=>`<option value="">— bỏ qua nhóm này —</option>`+PRODS.map(p=>`<option value="${p.id}" ${p.id===pid?'selected':''}>${esc((p.name||'').slice(0,55))}</option>`).join('');
+  const rows=(d.groups||[]).map((g,i)=>`<div class="scrsec">
+      <div class="sl">📦 ${esc(g.title)} <span class="cnt3 ${g.suggest_id?'ok':'warn'}">${g.videos} video${(g.top_don||[]).length?` · top ${g.top_don.join('/')} đơn`:''}</span></div>
+      <div class="hint" style="margin:2px 0 5px">${g.suggest_id?'🔗 máy gợi ý: '+esc(g.suggest_name):'⚠ không khớp SP nào — chọn tay hoặc bỏ qua'}</div>
+      <select class="kalo-map" data-title="${esc(g.title)}" style="width:100%">${opts(g.suggest_id)}</select>
+    </div>`).join('');
+  openModal(`<span class="tools"><span onclick="closeModal()">×</span></span>
+    <div class="scrhead">📄 Import Kalodata — duyệt sản phẩm đích</div>
+    <div class="hint" style="margin-bottom:10px">Mỗi nhóm (theo cột "Tiêu đề sản phẩm" trong file) chọn đúng SP trong kho. Máy đã gợi ý sẵn — sai thì đổi.</div>
+    ${rows||'<div class="hint">File không có dòng video hợp lệ.</div>'}
+    <div class="scractions" style="margin-top:14px">
+      <button class="primary" onclick="_kaloConfirm('${d.token}')">📥 Nạp vào phễu</button>
+      <button onclick="closeModal()">Hủy</button>
+    </div>`);
+  $("#sheetbox").classList.add("wide");
+};
+window._kaloConfirm=async token=>{
+  const mapping={};
+  document.querySelectorAll('.kalo-map').forEach(s=>{ mapping[s.dataset.title]=s.value; });
+  try{
+    const r=await fetch('/api/products/spy_import_confirm',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({token,mapping})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ alert('Nạp lỗi: '+(d.detail||r.status)); return; }
+    closeModal();
+    const lines=(d.matched||[]).map(m=>`✓ ${m.product}: +${m.added} mới${m.updated?` · ${m.updated} đổ bù số đơn`:''}${m.skipped?` · ${m.skipped} trùng`:''}`);
+    if((d.skipped_groups||[]).length) lines.push('', '↷ Bỏ qua: '+d.skipped_groups.join(', '));
+    alert('📄 Import xong:\n\n'+(lines.join('\n')||'không nạp nhóm nào'));
+    await load(); if(view==='brains') renderBrains();
+  }catch(e){ alert('Nạp lỗi: '+e.message); }
+};
+/* modal chi tiết 1 não — render đẹp theo khối, kèm sửa JSON + bóc thêm */
+window.openBrain=async pid=>{
+  _brainPid=pid;
+  const p=PRODS.find(x=>x.id===pid)||{};
+  const refs=p.spy_refs||[]; const nPend=refs.filter(r=>r.status!=='da_boc').length;
+  const job=_BN[pid];
+  let r; try{ r=await api(`/api/products/${pid}/brain`); }catch(e){ r={exists:false}; }
+  const bocBtn=nPend>0?`<button onclick="bocNaoStart('${pid}')">🧬 Bóc${r.exists?' thêm':''} (${nPend} video)</button>`:'';
+  const progress=job?`<div class="hint" style="margin:6px 0">⏳ Đang bóc ${job.done||0}/${job.total||'?'}${job.current?' · '+esc(job.current):''}${job.fails?` · ${job.fails} lỗi`:''}</div>`:'';
+  if(!r.exists || !r.brain){
+    openModal(`<span class="tools"><span onclick="closeModal();_brainPid=null">×</span></span>
+      <h3>🧠 ${esc(p.name||'').slice(0,50)}</h3>
+      <div id="brainbody"><div class="hint" style="padding:18px;text-align:center">Chưa có não — nạp video ra đơn ở trang <a onclick="closeModal();go('products')">Sản phẩm</a> rồi bấm 🧬 Bóc não.</div>
+      ${progress}<div class="row" style="margin-top:8px">${bocBtn}<button onclick="closeModal();_brainPid=null">Đóng</button></div></div>`);
+    $("#sheetbox").classList.add("wide");
+    if(job) watchBocNao();
+    return;
+  }
+  const b=r.brain;
+  const esL=x=>esc(typeof x==='string'?x:JSON.stringify(x));
+  const sec=(icon,title,arr)=>{ arr=arr||[]; if(!arr.length) return ''; return `<div class="scrsec"><div class="sl">${icon} ${title}</div><ul class="bnul">${arr.map(x=>`<li>${esL(x)}</li>`).join("")}</ul></div>`; };
+  // 💰 giá & neo (object)
+  const g=b.gia_neo||{}; let giaSec='';
+  if(g.gia_hien_tai||(g.cau_neo_ra_don||[]).length||g.bien_the_chay){
+    giaSec=`<div class="scrsec"><div class="sl">💰 Giá & neo</div><ul class="bnul">
+      ${g.gia_hien_tai?`<li><b>Giá hiện tại:</b> ${esc(g.gia_hien_tai)}</li>`:''}
+      ${(g.cau_neo_ra_don||[]).map(x=>`<li>${esL(x)}</li>`).join("")}
+      ${g.bien_the_chay?`<li><b>Biến thể chạy:</b> ${esc(g.bien_the_chay)}</li>`:''}</ul></div>`;
+  }
+  // 🧬 DNA (object)
+  const dn=b.dna||{}; let dnaSec='';
+  if((dn.hook_formula||[]).length||(dn.cau_truc||[]).length||(dn.cta_style||[]).length||dn.nhip_syl_10s){
+    dnaSec=`<div class="scrsec"><div class="sl">🧬 DNA</div><ul class="bnul">
+      ${(dn.hook_formula||[]).map(x=>`<li><b>Hook:</b> ${esL(x)}</li>`).join("")}
+      ${(dn.cau_truc||[]).map(x=>`<li><b>Cấu trúc:</b> ${esL(x)}</li>`).join("")}
+      ${(dn.cta_style||[]).map(x=>`<li><b>CTA:</b> ${esL(x)}</li>`).join("")}
+      ${dn.nhip_syl_10s?`<li><b>Nhịp:</b> ${esc(String(dn.nhip_syl_10s))} âm tiết/10s</li>`:''}</ul></div>`;
+  }
+  // 🎞 video đã bóc (bảng)
+  const vids=b.video_ra_don||[]; let vidSec='';
+  if(vids.length){
+    vidSec=`<div class="scrsec"><div class="sl">🎞 Video đã bóc (${vids.length})</div>
+      <table class="bntbl"><tr><th>Nguồn</th><th>Đơn</th><th>Hook</th></tr>
+      ${vids.map(v=>{ const s=(v.src||''); const sh=s.replace(/^https?:\/\/(www\.)?/,'').slice(0,32); return `<tr><td>${esc(sh)}</td><td>${esc(v.don||'')}</td><td>${esc((v.hook||'').slice(0,60))}</td></tr>`; }).join("")}
+      </table></div>`;
+  }
+  const body=`${progress}
+    ${sec('📋','Thông số',b.thong_so)}
+    ${sec('👤','Khách & khoảnh khắc',b.khach_va_khoanh_khac)}
+    ${sec('🛡','Objections',b.objections)}
+    ${sec('🎬','Winning shots',b.winning_shots)}
+    ${sec('💬','Ngôn ngữ khách',b.ngon_ngu_khach)}
+    ${giaSec}${dnaSec}
+    ${sec('⛔','Điểm cấm',b.diem_cam)}
+    ${vidSec}
+    ${sec('📔','Nhật ký',b.nhat_ky)}`;
+  openModal(`<span class="tools"><span onclick="closeModal();_brainPid=null">×</span></span>
+    <h3>🧠 ${esc(b.name||p.name||'').slice(0,50)} ${codeChip(p.code)}</h3>
+    <div class="hint" style="margin:-4px 0 10px">Cập nhật: ${esc(b.cap_nhat||'?')} · Đặt hàng kịch bản sẽ tự đọc não này.</div>
+    <div id="brainbody">${body}</div>
+    <div class="row" style="margin-top:14px">
+      <button onclick="brainEditJSON('${pid}')">✏️ Sửa (JSON)</button>${bocBtn}
+      <button onclick="closeModal();_brainPid=null">Đóng</button></div>`);
+  $("#sheetbox").classList.add("wide");
+  if(job) watchBocNao();
+};
+window.brainEditJSON=async pid=>{
+  let r; try{ r=await api(`/api/products/${pid}/brain`); }catch(e){ r={brain:{}}; }
+  const box=document.getElementById('brainbody'); if(!box) return;
+  box.innerHTML=`<textarea id="brainjson" style="width:100%;min-height:340px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5">${esc(JSON.stringify(r.brain||{},null,2))}</textarea>
+    <div class="row" style="margin-top:10px"><button class="primary" onclick="brainSaveJSON('${pid}')">💾 Lưu</button><button onclick="openBrain('${pid}')">Huỷ</button></div>`;
+};
+window.brainSaveJSON=async pid=>{
+  let obj; try{ obj=JSON.parse(document.getElementById('brainjson').value); }catch(e){ alert("JSON sai: "+e); return; }
+  const r=await fetch(`/api/products/${pid}/brain`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({brain:obj})}).then(x=>x.json()).catch(e=>({detail:String(e)}));
+  if(r.ok){ PRODS=await api("/api/products").catch(()=>PRODS); openBrain(pid); } else alert("Lưu lỗi: "+(r.detail||''));
+};
 // (Template kịch bản + Soạn brief/Hàng đợi brief đã bỏ 2026-07-11 — 1 luồng duy nhất qua Kịch bản duyệt)
 function pick(t,id){ sel[t]=id; render(); } window.pick=pick;
-window.del=async(k,id)=>{ if(confirm("Xoá?")){ await fetch("/api/"+k+"/"+id,{method:"DELETE"}); load(); } };
+window.del=async(k,id)=>{ if(await confirmPro({icon:'🗑',danger:true,title:'Xoá mục này?',body:'Hành động không hoàn tác được.',ok:'Xoá',cancel:'Giữ lại'})){ await fetch("/api/"+k+"/"+id,{method:"DELETE"}); load(); } };
 window._ed={refs:[],drop:new Set()};
 function renderThumbs(){
   const box=$("#f-existing"); if(!box) return;
@@ -1751,7 +2206,9 @@ window.openForm=(kind,id)=>{
           <div class="fld"><label>Identity (token EN khoá gương mặt/trang phục)</label><textarea id="f-id">${v('identity')}</textarea></div>
           <div class="fld"><label>Nhóm (phân loại KOL — gõ mới hoặc chọn nhóm sẵn có)</label>
             <input id="f-group" value="${v('group')}" list="group-opts" placeholder="vd: Nữ trẻ, Mẹ bỉm, Kho xưởng, Nam trung niên...">
-            <datalist id="group-opts">${[...new Set(KOLS.map(k=>(k.group||'').trim()).filter(Boolean))].map(g=>`<option value="${esc(g)}">`).join("")}</datalist></div>`
+            <datalist id="group-opts">${[...new Set(KOLS.map(k=>(k.group||'').trim()).filter(Boolean))].map(g=>`<option value="${esc(g)}">`).join("")}</datalist></div>
+          <div class="fld"><label>🔗 Notion — bảng nội dung (database id/link)</label>
+            <input id="f-notiondb" value="${v('notion_db')}" placeholder="dán link database Notion của KOL này — trống = bảng mặc định"></div>`
         :`<div class="fld"><label>Ngách (danh mục sản phẩm — gõ mới hoặc chọn ngách sẵn có)</label>
             <input id="f-niche" value="${v('niche')}" list="niche-opts" placeholder="vd: Nhà bếp, Mẹ & Bé, Nội thất, Gia dụng...">
             <datalist id="niche-opts">${NICHES.map(x=>`<option value="${esc(x.niche)}">`).join("")}</datalist></div>
@@ -1810,7 +2267,7 @@ window.saveForm=async(kind,id)=>{
   const isK=kind==='kol';const fd=new FormData();
   const put=(k,el)=>{const x=$(el);if(x)fd.append(k,x.value);};
   put("name","#f-name");put("code","#f-code");
-  if(isK){put("voice","#f-voice");put("identity","#f-id");put("voice_id","#f-voiceid");put("group","#f-group");put("channel","#f-channel");}
+  if(isK){put("voice","#f-voice");put("identity","#f-id");put("voice_id","#f-voiceid");put("group","#f-group");put("channel","#f-channel");put("notion_db","#f-notiondb");}
   else{put("niche","#f-niche");put("price","#f-price");put("info","#f-info");put("token_block","#f-tok");}
   for(const f of $("#f-refs").files) fd.append("refs",f);
   if(id && window._ed.drop.size) fd.append("drop_refs",JSON.stringify([...window._ed.drop]));
@@ -1891,7 +2348,7 @@ function renderProjects(){
     ${bar}
     <div class="grid">${cards||'<div class="sub">Chưa có dự án nào khớp bộ lọc.</div>'}</div>`;
 }
-window.openProj=async id=>{ curProj=await api("/api/projects/"+id); view="projects"; render(); };
+window.openProj=async id=>{ curProj=await api("/api/projects/"+id); view="projects"; render(); if(!window.PORTAL) watchSbGen(id); };  // nối lại job vẽ-tất-cả sau F5 (tự tắt nếu không có)
 window.closeProj=()=>{ curProj=null; renderProjects(); };
 /* --- XOÁ DỰ ÁN: modal xác nhận, mặc định chỉ gỡ khỏi Xưởng; tick thêm mới xoá file trên đĩa --- */
 window.delProject=id=>{
@@ -1919,6 +2376,13 @@ window.copyScenePrompt=(ev,idx,field)=>{
   ev.stopPropagation();
   const s=(curProj.scenes||[]).find(x=>x.idx===idx); if(!s) return;
   const t=s[field||'storyboard_prompt']||""; const el=ev.currentTarget; const old=el.innerHTML;
+  const done=()=>{ el.innerHTML='✓ đã copy'; el.classList.add('copied'); setTimeout(()=>{el.innerHTML=old;el.classList.remove('copied');},1300); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done,()=>{_fallbackCopy(t);done();});
+  else { _fallbackCopy(t); done(); }
+};
+window.copyCaption=(ev)=>{
+  ev.stopPropagation();
+  const t=(curProj&&curProj.caption)||""; const el=ev.currentTarget; const old=el.innerHTML;
   const done=()=>{ el.innerHTML='✓ đã copy'; el.classList.add('copied'); setTimeout(()=>{el.innerHTML=old;el.classList.remove('copied');},1300); };
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done,()=>{_fallbackCopy(t);done();});
   else { _fallbackCopy(t); done(); }
@@ -1990,7 +2454,13 @@ function _sceneCard(s,i){
          ${hasVid?'<span class="scplay"><b>▶</b></span>':''}
        </div>`
     : `<div class="scmedia empty"><span class="bi">🖼</span>${s.storyboard_prompt?'Có prompt · chưa có ảnh':'Chưa có ảnh storyboard'}</div>`;
-  const pill = hasVid ? '<span class="scstate ok">▶ Có video</span>'
+  // TRẠNG THÁI LIVE từng cảnh khi job đang chạy (user 2026-07-16): đọc job.clip_states
+  const _aj=(!window.PORTAL&&curProj&&_PJOBS[curProj.id]&&["queued","running"].includes(_PJOBS[curProj.id].status))?_PJOBS[curProj.id]:null;
+  const _cst=_aj&&_aj.clip_states?_aj.clip_states[String(idx)]:null;
+  const pill = (_cst==="sb") ? '<span class="scstate live">🎨 đang vẽ ảnh…</span>'
+             : (_cst==="gen") ? '<span class="scstate live">🎬 đang gen video…</span>'
+             : (_cst==="fail") ? '<span class="scstate err">❌ gen lỗi</span>'
+             : hasVid ? '<span class="scstate ok">▶ Có video</span>'
              : hasSb  ? '<span class="scstate sb">🖼 Có ảnh</span>'
                       : '<span class="scstate no">○ Chưa có ảnh</span>';
   const prompts = (s.storyboard_prompt||s.motion)?`<details class="promptdet">
@@ -2050,7 +2520,9 @@ window.sceneDetail=idx=>{
 };
 window.rerenderScene=async idx=>{
   if(window.PORTAL){ alert("Chế độ Văn phòng: chạy ở Xưởng (PC)."); return; }
-  if(!confirm(`Render lại clip cảnh ${idx}?\n\nSẽ gen lại video cảnh này (Veo i2v) rồi tự dựng lại bản hoàn thiện. Mất vài phút.`)) return;
+  if(!await confirmPro({icon:'🔄', title:`Render lại clip cảnh ${idx}?`,
+      body:'Gen lại video cảnh này (Veo i2v) rồi <b>tự dựng lại bản hoàn thiện</b>. Mất vài phút, tốn 1 lượt gen.',
+      ok:'🔄 Render lại', cancel:'Thôi'})) return;
   try{
     const r=await fetch(`/api/projects/${curProj.id}/scene_rerender`,{method:"POST",
       headers:{"Content-Type":"application/json"},body:JSON.stringify({idx})});
@@ -2061,7 +2533,9 @@ window.rerenderScene=async idx=>{
 };
 window.reassembleProject=async()=>{
   if(window.PORTAL){ alert("Chế độ Văn phòng: chạy ở Xưởng (PC)."); return; }
-  if(!confirm("Dựng lại video HOÀN THIỆN từ các clip hiện có?\n\n(Ghép + đồng bộ thoại + grade + xuất 1080p — KHÔNG gen lại clip.)")) return;
+  if(!await confirmPro({icon:'🎞', title:'Dựng lại video hoàn thiện?',
+      body:'Ghép các clip hiện có + đồng bộ thoại + grade màu + xuất 1080p.<br><b>Không gen lại clip</b> — nhanh và không tốn lượt gen.',
+      ok:'🎞 Dựng lại', cancel:'Thôi'})) return;
   try{
     const r=await fetch(`/api/projects/${curProj.id}/reassemble`,{method:"POST"});
     const d=await r.json().catch(()=>({}));
@@ -2102,19 +2576,24 @@ function renderProjectDetail(){
         <div class="psec"><h3><span class="step">1</span> Kịch bản</h3>
           <div class="scriptbox" style="max-height:180px;overflow:auto">${p.script?esc(p.script):'<span class="hint">Chưa có kịch bản.</span>'}</div></div>
         <div class="psec"><h3><span class="step">2</span> Phân cảnh <span class="hint" style="font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px">${scenes.length} cảnh · bấm ảnh để phóng to · prompt gập trong ⚙</span>
-          <button class="mini" style="margin-left:auto" onclick="genStoryboard()" title="Sinh/cập nhật prompt storyboard cho các cảnh">✨ Sinh prompt SB</button></h3>
+          ${(!window.PORTAL && scenes.some(s=>!s.storyboard))?(_SBGEN[p.id]?`<button class="mini" style="margin-left:auto;color:var(--brand);border-color:var(--brand)" disabled title="Máy đang vẽ tự động…">🎨 đang vẽ…</button>`:`<button class="mini" style="margin-left:auto;color:var(--brand);border-color:var(--brand)" onclick="genAllScenes()" title="Máy tự vẽ LẦN LƯỢT mọi cảnh còn thiếu ảnh qua ChatGPT (~1-3 phút/cảnh)">🤖 Vẽ tất cả (${scenes.filter(s=>!s.storyboard).length})</button>`):''}
+          <button class="mini" ${(!window.PORTAL && scenes.some(s=>!s.storyboard))?'':'style="margin-left:auto"'} onclick="genStoryboard()" title="Sinh/cập nhật prompt storyboard cho các cảnh">✨ Sinh prompt SB</button></h3>
           <div class="scenegrid">${scenes.map(_sceneCard).join("")||'<span class="hint">Chưa có phân cảnh.</span>'}</div></div>
       </div>
       <div class="pjside">
         <div class="psec finalvid"><h3><span class="step">✔</span> Video hoàn thiện</h3>
           ${p.final_video?`<video controls src="${fileUrl(p.final_video)}"></video>${dl}`:'<div class="hint" style="text-align:center;padding:20px 0">Chưa có.<br>Xong các cảnh → render → hiện ở đây.</div>'}
           ${(!window.PORTAL && (p.scenes||[]).some(s=>s.video))?`<button class="rebtn" style="width:100%;margin-top:10px" onclick="reassembleProject()" title="Ghép lại các clip đã có + đồng bộ thoại + grade + xuất 1080p (KHÔNG gen lại clip)">🔄 Dựng lại video hoàn thiện</button>`:''}
-          ${(!window.PORTAL&&p.final_video)?`<button class="primary" style="width:100%;margin-top:8px" onclick="publishMedia(event,'${p.id}')">⬆ Xuất bản lên Thư viện Media</button><div class="hint" style="margin-top:6px">Claude sẽ upload video lên Drive rồi tạo bản ghi trong Thư viện Media.</div>`:''}</div>
+          ${(!window.PORTAL&&p.final_video)?`<button class="primary" style="width:100%;margin-top:8px" onclick="publishMedia(event,'${p.id}')">⬆ Xuất bản lên Thư viện Media</button><div class="hint" style="margin-top:6px">Claude sẽ upload video lên Drive rồi tạo bản ghi trong Thư viện Media.</div>`:''}
+          ${p.auto_pub_cmd?`<div class="hint" style="margin-top:10px;color:var(--ok)">📤 Đã gửi xuất bản tự động (Drive + Notion)</div>`:''}
+          ${p.drive_link?`<a class="wbtn" href="${esc(p.drive_link)}" target="_blank" style="margin-top:6px">🔗 Mở video trên Drive</a>`:''}
+          ${p.caption?`<div class="pl" style="margin-top:8px">📝 Caption <span class="code copy" onclick="copyCaption(event)">copy<span class="ci">⧉</span></span></div><pre class="pv" style="white-space:pre-wrap">${esc(p.caption)}</pre>`:''}</div>
         ${window.PORTAL?'':`<div class="psec"><h3><span class="step">📋</span> Nhật ký sản xuất</h3><div id="pjlog">${produceLogHtml(p.id)}</div></div>`}
       </div>
     </div>
-    ${window.PORTAL?'':sbTrayHtml()}`;
-  if(!window.PORTAL){ sbTrayDl(); if(!window._sbtTimer){ window._sbtTimer=setInterval(()=>{ if(document.getElementById("sbtray")) sbTrayDl(); },12000); } loadProjectLog(p.id); }
+    `;
+  /* Khay nạp ảnh nổi (sbtray) đã GỠ 2026-07-16 (user: đỡ rối) — import ảnh qua nút trên thẻ cảnh / modal Chi tiết */
+  if(!window.PORTAL){ loadProjectLog(p.id); }
 }
 /* ===== KHAY NỔI NẠP ẢNH STORYBOARD (Ctrl+V / kéo-thả / Downloads) ===== */
 let sbTraySel=null;
@@ -2179,39 +2658,92 @@ const MSTAT={chua_dang:['Chưa đăng','chua_dang'],da_dang:['Đã đăng','da_d
 const _mnum=n=>(n===null||n===undefined||n==='')?'—':(typeof n==='number'?n.toLocaleString('vi-VN'):esc(''+n));
 const drivePrev=did=>"https://drive.google.com/file/d/"+encodeURIComponent(did)+"/preview";
 function mediaBadge(s){const[t,c]=MSTAT[s]||MSTAT.chua_dang;return `<span class="mbadge ${c}">${t}</span>`;}
+// emoji nen tang cho 1 gia tri channel (id khop CHANS -> theo platform; ten cu -> 📡)
+const _mchanEmoji=v=>{const c=chanById(v);return c?(PLAT[c.platform]||PLAT.khac).e:'📡';};
+const _mchanName=v=>{const c=chanById(v);return c?c.name:(v||'');};
+const _mFactive=()=>!!(mF.q||mF.kol||mF.chan||mF.st);
+const _mMatch=m=>{
+  if(mF.st&&(m.status_dang||'chua_dang')!==mF.st) return false;
+  if(mF.kol&&(m.kol||'')!==mF.kol) return false;
+  if(mF.chan&&(m.channel||'')!==mF.chan) return false;
+  if(mF.q){const q=mF.q.toLowerCase();
+    const hay=`${m.title||''} ${m.product||''} ${m.caption||''}`.toLowerCase();
+    if(!hay.includes(q)) return false;}
+  return true;
+};
+window.mFset=(k,v)=>{mF[k]=v;renderMedia();};
+window.mFclear=()=>{mF={q:"",kol:"",chan:"",st:""};renderMedia();};
+function _mFilterBar(){
+  // dem theo tung chieu tren TOAN BO MEDIA
+  const kols={}, chans={};
+  MEDIA.forEach(m=>{const k=m.kol||''; if(k) kols[k]=(kols[k]||0)+1;
+    const c=m.channel||''; if(c) chans[c]=(chans[c]||0)+1;});
+  const kolOpts=Object.entries(kols).sort((a,b)=>b[1]-a[1])
+    .map(([k,n])=>`<option value="${esc(k)}" ${mF.kol===k?'selected':''}>${esc(k)} · ${n}</option>`).join("");
+  const chanOpts=Object.entries(chans).sort((a,b)=>b[1]-a[1])
+    .map(([v,n])=>`<option value="${esc(v)}" ${mF.chan===v?'selected':''}>${_mchanEmoji(v)} ${esc(_mchanName(v))} · ${n}</option>`).join("");
+  const stOpts=Object.keys(MSTAT).map(s=>`<option value="${s}" ${mF.st===s?'selected':''}>${MSTAT[s][0]}</option>`).join("");
+  return `<div class="sfbar" style="margin-bottom:14px">
+    <input class="fsel" style="width:200px;max-width:44vw;padding-left:10px;background-image:none" id="mF-q" placeholder="🔍 Tìm tên / sản phẩm / caption" value="${esc(mF.q)}"
+      oninput="mF.q=this.value;clearTimeout(window._mFqt);window._mFqt=setTimeout(renderMedia,180)">
+    <select class="fsel${mF.chan?' act':''}" onchange="mFset('chan',this.value)"><option value="">📡 Kênh</option>${chanOpts}</select>
+    <select class="fsel${mF.kol?' act':''}" onchange="mFset('kol',this.value)"><option value="">👤 KOL</option>${kolOpts}</select>
+    <select class="fsel${mF.st?' act':''}" onchange="mFset('st',this.value)"><option value="">Trạng thái</option>${stOpts}</select>
+    ${_mFactive()?`<span class="nf clr" onclick="mFclear()">✕ Xoá lọc</span>`:''}</div>`;
+}
 function renderMedia(){
   if(!MEDIA.length){
     $("#app").innerHTML=`<h2>Thư viện Media</h2><div class="hint" style="padding:26px;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)">Chưa có video nào trong thư viện.<br>${window.PORTAL?'Xưởng sẽ tự xuất bản video hoàn thiện lên đây.':'Mở một dự án đã hoàn thiện rồi bấm “⬆ Xuất bản lên Thư viện Media”.'}</div>`;
     return;
   }
-  $("#app").innerHTML=`<h2>Thư viện Media (${MEDIA.length})</h2><div class="mgrid">${MEDIA.map(mediaCard).join("")}</div>`;
+  const shown=MEDIA.filter(_mMatch);
+  const cnt=_mFactive()?`${shown.length}/${MEDIA.length}`:`${MEDIA.length}`;
+  const body=shown.length
+    ?`<div class="mgrid">${shown.map(mediaCard).join("")}</div>`
+    :`<div class="hint" style="padding:26px;text-align:center;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)">Không video nào khớp bộ lọc.</div>`;
+  $("#app").innerHTML=`<h2>Thư viện Media (${cnt})</h2>${_mFilterBar()}${body}`;
+  const q=$("#mF-q"); if(q&&mF.q){ q.focus(); q.setSelectionRange(q.value.length,q.value.length); }
 }
 function mediaCard(m){
   const m2=m.metrics||{};
-  const chips=[m.kol?`👤 ${esc(m.kol)}`:'',m.product?`📦 ${esc(m.product)}`:'',m.channel&&chanById(m.channel)?esc(chanLabel(m.channel)):(m.channel?esc(m.channel):''),m.project_code?`🎬 ${esc(m.project_code)}`:''].filter(Boolean).map(c=>`<span class="mchip">${c}</span>`).join("");
+  const chanChip=m.channel?`<span class="mchip">${_mchanEmoji(m.channel)} ${esc(_mchanName(m.channel))}</span>`:'';
+  const chips=[m.kol?`<span class="mchip">👤 ${esc(m.kol)}</span>`:'',chanChip,m.project_code?`<span class="mchip">🎬 ${esc(m.project_code)}</span>`:''].filter(Boolean).join("");
   const auth=window.PORTAL&&m.nguoi_tao?`<span class="mchip">👤 ${esc(authorName(m.nguoi_tao))}</span>`:'';
-  const thumb=m.drive_id
+  const img=`<img class="mthimg" src="/api/media/${m.id}/thumb?v=${encodeURIComponent(m.updated_at||m.created||'1')}" alt="" onerror="this.remove()">`;
+  const overlay=m.drive_id
     ?`<div class="mplay" title="Xem video" onclick="event.stopPropagation();mediaEmbedCard('${m.id}',this.parentNode)">▶</div>`
     :`<div class="mnodrive">Chưa upload Drive</div>`;
   return `<div class="mcard" onclick="openMediaDetail('${m.id}')">
-    <div class="mthumb" id="mth-${m.id}">${thumb}</div>
+    <div class="mthumb" id="mth-${m.id}">${img}${overlay}<div class="mbadge-corner">${mediaBadge(m.status_dang)}</div></div>
     <div class="mbody">
       <div class="mtt">${esc(m.title||'(chưa đặt tên)')}</div>
-      <div>${mediaBadge(m.status_dang)}</div>
+      ${m.product?`<div class="mprod">📦 ${esc(m.product)}</div>`:''}
       <div class="mchips">${chips}${auth}</div>
       <div class="mmetrics"><span>👁 ${_mnum(m2.view)}</span><span>💬 ${_mnum(m2.binh_luan)}</span><span>🛒 ${_mnum(m2.don)}</span></div>
     </div></div>`;
 }
+/* Phát video: ƯU TIÊN file local trên máy (mở tức thì, đúng khung 9:16); Drive chỉ là fallback
+   (video mới up Drive hay báo "processing" + player Drive lệch khung với video dọc). */
+const _mLocalSrc=m=>(m.video_path&&!window.PORTAL)?`/api/file?path=${encodeURIComponent(m.video_path)}`:"";
 window.mediaEmbedCard=(id,thumbEl)=>{
+  const m=MEDIA.find(x=>x.id===id); if(!m) return;
+  const loc=_mLocalSrc(m);
+  if(loc){ thumbEl.innerHTML=`<video src="${loc}" controls autoplay playsinline onerror="mediaEmbedDrive('${id}',this.parentNode)"></video>`; return; }
+  mediaEmbedDrive(id,thumbEl);
+};
+window.mediaEmbedDrive=(id,thumbEl)=>{
   const m=MEDIA.find(x=>x.id===id); if(!m||!m.drive_id) return;
   thumbEl.innerHTML=`<iframe src="${drivePrev(m.drive_id)}" allow="autoplay" allowfullscreen></iframe>`;
 };
 window.openMediaDetail=(id)=>{
   const m=MEDIA.find(x=>x.id===id); if(!m) return;
   const m2=m.metrics||{};
-  const player=m.drive_id
-    ?`<div class="mplayer"><iframe src="${drivePrev(m.drive_id)}" allow="autoplay" allowfullscreen></iframe></div>`
-    :`<div class="mplayer" style="display:flex;align-items:center;justify-content:center;color:#888;font-size:13px">Chưa upload Drive — chưa có video để xem</div>`;
+  const _loc=_mLocalSrc(m);
+  const player=_loc
+    ?`<div class="mplayer"><video src="${_loc}" controls playsinline ${m.drive_id?`onerror="this.parentNode.innerHTML='<iframe src=&quot;${drivePrev(m.drive_id)}&quot; allow=&quot;autoplay&quot; allowfullscreen></iframe>'"`:''}></video></div>`
+    :(m.drive_id
+      ?`<div class="mplayer"><iframe src="${drivePrev(m.drive_id)}" allow="autoplay" allowfullscreen></iframe></div>`
+      :`<div class="mplayer" style="display:flex;align-items:center;justify-content:center;color:#888;font-size:13px">Chưa upload Drive — chưa có video để xem</div>`);
   const row=(lbl,val)=>`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`;
   const auth=window.PORTAL&&m.nguoi_tao?`<span class="authchip">👤 ${esc(authorName(m.nguoi_tao))}</span>`:'';
   const meta=row('👤 KOL',m.kol?esc(m.kol):'—')+row('📦 Sản phẩm',m.product?esc(m.product):'—')
@@ -2492,7 +3024,9 @@ function renderServices(){
 }
 window.svcAct=async(k,act)=>{
   const lbl=act==='stop'?'Tắt':'Bật';
-  if(act==='stop'&&!confirm('Tắt dịch vụ này?')) return;
+  if(act==='stop'&&!await confirmPro({icon:'⏻', danger:true, title:'Tắt dịch vụ này?',
+      body:'Dịch vụ dừng ngay. Bật lại bất cứ lúc nào bằng nút ▶ trong panel.',
+      ok:'⏻ Tắt', cancel:'Giữ chạy'})) return;
   try{ const r=await fetch('/api/services/'+k+'/'+act,{method:'POST'}); const d=await r.json().catch(()=>({}));
     if(!r.ok){ alert(d.detail||('lỗi '+r.status)); return; }
   }catch(e){ alert(e.message); }
@@ -2527,6 +3061,190 @@ setInterval(()=>{ if(agentOpen) pollAgent(); },3000);
 setInterval(pollStatusLight,10000);
 pollSyncStat(); setInterval(pollSyncStat,15000);
 setInterval(()=>{ if(view==='dash') loadServices(); },10000);  // ⚡ tự cập nhật panel dịch vụ
+
+/* ===== 🐾 THÚ CƯNG XƯỞNG — mascot nổi góc trái-dưới + nhật ký hệ thống live ===== */
+let _PETLOG=[];                 // hàng nhật ký (mới nhất ở đầu), bền qua F5 bằng sessionStorage
+let _PETPREV={produce:{},sbgen:{},cmds:{},sync:null};  // snapshot lần poll trước để sinh sự kiện (diff)
+let _petSeeded=false;           // lần poll đầu chỉ nạp nền, KHÔNG phun sự kiện
+let _petErr=false;              // đang có lỗi chưa xem (mood 🙀 + badge)
+let _petWorking=false, _petStatusLine=null;  // đang có việc chạy + dòng trạng thái thường trực
+let _petSuccessUntil=0;         // mốc giữ mood 😻 tới thời điểm này
+let _petLastEvent=0;            // mốc sự kiện gần nhất (để 90s → ngủ 😴)
+let _petNewEvent=null;          // dòng sự kiện mới nhất trong lượt poll này (cho bong bóng)
+let _petBubbleMode="off", _petBubbleTimer=null;  // off | temp (tự ẩn) | persist (working)
+
+const _PET_STAGE={build:"dựng episode",sb:"vẽ storyboard",videos:"gen clip",assemble:"dựng phim",finish:"hoàn tất"};
+const _petStage=s=>_PET_STAGE[s]||s||"…";
+const _petCode=pid=>{ const p=(PROJS||[]).find(x=>x.id===pid); return (p&&p.code)||(pid?String(pid).slice(0,8):"?"); };
+
+function petLog(emoji,msg,isErr){  // thêm 1 dòng nhật ký (mới nhất lên trên, giữ tối đa 60)
+  const t=new Date(), hh=String(t.getHours()).padStart(2,"0"), mm=String(t.getMinutes()).padStart(2,"0");
+  _PETLOG.unshift({t:hh+":"+mm,i:emoji,m:msg,e:!!isErr});
+  if(_PETLOG.length>60) _PETLOG.length=60;
+  try{ sessionStorage.setItem("petlog",JSON.stringify(_PETLOG)); }catch(e){}
+  _petLastEvent=Date.now(); _petNewEvent={i:emoji,m:msg};
+  petRenderLog();
+}
+function petRenderLog(){
+  const body=document.getElementById("petlogbody"); if(!body) return;
+  if(!_PETLOG.length){ body.innerHTML='<div class="plempty">Chưa có sự kiện nào.<br>Nhật ký sẽ hiện khi Xưởng bắt đầu chạy.</div>'; return; }
+  body.innerHTML=_PETLOG.map(r=>`<div class="plrow${r.e?' err':''}"><span class="plt">${r.t}</span><span class="pli">${r.i}</span><span class="plm">${esc(r.m)}</span></div>`).join("");
+}
+
+function petDiff(produce,sbgen,cmds,syncAlive){  // so 2 lần poll → sinh sự kiện
+  const first=!_petSeeded;
+  // --- produce jobs (theo job.id) ---
+  const npv={};
+  (produce||[]).forEach(j=>{
+    const snap={status:j.status,stage:j.stage,detail:j.stage_detail||"",qcs:j.qc_status||"",qco:(j.qc&&j.qc.overall)||""};
+    npv[j.id]=snap;
+    if(first) return;
+    const p=_PETPREV.produce[j.id], DA=_petCode(j.project_id);
+    if(!p){
+      if(j.status==="running"||j.status==="queued") petLog("🎬","Bắt đầu sản xuất "+DA+" — khâu "+_petStage(j.stage));
+    }else{
+      if(p.status!=="done"&&j.status==="done"){ petLog("✅",DA+": video hoàn thiện!"); _petSuccessUntil=Date.now()+8000; }
+      else if(p.status!=="failed"&&j.status==="failed"){ petLog("❌",DA+": lỗi — "+String(j.error||"").slice(0,80),true); _petErr=true; }
+      else if(p.status!=="cancelled"&&j.status==="cancelled"){ petLog("⛔",DA+": đã hủy"); }
+      else if(p.stage!==j.stage&&(j.status==="running"||j.status==="queued")){ petLog("⚙️",DA+": sang khâu "+_petStage(j.stage)); }
+      if(j.status!=="done"&&j.status!=="failed"&&snap.detail!==p.detail&&/clip/i.test(snap.detail)) petLog("🎞",DA+": "+snap.detail);
+      if(p.qcs!=="running"&&snap.qcs==="running") petLog("⭐",DA+": đang QC video");
+      if(!p.qco&&(snap.qco==="pass"||snap.qco==="fail")) petLog("⭐",DA+": QC "+(snap.qco==="pass"?"ĐẠT":"CẦN SỬA"),snap.qco==="fail");
+    }
+  });
+  _PETPREV.produce=npv;
+  // --- sbgen jobs ---
+  const nsv={};
+  (sbgen||[]).forEach(j=>{
+    const snap={status:j.status,done:j.done||0,total:j.total||0,cur:j.current_idx};
+    nsv[j.id]=snap;
+    if(first) return;
+    const p=_PETPREV.sbgen[j.id], DA=_petCode(j.project_id);
+    if(!p){
+      if(j.status==="running"||j.status==="queued") petLog("🎨",DA+": bắt đầu vẽ storyboard ("+(j.total||0)+" cảnh)");
+    }else{
+      if(p.status!=="done"&&j.status==="done"){ petLog("✅",DA+": đủ ảnh storyboard"); _petSuccessUntil=Date.now()+8000; }
+      else if(p.status!=="failed"&&j.status==="failed"){ petLog("❌",DA+": vẽ dừng — "+String(j.error||"").slice(0,80),true); _petErr=true; }
+      else if(snap.done>p.done&&j.status!=="done") petLog("🖼",DA+": xong ảnh cảnh "+(j.current_idx!=null?j.current_idx:snap.done)+" ("+snap.done+"/"+snap.total+")");
+    }
+  });
+  _PETPREV.sbgen=nsv;
+  // --- commands (não Claude/Codex/Gemini) ---
+  const ncv={};
+  (cmds||[]).forEach(c=>{
+    ncv[c.id]=c.status;
+    if(first) return;
+    const p=_PETPREV.cmds[c.id], lb=String(c.label||c.text||"việc").slice(0,80);
+    if(p!==c.status){
+      if(c.status==="running") petLog("🧠","Claude nhận việc: "+lb);
+      else if(c.status==="done") petLog("✅","Claude xong: "+lb);
+      else if(c.status==="failed"){ petLog("❌","Claude lỗi: "+lb,true); _petErr=true; }
+    }
+  });
+  _PETPREV.cmds=ncv;
+  // --- sync VPS ---
+  if(!first&&_PETPREV.sync!=null&&_PETPREV.sync!==syncAlive){
+    if(syncAlive) petLog("🔄","Đồng bộ VPS đã nối lại"); else petLog("⚠️","Mất đồng bộ VPS",true);
+  }
+  _PETPREV.sync=syncAlive;
+  _petSeeded=true;
+}
+
+function petStatusLine(produce,sbgen,cmds){  // dòng trạng thái thường trực khi đang chạy
+  const pr=(produce||[]).find(j=>j.status==="running"||j.status==="queued");
+  if(pr){ let s="🎬 "+_petCode(pr.project_id)+" · "+_petStage(pr.stage); if(pr.stage_detail) s+=" · "+pr.stage_detail; return s; }
+  const sg=(sbgen||[]).find(j=>j.status==="running"||j.status==="queued");
+  if(sg) return "🎨 "+_petCode(sg.project_id)+" · vẽ cảnh "+(sg.current_idx!=null?sg.current_idx:(sg.done||0))+" ("+(sg.done||0)+"/"+(sg.total||0)+")";
+  const cm=(cmds||[]).find(c=>c.status==="running");
+  if(cm) return "🧠 "+String(cm.label||cm.text||"đang xử lý").slice(0,60);
+  return null;
+}
+
+function petShowBubble(text,ms){  // ms>0: tự ẩn; ms=0: thường trực
+  const b=document.getElementById("petbubble"); if(!b) return;
+  b.textContent=text; b.classList.add("on");
+  if(_petBubbleTimer){ clearTimeout(_petBubbleTimer); _petBubbleTimer=null; }
+  if(ms>0){ _petBubbleMode="temp"; _petBubbleTimer=setTimeout(()=>{ b.classList.remove("on"); _petBubbleMode="off"; },ms); }
+  else _petBubbleMode="persist";
+}
+function petHideBubble(){ const b=document.getElementById("petbubble"); if(!b) return; b.classList.remove("on"); _petBubbleMode="off"; if(_petBubbleTimer){ clearTimeout(_petBubbleTimer); _petBubbleTimer=null; } }
+
+function petApplyMood(){
+  const pet=document.getElementById("pet"), face=document.getElementById("petface"); if(!pet||!face) return;
+  const now=Date.now(); let mood,emoji;
+  if(_petErr){ mood="error"; emoji="🙀"; }
+  else if(_petSuccessUntil>now){ mood="success"; emoji="😻"; }
+  else if(_petWorking){ mood="working"; emoji="😼"; }
+  else if(now-_petLastEvent>90000){ mood="sleep"; emoji="😴"; }
+  else { mood="idle"; emoji="😺"; }
+  if(pet.dataset.mood!==mood){ pet.dataset.mood=mood; pet.className="pet "+mood; }  // chỉ đổi class khi mood đổi → animation không restart mỗi poll
+  pet.classList.toggle("haserr",_petErr);
+  face.textContent=emoji;
+}
+
+async function petPoll(){
+  if(window.PORTAL) return;
+  const R=await Promise.allSettled([api("/api/produce_jobs"),api("/api/sbgen_jobs"),api("/api/agent/status"),api("/api/commands"),api("/api/sync-status")]);
+  const produce=R[0].status==="fulfilled"?R[0].value:[];
+  const sbgen  =R[1].status==="fulfilled"?R[1].value:[];
+  const cmds   =R[3].status==="fulfilled"?R[3].value:[];
+  const sync   =R[4].status==="fulfilled"?R[4].value:null;
+  const syncAlive=sync?!!sync.alive:_PETPREV.sync;  // fetch lỗi → giữ nguyên, không phun sự kiện giả
+  petDiff(produce,sbgen,cmds,syncAlive);
+  const line=petStatusLine(produce,sbgen,cmds);
+  _petWorking=!!line; _petStatusLine=line;
+  petApplyMood();
+  // bong bóng: working → thường trực; else có sự kiện mới → 6s; else đang thường trực thì ẩn
+  if(_petWorking) petShowBubble(_petStatusLine,0);
+  else if(_petNewEvent) petShowBubble(_petNewEvent.i+" "+_petNewEvent.m,6000);
+  else if(_petBubbleMode==="persist") petHideBubble();
+  _petNewEvent=null;
+}
+
+function petTogglePanel(){
+  const pl=document.getElementById("petlog"); const on=pl.classList.toggle("on");
+  if(on) petRenderLog();
+  if(_petErr){ _petErr=false; petApplyMood(); }  // bấm xem = đánh dấu đã xem lỗi
+}
+
+function initPet(){
+  if(window.PORTAL) return;                    // chỉ hiện ở Xưởng (PC), không hiện ở Văn phòng
+  if(document.getElementById("pet")) return;   // tạo DOM 1 lần
+  try{ _PETLOG=JSON.parse(sessionStorage.getItem("petlog")||"[]")||[]; }catch(e){ _PETLOG=[]; }
+  _petLastEvent=Date.now();
+  const pet=document.createElement("div"); pet.id="pet"; pet.className="pet idle"; pet.title="Thú cưng Xưởng — bấm xem nhật ký";
+  pet.innerHTML='<span class="petface" id="petface">😺</span><span id="petbadge"></span><div id="petbubble"></div>';
+  document.body.appendChild(pet);
+  const log=document.createElement("div"); log.id="petlog";
+  log.innerHTML='<div class="plhead">📔 Nhật ký xưởng <span class="plx" id="petlogx">×</span></div><div class="plbody" id="petlogbody"></div>';
+  document.body.appendChild(log);
+  pet.addEventListener("click",e=>{ if(e.target.id==="petbubble") return; petTogglePanel(); });
+  pet.addEventListener("mouseenter",()=>{ if(_petWorking||_petBubbleMode==="persist") return; const last=_PETLOG[0]; if(last) petShowBubble(last.i+" "+last.m,6000); });
+  document.getElementById("petlogx").addEventListener("click",e=>{ e.stopPropagation(); document.getElementById("petlog").classList.remove("on"); });
+  petRenderLog();
+  petPoll();                                   // chạy ngay 1 lần (nạp nền)
+  if(!window._petTimer) window._petTimer=setInterval(petPoll,6000);
+}
+
+/* HỘP XÁC NHẬN đẹp (user 2026-07-16): thay confirm() thô. Trả Promise<bool>.
+   confirmPro({icon,title,body,ok,cancel,danger}) — Enter/click OK = true, Esc/nền/Cancel = false */
+window.confirmPro=opts=>new Promise(res=>{
+  const o=document.createElement('div'); o.id='cfm';
+  o.innerHTML=`<div class="cfmbox${opts.danger?' danger':''}">
+    <div class="cfmicon">${opts.icon||'❓'}</div>
+    <div class="cfmtitle">${opts.title||'Xác nhận?'}</div>
+    ${opts.body?`<div class="cfmbody">${opts.body}</div>`:''}
+    <div class="cfmact"><button class="cfmcancel">${opts.cancel||'Hủy'}</button>
+    <button class="cfmok">${opts.ok||'Đồng ý'}</button></div></div>`;
+  document.body.appendChild(o);
+  const done=v=>{ o.remove(); document.removeEventListener('keydown',onKey); res(v); };
+  const onKey=e=>{ if(e.key==='Escape') done(false); if(e.key==='Enter') done(true); };
+  o.querySelector('.cfmok').onclick=()=>done(true);
+  o.querySelector('.cfmcancel').onclick=()=>done(false);
+  o.addEventListener('click',e=>{ if(e.target===o) done(false); });
+  document.addEventListener('keydown',onKey);
+  setTimeout(()=>o.querySelector('.cfmok').focus(),40);
+});
 
 /* Thu gọn thanh bên (user 2026-07-15) — lưu localStorage, Ctrl+B bật/tắt */
 window.toggleSidebar=()=>{
