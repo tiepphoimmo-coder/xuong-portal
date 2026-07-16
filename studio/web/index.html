@@ -490,7 +490,7 @@
   .kolcard .kfoot .wbtn{margin:0}
 
   /* ===== THU VIEN MEDIA ===== */
-  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
   @media (max-width:640px){.mgrid{grid-template-columns:repeat(2,1fr);gap:10px}}
   .mcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);display:flex;flex-direction:column;transition:box-shadow .12s,border-color .12s,transform .12s;cursor:pointer}
   .mcard:hover{border-color:var(--bd2);box-shadow:var(--sh2);transform:translateY(-1px)}
@@ -505,23 +505,24 @@
   .mlightbox video,.mlightbox iframe{width:100%;height:100%;border:0;object-fit:contain;background:#000;display:block}
   .mlbempty{color:#888;font-size:13px}
   .mthimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0}
-  .mplay{position:relative;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.4);z-index:2;cursor:pointer;transition:transform .12s}
+  .mplay{position:relative;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(0,0,0,.4);z-index:2;cursor:pointer;transition:transform .12s}
   .mcard:hover .mplay{transform:scale(1.08)}
   .mthumb .mnodrive{position:relative;z-index:2;color:#dfe1e6;font-size:12px;text-align:center;padding:6px 10px;background:rgba(0,0,0,.42);border-radius:8px;backdrop-filter:blur(2px)}
-  .mbadge-corner{position:absolute;top:8px;left:8px;z-index:3}
+  .mbadge-corner{position:absolute;top:6px;left:6px;z-index:3}
+  .mbadge-corner .mbadge{font-size:10px;padding:1px 7px}
   .mbadge-corner .mbadge{background:rgba(255,255,255,.9)!important;color:var(--tx)!important;backdrop-filter:blur(3px);box-shadow:0 1px 4px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.6)}
   .mbadge-corner .mbadge.da_dang{color:var(--ok)!important}
   .mbadge-corner .mbadge.len_lich{color:var(--warn)!important}
-  .mbody{padding:11px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
-  .mtt{font-weight:600;font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .mprod{font-size:11.5px;color:var(--mut);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mchips{display:flex;flex-wrap:wrap;gap:5px}
-  .mchip{font-size:11px;background:var(--bg);border:1px solid var(--bd);color:var(--mut);padding:1px 7px;border-radius:99px}
+  .mbody{padding:8px 10px 9px;display:flex;flex-direction:column;gap:5px;flex:1}
+  .mtt{font-weight:600;font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mprod{font-size:10.5px;color:var(--mut);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mchips{display:flex;flex-wrap:wrap;gap:4px}
+  .mchip{font-size:10px;background:var(--bg);border:1px solid var(--bd);color:var(--mut);padding:1px 6px;border-radius:99px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mbadge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;align-self:flex-start}
   .mbadge.chua_dang{background:#ECECEC;color:#666}
   .mbadge.da_dang{background:var(--okbg);color:var(--ok)}
   .mbadge.len_lich{background:var(--warnbg);color:var(--warn)}
-  .mmetrics{display:flex;gap:12px;font-size:12.5px;color:var(--tx);margin-top:auto;padding-top:4px;border-top:1px dashed var(--bd)}
+  .mmetrics{display:flex;gap:9px;font-size:11px;color:var(--tx);margin-top:auto;padding-top:4px;border-top:1px dashed var(--bd)}
   .mmetrics span{display:flex;align-items:center;gap:3px}
   .mplayer{width:100%;aspect-ratio:9/16;max-height:62vh;background:#111;border-radius:10px;overflow:hidden}
   .mplayer iframe{width:100%;height:100%;border:0}
