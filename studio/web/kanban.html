@@ -137,10 +137,11 @@ function openTask(t){
       <label>Tiêu đề<input id="f_title" value="${esc(t.title||'')}" placeholder="Tiêu đề thẻ"></label>
       <label>Cột<select id="f_col">${optList(DATA.columns,t.column_ref||curCol,'— chọn cột —')}</select></label>
       <div class="row2">
-        <label>Nhân vật (KOL)<select id="f_kol">${optList(DATA.kols,t.kol_ref,'—')}</select></label>
+        <label>Nhân vật (KOL)<select id="f_kol" onchange="renderDnaImgs()">${optList(DATA.kols,t.kol_ref,'—')}</select></label>
         <label>Kênh<select id="f_chan">${optList(DATA.channels,t.channel_ref,'—')}</select></label>
       </div>
-      <label>Sản phẩm<select id="f_prod">${optList(DATA.products,t.product_ref,'—')}</select></label>
+      <label>Sản phẩm<select id="f_prod" onchange="renderDnaImgs()">${optList(DATA.products,t.product_ref,'—')}</select></label>
+      <div id="dnaImgs"></div>
       <label>Kịch bản (lời thoại)<textarea id="f_script" placeholder="Nội dung kịch bản…">${esc(t.script||'')}</textarea></label>
       <label>Ghi chú<textarea id="f_note" style="min-height:70px" placeholder="Voice direction / ghi chú…">${esc(t.note||'')}</textarea></label>
       <div id="scenesBox"></div>
@@ -151,9 +152,50 @@ function openTask(t){
       ${isNew?'':'<button class="btn btn--err" onclick="delTask(\''+t.id+'\')">🗑</button>'}
      </div>
     </div></div>`;
-  renderScenes();
+  renderScenes(); renderDnaImgs();
 }
 function closeM(){$('#modal').innerHTML='';}
+
+// ── Ảnh DNA KOL / Sản phẩm: preview + copy dán ChatGPT ──
+function renderDnaImgs(){
+  const box=$('#dnaImgs'); if(!box) return;
+  const kol=DATA.kols.find(x=>x.id===($('#f_kol')&&$('#f_kol').value));
+  const prod=DATA.products.find(x=>x.id===($('#f_prod')&&$('#f_prod').value));
+  const cell=(rec,emoji,label)=>{ if(!rec||!rec.img) return '';
+    const u='/fbmedia/'+rec.img+'.jpg';
+    return '<div style="flex:1;min-width:0;background:var(--surf2);border:1px solid var(--bd);border-radius:10px;padding:8px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muthi);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+esc(rec.name)+'</div>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+      +'<img src="'+u+'" style="width:46px;height:60px;object-fit:cover;border-radius:7px;border:1px solid var(--bd);flex:0 0 auto" onerror="this.style.opacity=.2">'
+      +'<button class="btn btn--acc" style="flex:1;padding:8px 6px" onclick="copyImgUrl(\''+u+'\',\''+esc(label)+'\')">📋 Copy ảnh</button>'
+      +'</div></div>';
+  };
+  const k=cell(kol,'🧑‍🎨','ảnh KOL'), p=cell(prod,'📦','ảnh SP');
+  box.innerHTML=(k||p)?('<div style="font-size:12px;font-weight:700;color:var(--muthi);margin-bottom:6px">🧬 Ảnh DNA — copy dán ChatGPT</div><div style="display:flex;gap:10px">'+k+p+'</div>'):'';
+}
+async function blobToPng(blob){
+  const img=await createImageBitmap(blob);
+  const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+  c.getContext('2d').drawImage(img,0,0);
+  return await new Promise(res=>c.toBlob(res,'image/png'));
+}
+async function copyImgUrl(url,label){
+  // 1) Clipboard ảnh (PNG) — Safari cần ClipboardItem nhận Promise
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({'image/png':(async()=>blobToPng(await fetch(url).then(r=>r.blob())))()})]);
+      toast('Đã copy '+label+' — dán vào ChatGPT','ok'); return;
+    }
+  }catch(e){}
+  // 2) Chia sẻ file (mobile) -> chọn ChatGPT/Ảnh
+  try{
+    const blob=await fetch(url).then(r=>r.blob());
+    const file=new File([blob],(label||'anh').replace(/\s+/g,'_')+'.jpg',{type:blob.type||'image/jpeg'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:label}); return; }
+  }catch(e){}
+  // 3) Mở ảnh -> nhấn giữ để copy
+  window.open(url,'_blank'); toast('Nhấn giữ ảnh để copy','warn');
+}
 
 function renderScenes(){
   const box=$('#scenesBox'); if(!box) return;
