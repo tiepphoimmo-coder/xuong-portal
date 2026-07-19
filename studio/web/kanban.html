@@ -139,7 +139,7 @@ function openTask(t){
       <label>Kịch bản (lời thoại)<textarea id="f_script" placeholder="Nội dung kịch bản…">${esc(t.script||'')}</textarea></label>
       <label>Ghi chú<textarea id="f_note" style="min-height:70px" placeholder="Voice direction / ghi chú…">${esc(t.note||'')}</textarea></label>
       <div id="scenesBox"></div>
-      ${isNew?'':'<button class="btn" onclick="cmd(\'produce_workflow\',{task_ref:\''+t.id+'\'})">🏭 Sản xuất workflow (gửi về Xưởng)</button>'}
+      ${isNew?'':'<div class="row2"><button class="btn" onclick="cmd(\'produce_basic\',{task_ref:\''+t.id+'\'})">▶ Dự án cơ bản</button><button class="btn btn--acc" onclick="cmd(\'produce_workflow\',{task_ref:\''+t.id+'\'})">🏭 Sản xuất workflow</button></div><div style="font-size:11px;color:var(--mut);margin-top:-4px">Gửi lệnh về Xưởng (PC) chạy — không tạo tại VPS.</div>'}
      </div>
      <div class="ft">
       <button class="btn btn--acc" style="flex:1" onclick="saveTask('${isNew?'':t.id}')">💾 Lưu</button>
@@ -152,21 +152,32 @@ function closeM(){$('#modal').innerHTML='';}
 
 function renderScenes(){
   const box=$('#scenesBox'); if(!box) return;
-  let h='<div style="font-size:12px;font-weight:700;color:var(--muthi);margin:2px 0 6px">🎬 Cảnh ('+EDIT_SCENES.length+') — storyboard</div>';
-  h+='<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">';
+  let h='<div style="font-size:12px;font-weight:700;color:var(--muthi);margin:2px 0 8px">🎬 Cảnh ('+EDIT_SCENES.length+') — mỗi cảnh: ảnh storyboard + prompt ảnh + JSON video</div>';
   EDIT_SCENES.forEach((s,i)=>{
     const mid=s.storyboard_media_id, pend=s.storyboard_pending_rel;
     const src=pend?('/'+pend):(mid?('/fbmedia/'+mid+'.jpg'):null);
-    const inner=src?'<img src="'+esc(src)+'" loading="lazy" style="width:100%;height:100%;border-radius:8px;object-fit:cover" onerror="this.style.opacity=.25">'
-      :'<div style="width:100%;height:100%;display:grid;place-items:center;font-size:11px;color:var(--mut)">cảnh '+(i+1)+'</div>';
-    h+='<div style="flex:0 0 30%;position:relative;aspect-ratio:3/4;background:#000;border-radius:8px" onclick="pickSceneImg('+i+')">'
-      +inner+(pend?'<span style="position:absolute;left:3px;bottom:3px;font-size:9px;background:rgba(245,158,11,.9);color:#000;border-radius:4px;padding:0 4px">⏳ chờ Xưởng</span>':'')
-      +'<span style="position:absolute;right:3px;top:3px;font-size:12px;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 5px">📷</span></div>';
+    const img=src?'<img src="'+esc(src)+'" loading="lazy" style="width:100%;height:100%;border-radius:8px;object-fit:cover" onerror="this.style.opacity=.25">'
+      :'<div style="width:100%;height:100%;display:grid;place-items:center;font-size:11px;color:var(--mut);text-align:center">⬆ Dán /<br>chọn ảnh</div>';
+    h+='<div style="background:var(--surf2);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:10px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:12px;font-weight:800;color:var(--acc)">Cảnh '+(s.idx||i+1)+'</span>'
+      +'<button class="btn btn--err" style="margin-left:auto;padding:4px 10px" onclick="delScene('+i+')">🗑</button></div>'
+      +'<div style="aspect-ratio:3/4;max-width:132px;background:#000;border-radius:8px;position:relative;margin-bottom:10px" onclick="pickSceneImg('+i+')">'
+      +img+(pend?'<span style="position:absolute;left:3px;bottom:3px;font-size:9px;background:rgba(245,158,11,.9);color:#000;border-radius:4px;padding:0 4px">⏳ chờ Xưởng</span>':'')
+      +'<span style="position:absolute;right:3px;top:3px;font-size:12px;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 5px">📷</span></div>'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--muthi)">🖼 Prompt tạo ảnh storyboard</span>'
+      +'<button class="btn" style="margin-left:auto;padding:2px 9px;font-size:13px" onclick="copyText(EDIT_SCENES['+i+'].image_prompt,\'prompt ảnh\')">📋</button></div>'
+      +'<textarea style="min-height:64px;margin-bottom:10px" placeholder="Prompt sinh ảnh storyboard cảnh này… (dán ChatGPT / Nano)" oninput="EDIT_SCENES['+i+'].image_prompt=this.value">'+esc(s.image_prompt||'')+'</textarea>'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--muthi)">🎬 JSON prompt tạo video</span>'
+      +'<button class="btn" style="margin-left:auto;padding:2px 9px;font-size:13px" onclick="copyText(EDIT_SCENES['+i+'].prompt_json,\'JSON video\')">📋</button></div>'
+      +'<textarea style="min-height:64px;font-family:ui-monospace,monospace;font-size:13px" placeholder=\'{&quot;scene&quot;:1,...}\' oninput="EDIT_SCENES['+i+'].prompt_json=this.value">'+esc(s.prompt_json||'')+'</textarea>'
+      +'</div>';
   });
-  h+='</div><button class="btn" style="margin-top:6px;width:100%" onclick="addScene()">＋ Thêm cảnh</button>';
+  h+='<button class="btn" style="width:100%" onclick="addScene()">＋ Thêm cảnh</button>';
   box.innerHTML=h;
 }
-function addScene(){ const mx=EDIT_SCENES.reduce((m,s)=>Math.max(m,s.idx||0),0); EDIT_SCENES.push({idx:mx+1}); renderScenes(); }
+function addScene(){ const mx=EDIT_SCENES.reduce((m,s)=>Math.max(m,s.idx||0),0); EDIT_SCENES.push({idx:mx+1,image_prompt:'',prompt_json:'',storyboard_media_id:null}); renderScenes(); }
+function delScene(i){ EDIT_SCENES.splice(i,1); renderScenes(); }
+async function copyText(t,label){ if(!t||!(''+t).trim()){toast('Chưa có nội dung','err');return;} try{await navigator.clipboard.writeText(t);toast('Đã copy '+(label||''),'ok');}catch(e){toast('Không copy được (trình duyệt chặn)','err');} }
 function pickSceneImg(i){ SCENE_PICK=i; $('#sceneFile').click(); }
 async function onSceneFile(e){
   const f=e.target.files&&e.target.files[0]; e.target.value=''; if(!f||SCENE_PICK<0)return;
