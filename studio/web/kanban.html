@@ -6,6 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#0b0f1a" />
+<link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <title>Kanban Kịch bản</title>
 <style>
   :root{--bg:#0b0f1a;--surf:#141a29;--surf2:#1c2333;--surf3:#252d40;--bd:#2b344a;--txt:#e8ecf4;--mut:#8b94a8;--muthi:#aab3c7;--acc:#7c3aed;--accbg:#2a1e4d;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444}
@@ -41,10 +43,11 @@
   .fab .add{background:linear-gradient(135deg,#a855f7,#7c3aed)}
   .fab .order{background:linear-gradient(135deg,#0ea5e9,#2563eb);font-size:20px}
   /* modal full-screen mobile */
-  .modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}
-  .sheet{width:100%;max-height:96vh;background:var(--bg);border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden}
-  @media(min-width:640px){.modal{align-items:center;justify-content:center}.sheet{max-width:560px;border-radius:16px;max-height:92vh}}
-  .sheet .sh{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--bd)}
+  .modal{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;align-items:stretch}
+  .sheet{width:100%;height:100dvh;max-height:100dvh;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;animation:appIn .22s ease}
+  @keyframes appIn{from{transform:translateX(22px);opacity:.35}to{transform:translateX(0);opacity:1}}
+  @media(min-width:640px){.modal{align-items:center;justify-content:center;background:rgba(0,0,0,.55)}.sheet{max-width:560px;height:auto;max-height:92vh;border-radius:16px}}
+  .sheet .sh{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--surf);z-index:2}
   .sheet .sh .g{flex:1}
   .sheet .bd{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
   label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:var(--muthi)}
@@ -53,7 +56,8 @@
   textarea{resize:vertical;min-height:200px;line-height:1.6}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .sheet .ft{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--bd)}
-  .x{background:none;border:none;color:var(--mut);font-size:22px;cursor:pointer;padding:0 4px}
+  .x{order:-1;background:var(--surf3);border:1px solid var(--bd);border-radius:9px;color:var(--acc);font-size:15px;font-weight:800;cursor:pointer;padding:7px 11px;font-family:inherit}
+  .x:active{filter:brightness(.9)}
   .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--surf3);border:1px solid var(--bd);border-radius:10px;padding:10px 16px;font-size:13px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:88vw}
   .toast.show{opacity:1}
   .toast.ok{border-color:var(--ok)}.toast.err{border-color:var(--err);color:#ff9b9b}
@@ -128,7 +132,7 @@ function openTask(t){
   const m=$('#modal'); m.innerHTML=`
    <div class="modal" onclick="if(event.target===this)closeM()">
     <div class="sheet">
-     <div class="sh"><span class="code" style="${t.code?'':'display:none'}">${esc(t.code||'')}</span><span class="g" style="font-weight:800">${isNew?'Thẻ mới':'Sửa thẻ'}</span><button class="x" onclick="closeM()">✕</button></div>
+     <div class="sh"><span class="code" style="${t.code?'':'display:none'}">${esc(t.code||'')}</span><span class="g" style="font-weight:800">${isNew?'Thẻ mới':'Sửa thẻ'}</span><button class="x" onclick="closeM()">‹ Quay lại</button></div>
      <div class="bd">
       <label>Tiêu đề<input id="f_title" value="${esc(t.title||'')}" placeholder="Tiêu đề thẻ"></label>
       <label>Cột<select id="f_col">${optList(DATA.columns,t.column_ref||curCol,'— chọn cột —')}</select></label>
@@ -215,7 +219,7 @@ function openOrder(){
   const m=$('#modal'); m.innerHTML=`
    <div class="modal" onclick="if(event.target===this)closeM()">
     <div class="sheet">
-     <div class="sh"><span class="g" style="font-weight:800">📨 Đặt hàng kịch bản</span><button class="x" onclick="closeM()">✕</button></div>
+     <div class="sh"><span class="g" style="font-weight:800">📨 Đặt hàng kịch bản</span><button class="x" onclick="closeM()">‹ Quay lại</button></div>
      <div class="bd">
       <p style="font-size:12px;color:var(--mut);margin:0">Chọn sản phẩm (đã gắn não). Xưởng sẽ để AI soạn N thẻ rồi đồng bộ lên đây.</p>
       <label>Sản phẩm<select id="o_prod">${optList(DATA.products.filter(p=>p.brain_code),null,'— chọn SP có não —')}</select></label>

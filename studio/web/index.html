@@ -180,6 +180,10 @@
   .tools{position:absolute;top:9px;right:11px;display:flex;gap:9px}
   .tools span{cursor:pointer;color:var(--mut);font-size:15px}
   .tools span:hover{color:var(--brand)}
+  /* Header app cho sheet (chi hien o mobile — bien popup thanh trang) */
+  .sheethd{display:none}
+  .sheetback{background:none;border:none;color:var(--brand);font-size:15.5px;font-weight:800;padding:8px 4px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
+  .sheetback:active{opacity:.6}
   .cmd{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:13px;margin-top:8px;display:flex;align-items:center;gap:8px;justify-content:space-between}
   .instr{font-size:13px;color:var(--mut);margin-top:6px;white-space:pre-wrap;line-height:1.5}
   .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
@@ -575,10 +579,15 @@
     input,textarea,select{font-size:16px!important} /* chặn iOS auto-zoom khi focus */
     .sfbar select.fsel{height:36px;font-size:13px!important;max-width:46vw} /* giữ filter gọn */
 
-    /* VIỆC 3 — Modal thành bottom-sheet */
-    .modal{align-items:flex-end}
-    .sheet{width:100vw;max-width:100vw;max-height:92vh;border-radius:18px 18px 0 0;
-      padding:18px 14px calc(16px + env(safe-area-inset-bottom))}
+    /* VIỆC 3 — Modal = TRANG app toàn màn hình (bỏ popup, trượt vào từ phải) */
+    .modal{align-items:stretch;justify-content:stretch;background:var(--bg);backdrop-filter:none}
+    .sheet{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;
+      padding:0 14px calc(16px + env(safe-area-inset-bottom));animation:appScreenIn .22s ease}
+    .sheet.detail,.sheet.wide{width:100vw;max-width:100vw}
+    .sheethd{display:flex;align-items:center;position:sticky;top:0;z-index:6;
+      margin:0 -14px 12px;padding:6px 10px;background:var(--card);border-bottom:1px solid var(--bd2)}
+    #sheetbox .tools{top:12px;right:14px}   /* nut × giu goc phai — phu voi nut ‹ Quay lai ben trai */
+    @keyframes appScreenIn{from{transform:translateX(24px);opacity:.4}to{transform:translateX(0);opacity:1}}
     .scdcols{grid-template-columns:1fr}
     .scractions{display:flex;flex-wrap:wrap;gap:8px}
     .scractions button{flex:1;min-height:42px}
@@ -2967,7 +2976,7 @@ window.resetUserPw=async(u)=>{
     <div class="row" style="margin-top:14px"><button class="primary" onclick="closeModal()">Xong</button></div>`);
 };
 
-function openModal(h){$("#sheetbox").innerHTML=h;$("#modal").classList.add("on");}
+function openModal(h){$("#sheetbox").innerHTML='<div class="sheethd"><button class="sheetback" onclick="closeModal()">‹ Quay lại</button></div>'+h;$("#modal").classList.add("on");$("#sheetbox").scrollTop=0;}
 function closeModal(){$("#modal").classList.remove("on");$("#sheetbox").classList.remove("wide","detail","mlb");} window.closeModal=closeModal;
 // ===== Agent nổi =====
 let agentOpen=false, CMDS=[];
