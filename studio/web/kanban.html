@@ -143,7 +143,6 @@ function openTask(t){
       <label>Sản phẩm<select id="f_prod" onchange="renderDnaImgs()">${optList(DATA.products,t.product_ref,'—')}</select></label>
       <div id="dnaImgs"></div>
       <label>Kịch bản (lời thoại)<textarea id="f_script" placeholder="Nội dung kịch bản…">${esc(t.script||'')}</textarea></label>
-      <label>Ghi chú<textarea id="f_note" style="min-height:70px" placeholder="Voice direction / ghi chú…">${esc(t.note||'')}</textarea></label>
       <div id="scenesBox"></div>
       ${isNew?'':'<div class="row2"><button class="btn" onclick="cmd(\'produce_basic\',{task_ref:\''+t.id+'\'})">▶ Dự án cơ bản</button><button class="btn btn--acc" onclick="cmd(\'produce_workflow\',{task_ref:\''+t.id+'\'})">🏭 Sản xuất workflow</button></div><div style="font-size:11px;color:var(--mut);margin-top:-4px">Gửi lệnh về Xưởng (PC) chạy — không tạo tại VPS.</div>'}
      </div>
@@ -240,7 +239,7 @@ async function onSceneFile(e){
 async function saveTask(id){
   const body={title:$('#f_title').value.trim(),column_ref:$('#f_col').value||null,
     kol_ref:$('#f_kol').value||null,channel_ref:$('#f_chan').value||null,product_ref:$('#f_prod').value||null,
-    script:$('#f_script').value,note:$('#f_note').value,scenes:EDIT_SCENES};
+    script:$('#f_script').value,scenes:EDIT_SCENES};
   if(!body.title){toast('Nhập tiêu đề','err');return;}
   try{
     if(id) await api('/api/fbkanban/task/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
