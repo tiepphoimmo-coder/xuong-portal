@@ -646,7 +646,7 @@
 </head>
 <body>
 <aside>
-  <div class="logo">
+  <div class="logo" onclick="location.href='/'" style="cursor:pointer" title="Về trang chủ — chọn khu vực">
     <div class="mark">XK</div>
     <div class="lt"><b>Xưởng KOL</b><span>TiếpPhối Space</span></div>
     <button class="sidetoggle" onclick="toggleSidebar()" title="Thu gọn / mở rộng thanh bên (Ctrl+B)">‹</button>
@@ -685,6 +685,7 @@
       <div><h1 id="ttitle">Tổng quan</h1><div class="tdesc" id="tdesc"></div></div>
       <div class="tact">
         <span id="syncstat" class="syncstat" title="Trạng thái đồng bộ với Văn phòng VPS"></span>
+        <button class="mini" onclick="location.href='/'" title="Về trang chủ — chọn khu vực (Xưởng KOL / Space Kịch Bản)">🏢 Trang chủ</button>
         <button class="mini" onclick="load()" title="Tải lại dữ liệu">↻ Làm mới</button>
         <button class="primary prodbtn" style="height:33px;padding:0 14px;font-size:13px" onclick="go('scripts');openScriptOrder()">＋ Đặt hàng kịch bản</button>
       </div>
