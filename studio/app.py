@@ -85,20 +85,27 @@ def _materialize_record(rec):
 
 
 def _safe_ref_path(rel):
-    """Chan path traversal: rel PHAI bat dau 'refs/', basename sach, resolve trong DATA_HOME/refs.
+    """Chan path traversal: rel PHAI bat dau 'refs/' (studio) HOAC 'fbmedia/'/'fbmedia_inbox/'
+    (thumbnail + upload storyboard Kanban Flowboard, Pha 3), basename sach, resolve trong DATA_HOME.
     Tra ve path tuyet doi hop le hoac None."""
     if not rel or not isinstance(rel, str):
         return None
     rr = rel.replace("\\", "/")
-    if not rr.startswith("refs/"):
+    if rr.startswith("refs/"):
+        prefix, root = "refs/", UPLOAD_DIR
+    elif rr.startswith("fbmedia/"):          # thumbnail storyboard (PC -> portal)
+        prefix, root = "fbmedia/", os.path.join(DATA_HOME, "fbmedia")
+    elif rr.startswith("fbmedia_inbox/"):    # phone upload storyboard (PC hut ve)
+        prefix, root = "fbmedia_inbox/", os.path.join(DATA_HOME, "fbmedia_inbox")
+    else:
         return None
-    name = rr[len("refs/"):]
+    name = rr[len(prefix):]
     if not name or "/" in name or "\\" in name or name in (".", ".."):
         return None
     if os.path.basename(name) != name:
         return None
-    dest = os.path.abspath(os.path.join(UPLOAD_DIR, name))
-    if not dest.replace("\\", "/").lower().startswith(_REFS_ROOT.replace("\\", "/").lower() + "/"):
+    dest = os.path.abspath(os.path.join(root, name))
+    if not dest.replace("\\", "/").lower().startswith(os.path.abspath(root).replace("\\", "/").lower() + "/"):
         return None
     return dest
 
@@ -282,6 +289,130 @@ def api_sync_status():
         return {"alive": ago < 90, "ago": int(ago), "portal": hb.get("portal")}
     except Exception:
         return {"alive": False, "ago": None, "portal": None}
+
+
+# ==================== KANBAN FLOWBOARD (mobile portal, Pha 1-3) ====================
+# Thao tac tren store fb_* (dong bo xuong Flowboard PC qua sync_agent). Thao tac
+# la DATA thuan -> khong bi _portal_blocked; gate lo login o portal mode.
+import uuid as _uuid
+
+
+def _fb_alive(rows):
+    return sorted([r for r in rows if not r.get("deleted")],
+                  key=lambda r: (r.get("sort_order") or 0, r.get("id")))
+
+
+@app.post("/api/fbkanban/upload")
+async def fbkanban_upload(file: UploadFile = File(...)):
+    """Phone dán/chọn ảnh storyboard -> luu inbox tren VPS -> tra rel de gan vao
+    scene (storyboard_pending_rel). PC (sync_agent) hut ve + ingest -> media_id that."""
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "file rong")
+    if len(raw) > 25 * 1024 * 1024:
+        raise HTTPException(400, "anh qua lon (>25MB)")
+    ext = ".jpg"
+    for sig, e in ((b"\x89PNG", ".png"), (b"\xff\xd8\xff", ".jpg"), (b"RIFF", ".webp"), (b"GIF8", ".gif")):
+        if raw.startswith(sig):
+            ext = e
+            break
+    inbox = os.path.join(DATA_HOME, "fbmedia_inbox")
+    os.makedirs(inbox, exist_ok=True)
+    name = _uuid.uuid4().hex + ext
+    with open(os.path.join(inbox, name), "wb") as fh:
+        fh.write(raw)
+    rel = "fbmedia_inbox/" + name
+    return {"rel": rel, "url": "/" + rel, "size": len(raw)}
+
+
+@app.get("/fbmedia_inbox/{name}")
+def fbmedia_inbox_serve(name: str):
+    """Serve anh phone vua upload (xem tam truoc khi PC ingest). Login-gated."""
+    dest = _safe_ref_path("fbmedia_inbox/" + name)
+    if not dest or not os.path.isfile(dest):
+        raise HTTPException(404, "khong co")
+    return FileResponse(dest, media_type=mimetypes.guess_type(dest)[0] or "image/jpeg")
+
+
+@app.get("/fbmedia/{name}")
+def fbmedia_serve(name: str):
+    """Serve thumbnail storyboard (Pha 3). Login-gated qua _portal_gate (path
+    khong /api). sync_agent day thumbnail vao DATA_HOME/fbmedia qua /api/sync/file."""
+    dest = _safe_ref_path("fbmedia/" + name)
+    if not dest or not os.path.isfile(dest):
+        raise HTTPException(404, "khong co")
+    return FileResponse(dest, media_type=mimetypes.guess_type(dest)[0] or "image/jpeg")
+
+
+@app.get("/api/fbkanban/board")
+def fbkanban_board():
+    """Toan bo bang cho UI mobile: cot + the + mirror KOL/SP/kenh."""
+    return {
+        "columns": _fb_alive(store.list_all("fb_cols")),
+        "tasks": _fb_alive(store.list_all("fb_tasks")),
+        "kols": _fb_alive(store.list_all("fb_kols")),
+        "products": _fb_alive(store.list_all("fb_products")),
+        "channels": _fb_alive(store.list_all("fb_channels")),
+        "cmds": [c for c in store.list_all("fb_cmds") if not c.get("deleted")][-30:],
+        "sync": api_sync_status(),
+    }
+
+
+@app.post("/api/fbkanban/task")
+async def fbkanban_task_create(request: Request):
+    b = await request.json()
+    title = (b.get("title") or "").strip()
+    if not title:
+        raise HTTPException(400, "title trong")
+    cols = _fb_alive(store.list_all("fb_cols"))
+    col_ref = b.get("column_ref") or (cols[0]["id"] if cols else None)
+    tasks = _fb_alive(store.list_all("fb_tasks"))
+    nxt = max([t.get("sort_order") or 0 for t in tasks if t.get("column_ref") == col_ref] + [-1]) + 1
+    rec = {
+        "id": _uuid.uuid4().hex, "title": title, "script": b.get("script"),
+        "note": b.get("note"), "column_ref": col_ref, "sort_order": nxt,
+        "kol_ref": b.get("kol_ref"), "product_ref": b.get("product_ref"),
+        "channel_ref": b.get("channel_ref"), "scenes": b.get("scenes") or [],
+    }
+    store.upsert("fb_tasks", rec)   # stamp updated_at + origin -> sync xuong PC (new)
+    return store.get("fb_tasks", rec["id"])
+
+
+@app.patch("/api/fbkanban/task/{tid}")
+async def fbkanban_task_patch(tid: str, request: Request):
+    if not store.get("fb_tasks", tid):
+        raise HTTPException(404, "khong thay the")
+    b = await request.json()
+    allowed = {k: b[k] for k in ("title", "script", "note", "column_ref", "sort_order",
+                                 "kol_ref", "product_ref", "channel_ref", "scenes") if k in b}
+    if not allowed:
+        raise HTTPException(400, "khong co field hop le")
+    store.patch("fb_tasks", tid, **allowed)   # stamp updated_at -> sync xuong PC
+    return store.get("fb_tasks", tid)
+
+
+@app.delete("/api/fbkanban/task/{tid}")
+def fbkanban_task_delete(tid: str):
+    if not store.get("fb_tasks", tid):
+        raise HTTPException(404, "khong thay the")
+    store.patch("fb_tasks", tid, deleted=True)   # xoa mem -> sync mang tin xoa xuong PC
+    return {"ok": True}
+
+
+@app.post("/api/fbkanban/cmd")
+async def fbkanban_cmd_create(request: Request):
+    """Tao lenh (dat hang / san xuat) — PC nhat qua sync_agent, chay roi day status ve."""
+    b = await request.json()
+    cmd = (b.get("cmd") or "").strip()
+    if cmd not in ("order_scripts", "produce_basic", "produce_workflow"):
+        raise HTTPException(400, "cmd khong hop le")
+    rec = {
+        "id": _uuid.uuid4().hex, "cmd": cmd, "payload": b.get("payload") or {},
+        "status": "pending", "result": None, "error": None,
+        "created_by": (store.current_user() or "portal"),
+    }
+    store.upsert("fb_cmds", rec)
+    return store.get("fb_cmds", rec["id"])
 
 
 @app.get("/api/config")
@@ -3420,7 +3551,10 @@ def image(path: str):
 
 
 # ==================== SYNC API (PC <-> VAN PHONG) ====================
-SYNC_TYPES = ("kols", "products", "scripts", "media", "channels")
+SYNC_TYPES = ("kols", "products", "scripts", "media", "channels",
+              # Flowboard Kanban (portal-vps-sync): cot + the (2 chieu) + mirror
+              # KOL/SP/kenh (PC->portal 1 chieu, dropdown phone) + hang lenh (Pha 2).
+              "fb_cols", "fb_tasks", "fb_kols", "fb_products", "fb_channels", "fb_cmds")
 SYNC_LOG = os.path.join(DATA_HOME, "sync_log.jsonl")
 
 
@@ -3487,6 +3621,9 @@ async def sync_file_post(request: Request, rel: str = Form(...), file: UploadFil
 
 def _portal_allowed_fields(kind, rec):
     """Portal NHAN tu PC: chi mo field ket qua san xuat (+ co 'deleted' — lenh xoa lan 2 chieu)."""
+    if kind.startswith("fb_"):
+        # Flowboard Kanban: portal la BAN MIRROR cua PC -> nhan FULL (tru id/created).
+        return [k for k in rec.keys() if k not in ("id", "created")]
     if kind == "scripts":
         allowed = []
         if rec.get("status") in ("producing", "done", "error"):
