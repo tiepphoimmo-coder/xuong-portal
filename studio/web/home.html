@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0C66E4">
+<title>Xưởng KOL · Văn phòng</title>
+<style>
+:root{--bg:#F1F2F4;--card:#FFFFFF;--brand:#0C66E4;--bd:#DCDFE4;--tx:#172B4D;--mut:#626F86}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:14px 18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.mk{width:34px;height:34px;border-radius:9px;background:var(--brand);display:grid;place-items:center;color:#fff;font-size:18px}
+.sp{flex:1}
+.who{font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+.lg{background:none;border:1px solid var(--bd);border-radius:8px;color:var(--mut);padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.lg:active{filter:brightness(.95)}
+.wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 18px 40px}
+.inner{width:100%;max-width:720px}
+.title{text-align:center;margin:0 0 16px;font-size:14px;color:var(--mut);font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:24px 22px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px;min-height:180px;box-shadow:0 10px 30px rgba(9,30,66,.08);transition:transform .12s,box-shadow .12s,border-color .12s}
+.card:active{transform:scale(.98)}
+.card:hover{box-shadow:0 16px 44px rgba(9,30,66,.16);border-color:var(--brand)}
+.ic{width:58px;height:58px;border-radius:15px;display:grid;place-items:center;font-size:29px}
+.card h2{margin:8px 0 0;font-size:19px}
+.card p{margin:0;color:var(--mut);font-size:13.5px;line-height:1.5}
+.go{margin-top:auto;color:var(--brand);font-weight:800;font-size:14px}
+</style>
+</head>
+<body>
+ <div class="top">
+   <div class="brand"><span class="mk">🏢</span> Xưởng KOL · Văn phòng</div>
+   <div class="sp"></div>
+   <span class="who" id="who"></span>
+   <button class="lg" onclick="logout()">Đăng xuất</button>
+ </div>
+ <div class="wrap">
+  <div class="inner">
+   <p class="title">Chọn khu vực làm việc</p>
+   <div class="grid">
+    <a class="card" href="/index.html">
+      <div class="ic" style="background:#E9F2FF">🏭</div>
+      <h2>Xưởng KOL</h2>
+      <p>Quản lý KOL, sản phẩm, kịch bản duyệt, trạng thái sản xuất &amp; thư viện video.</p>
+      <span class="go">Vào Xưởng →</span>
+    </a>
+    <a class="card" href="/kanban.html">
+      <div class="ic" style="background:#F3ECFF">📋</div>
+      <h2>Space Kịch Bản</h2>
+      <p>Bảng Kanban kịch bản — tạo / sửa thẻ, cảnh storyboard, đặt hàng ngay trên điện thoại.</p>
+      <span class="go">Vào Kanban →</span>
+    </a>
+   </div>
+  </div>
+ </div>
+<script>
+fetch('/api/config').then(r=>r.ok?r.json():null).then(d=>{if(d&&d.user)document.getElementById('who').textContent='👤 '+d.user;}).catch(function(){});
+async function logout(){try{await fetch('/api/logout',{method:'POST'});}catch(e){}location.href='/';}
+</script>
+</body>
+</html>

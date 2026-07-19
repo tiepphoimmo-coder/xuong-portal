@@ -3896,11 +3896,18 @@ from fastapi.staticfiles import StaticFiles
 
 
 @app.get("/")
+def _serve_home():
+    """Trang chu = man hinh CHON khu vuc: Xuong KOL (/index.html) hoac
+    Space Kich Ban (/kanban.html). Login-gated qua _portal_gate."""
+    return FileResponse(
+        os.path.join(SD, "web", "home.html"), media_type="text/html",
+        headers={"Cache-Control": "no-cache, must-revalidate"})
+
+
 @app.get("/index.html")
+@app.get("/xuong")
 def _serve_index():
-    """Serve index.html voi no-cache (user 2026-07-15): SPA 1-file (inline CSS+JS) — moi
-    lan cap nhat giao dien, browser TU lay ban moi (revalidate 304 neu khong doi), khong
-    con phai Ctrl+F5. StaticFiles ben duoi van phuc vu cac tai nguyen khac."""
+    """Dashboard Xuong KOL (SPA 1-file hash-routing) — no-cache de luon lay ban moi."""
     return FileResponse(
         os.path.join(SD, "web", "index.html"), media_type="text/html",
         headers={"Cache-Control": "no-cache, must-revalidate"})
