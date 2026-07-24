@@ -268,7 +268,7 @@ function openTask(t,colId){
         </div>
         <label>Sản phẩm<select id="f_prod" onchange="renderDnaImgs()">${optList(DATA.products,t.product_ref,'—')}</select></label>
         <div id="dnaImgs"></div>
-        <label>Kịch bản (lời thoại)<textarea id="f_script" placeholder="Nội dung kịch bản…">${esc(t.script||'')}</textarea></label>
+        <label><span style="display:flex;align-items:center;gap:6px">Kịch bản (lời thoại)<button type="button" class="btn" style="margin-left:auto;padding:2px 9px;font-size:13px" onclick="copyText($('#f_script').value,'kịch bản')">📋 Copy</button></span><textarea id="f_script" placeholder="Nội dung kịch bản…">${esc(t.script||'')}</textarea></label>
        </div>
        <div class="c2b"><div id="scenesBox"></div></div>
        <div class="c2c">
